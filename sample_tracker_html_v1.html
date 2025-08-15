@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+            color: #111827;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #111827;
+        }
+        
+        .header p {
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .add-btn {
+            background: #2563eb;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        
+        .add-btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .filters {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .search-input {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        td {
+            padding: 1rem 0.75rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-received { background: #f3f4f6; color: #374151; }
+        .status-bap { background: #dbeafe; color: #1e40af; }
+        .status-tsb { background: #fef3c7; color: #92400e; }
+        .status-extraction { background: #fed7aa; color: #c2410c; }
+        .status-dilution { background: #e9d5ff; color: #7c3aed; }
+        .status-cleanup { background: #c7d2fe; color: #4338ca; }
+        .status-index { background: #fce7f3; color: #be185d; }
+        .status-miseq { background: #ccfbf1; color: #047857; }
+        .status-complete { background: #dcfce7; color: #166534; }
+        .status-failed { background: #fee2e2; color: #dc2626; }
+        
+        .qc-pass { color: #059669; }
+        .qc-fail { color: #dc2626; }
+        .qc-pending { color: #d97706; }
+        
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-view {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background: #2563eb;
+        }
+        
+        .btn-process {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-process:hover {
+            background: #059669;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn-primary {
+            flex: 1;
+            background: #2563eb;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            flex: 1;
+            background: #e5e7eb;
+            color: #374151;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>Sample Tracker</h1>
+                <p>Laboratory sample management system</p>
+            </div>
+            <button class="add-btn" onclick="openAddModal()">
+                + Add Sample
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Total Samples</div>
+                    <div class="stat-value" id="total-count">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value" style="color: #d97706;" id="pending-count">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">In Progress</div>
+                    <div class="stat-value" style="color: #2563eb;" id="progress-count">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value" style="color: #059669;" id="complete-count">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <input type="text" class="search-input" placeholder="Search samples..." id="search-input">
+            <select class="search-input" id="species-filter">
+                <option value="all">All Species</option>
+                <option value="E.coli">E.coli</option>
+                <option value="Salmonella">Salmonella</option>
+                <option value="Campylobacter">Campylobacter</option>
+            </select>
+            <select class="search-input" id="status-filter">
+                <option value="all">All Statuses</option>
+                <option value="Sample Received">Sample Received</option>
+                <option value="BAP Complete">BAP Complete</option>
+                <option value="TSB Complete">TSB Complete</option>
+                <option value="Extraction Complete">Extraction Complete</option>
+                <option value="WGS Complete">WGS Complete</option>
+            </select>
+            <button class="search-input" style="background: #f3f4f6; cursor: pointer;">
+                Export Data
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sample ID</th>
+                        <th>Species</th>
+                        <th>Status</th>
+                        <th>Date Received</th>
+                        <th>Location</th>
+                        <th>QC</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="samples-table">
+                    <!-- Sample rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Sample Modal -->
+    <div id="add-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Sample</h3>
+                <button class="close-btn" onclick="closeAddModal()">&times;</button>
+            </div>
+            <form id="add-form">
+                <div class="form-group">
+                    <label class="form-label">Sample ID</label>
+                    <input type="text" class="form-input" id="sample-id" placeholder="25KS01XX01-XX" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Species</label>
+                    <select class="form-input" id="sample-species">
+                        <option value="E.coli">E.coli</option>
+                        <option value="Salmonella">Salmonella</option>
+                        <option value="Campylobacter">Campylobacter</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date Received</label>
+                    <input type="date" class="form-input" id="date-received" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Initials</label>
+                    <input type="text" class="form-input" id="initials" maxlength="3" placeholder="AMD" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Freezer Location</label>
+                    <input type="text" class="form-input" id="freezer-location" placeholder="F1-S2-R3-B1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-input" id="notes" rows="3" placeholder="Any additional notes..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Add Sample</button>
+                    <button type="button" class="btn-secondary" onclick="closeAddModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample data storage
+        let samples = [
+            {
+                id: '25KS01CB02-EC',
+                species: 'E.coli',
+                status: 'WGS Complete',
+                dateReceived: '2025-01-15',
+                initials: 'AMD',
+                freezerLocation: 'F1-S2-R3-B1',
+                notes: 'High quality DNA',
+                qcStatus: 'Pass'
+            },
+            {
+                id: '25KS01GT01-S1',
+                species: 'Salmonella',
+                status: 'Extraction Complete',
+                dateReceived: '2025-01-16',
+                initials: 'TD',
+                freezerLocation: 'F1-S2-R3-B2',
+                notes: 'Ready for dilution',
+                qcStatus: 'Pass'
+            },
+            {
+                id: '25KS01GT02-EC',
+                species: 'E.coli',
+                status: 'BAP Complete',
+                dateReceived: '2025-01-17',
+                initials: 'AMD',
+                freezerLocation: 'F1-S2-R3-B3',
+                notes: 'Ready for TSB',
+                qcStatus: 'Pending'
+            },
+            {
+                id: '25KS01GT03-EC',
+                species: 'E.coli',
+                status: 'Sample Received',
+                dateReceived: '2025-01-18',
+                initials: 'TD',
+                freezerLocation: 'F1-S2-R3-B4',
+                notes: 'Ready for BAP',
+                qcStatus: 'Pending'
+            }
+        ];
+
+        // Get status badge class
+        function getStatusClass(status) {
+            const statusMap = {
+                'Sample Received': 'status-received',
+                'BAP Complete': 'status-bap',
+                'TSB Complete': 'status-tsb',
+                'Extraction Complete': 'status-extraction',
+                'Dilution Complete': 'status-dilution',
+                'Cleanup Complete': 'status-cleanup',
+                'Index Complete': 'status-index',
+                'MiSeq QC Complete': 'status-miseq',
+                'WGS Complete': 'status-complete',
+                'QC Failed': 'status-failed'
+            };
+            return statusMap[status] || 'status-received';
+        }
+
+        // Get QC status class
+        function getQCClass(qcStatus) {
+            const qcMap = {
+                'Pass': 'qc-pass',
+                'Fail': 'qc-fail',
+                'Pending': 'qc-pending'
+            };
+            return qcMap[qcStatus] || 'qc-pending';
+        }
+
+        // Render samples table
+        function renderSamples(samplesToRender = samples) {
+            const tbody = document.getElementById('samples-table');
+            tbody.innerHTML = '';
+
+            samplesToRender.forEach(sample => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${sample.id}</strong></td>
+                    <td>${sample.species}</td>
+                    <td><span class="status-badge ${getStatusClass(sample.status)}">${sample.status}</span></td>
+                    <td>${sample.dateReceived}</td>
+                    <td>📍 ${sample.freezerLocation || 'Not set'}</td>
+                    <td><span class="${getQCClass(sample.qcStatus)}">${sample.qcStatus}</span></td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn btn-view" onclick="viewSample('${sample.id}')">View</button>
+                            <button class="btn btn-process">Process</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            updateStats();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const total = samples.length;
+            const pending = samples.filter(s => s.status === 'Sample Received').length;
+            const inProgress = samples.filter(s => 
+                ['BAP Complete', 'TSB Complete', 'Extraction Complete', 'Dilution Complete', 
+                 'Cleanup Complete', 'Index Complete', 'MiSeq QC Complete'].includes(s.status)
+            ).length;
+            const completed = samples.filter(s => s.status === 'WGS Complete').length;
+
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('pending-count').textContent = pending;
+            document.getElementById('progress-count').textContent = inProgress;
+            document.getElementById('complete-count').textContent = completed;
+        }
+
+        // Filter samples
+        function filterSamples() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const speciesFilter = document.getElementById('species-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+
+            let filtered = samples.filter(sample => {
+                const matchesSearch = sample.id.toLowerCase().includes(searchTerm) ||
+                                    sample.species.toLowerCase().includes(searchTerm) ||
+                                    sample.notes.toLowerCase().includes(searchTerm);
+                
+                const matchesSpecies = speciesFilter === 'all' || sample.species === speciesFilter;
+                const matchesStatus = statusFilter === 'all' || sample.status === statusFilter;
+
+                return matchesSearch && matchesSpecies && matchesStatus;
+            });
+
+            renderSamples(filtered);
+        }
+
+        // Modal functions
+        function openAddModal() {
+            document.getElementById('add-modal').style.display = 'block';
+            document.getElementById('date-received').value = new Date().toISOString().split('T')[0];
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').style.display = 'none';
+            document.getElementById('add-form').reset();
+        }
+
+        // Add new sample
+        function addSample(event) {
+            event.preventDefault();
+            
+            const newSample = {
+                id: document.getElementById('sample-id').value,
+                species: document.getElementById('sample-species').value,
+                status: 'Sample Received',
+                dateReceived: document.getElementById('date-received').value,
+                initials: document.getElementById('initials').value.toUpperCase(),
+                freezerLocation: document.getElementById('freezer-location').value,
+                notes: document.getElementById('notes').value,
+                qcStatus: 'Pending'
+            };
+
+            // Basic validation
+            if (!newSample.id || !newSample.initials) {
+                alert('Please fill in required fields');
+                return;
+            }
+
+            samples.push(newSample);
+            renderSamples();
+            closeAddModal();
+        }
+
+        // View sample details
+        function viewSample(sampleId) {
+            const sample = samples.find(s => s.id === sampleId);
+            if (sample) {
+                alert(`Sample Details:\n\nID: ${sample.id}\nSpecies: ${sample.species}\nStatus: ${sample.status}\nDate Received: ${sample.dateReceived}\nInitials: ${sample.initials}\nLocation: ${sample.freezerLocation}\nNotes: ${sample.notes}`);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', filterSamples);
+        document.getElementById('species-filter').addEventListener('change', filterSamples);
+        document.getElementById('status-filter').addEventListener('change', filterSamples);
+        document.getElementById('add-form').addEventListener('submit', addSample);
+
+        // Initialize
+        renderSamples();
+    </script>
+</body>
+</html>
