@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAP Tracker - Simple Start</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .add-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .sample-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        input, select, button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        .sample-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .sample-info {
+            flex: 1;
+        }
+        
+        .sample-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-received {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .status-bap {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            margin: 0;
+        }
+        
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+        }
+        
+        .btn-cancel:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 BAP Tracker</h1>
+        <p>Track Blood Agar Plate processing</p>
+    </div>
+
+    <div class="add-section">
+        <h3>Add New Sample</h3>
+        <input type="text" id="sampleId" placeholder="Sample ID (e.g., 25KS01-001)">
+        <input type="text" id="initials" placeholder="Your initials" maxlength="3">
+        <button id="addBtn">Add Sample</button>
+    </div>
+
+    <div class="sample-list">
+        <h3>Samples</h3>
+        <div id="sampleContainer">
+            <!-- Samples will appear here -->
+        </div>
+    </div>
+
+    <!-- BAP Processing Modal -->
+    <div id="bapModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeBapModal()">&times;</span>
+            <h3>Start BAP Processing</h3>
+            <p>Sample: <strong id="modalSampleId"></strong></p>
+            <p>BAP Number: <strong id="modalBapNumber"></strong></p>
+            
+            <div class="form-group">
+                <label>Technician Initials:</label>
+                <input type="text" id="techInitials" maxlength="3" placeholder="AMD">
+            </div>
+            
+            <div class="form-group">
+                <label>Start Time:</label>
+                <input type="datetime-local" id="startTime">
+            </div>
+            
+            <div class="form-group">
+                <label>BAP Lot Number:</label>
+                <input type="text" id="bapLot" placeholder="LOT12345">
+            </div>
+            
+            <div class="form-group">
+                <label>Incubation Temperature (°C):</label>
+                <select id="incubationTemp">
+                    <option value="35">35°C</option>
+                    <option value="37" selected>37°C</option>
+                    <option value="42">42°C</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Incubator:</label>
+                <select id="incubator">
+                    <option value="INC-1">Incubator 1</option>
+                    <option value="INC-2">Incubator 2</option>
+                    <option value="INC-3">Incubator 3</option>
+                    <option value="INC-A">Incubator A</option>
+                    <option value="INC-B">Incubator B</option>
+                </select>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="completeBap()">Complete BAP</button>
+                <button class="btn-cancel" onclick="closeBapModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Very simple approach - all in one script block
+        let samples = [];
+        let nextBapNumber = 1;
+        let currentSample = null;
+
+        function addSample() {
+            const sampleId = document.getElementById('sampleId').value.trim();
+            const initials = document.getElementById('initials').value.trim().toUpperCase();
+            
+            if (!sampleId || !initials) {
+                alert('Please fill in both Sample ID and Initials');
+                return;
+            }
+            
+            const newSample = {
+                id: sampleId,
+                initials: initials,
+                status: 'Received',
+                dateAdded: new Date().toLocaleDateString(),
+                bapNumber: null,
+                bapDetails: null
+            };
+            
+            samples.push(newSample);
+            displaySamples();
+            
+            // Clear inputs
+            document.getElementById('sampleId').value = '';
+            document.getElementById('initials').value = '';
+        }
+
+        function startBAP(sampleId) {
+            const sample = samples.find(s => s.id === sampleId);
+            if (!sample) return;
+            
+            currentSample = sample;
+            const bapNumber = `25B${String(nextBapNumber).padStart(3, '0')}`;
+            
+            // Set up modal
+            document.getElementById('modalSampleId').textContent = sampleId;
+            document.getElementById('modalBapNumber').textContent = bapNumber;
+            
+            // Set default time to now
+            const now = new Date();
+            const timeString = now.getFullYear() + '-' + 
+                              String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                              String(now.getDate()).padStart(2, '0') + 'T' + 
+                              String(now.getHours()).padStart(2, '0') + ':' + 
+                              String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('startTime').value = timeString;
+            
+            // Show modal
+            document.getElementById('bapModal').style.display = 'block';
+        }
+
+        function closeBapModal() {
+            document.getElementById('bapModal').style.display = 'none';
+            currentSample = null;
+            
+            // Clear form
+            document.getElementById('techInitials').value = '';
+            document.getElementById('bapLot').value = '';
+        }
+
+        function completeBap() {
+            if (!currentSample) return;
+            
+            const techInitials = document.getElementById('techInitials').value.trim().toUpperCase();
+            const startTime = document.getElementById('startTime').value;
+            const bapLot = document.getElementById('bapLot').value.trim();
+            const incubationTemp = document.getElementById('incubationTemp').value;
+            const incubator = document.getElementById('incubator').value;
+            
+            if (!techInitials || !startTime || !bapLot) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const bapNumber = `25B${String(nextBapNumber).padStart(3, '0')}`;
+            
+            currentSample.bapNumber = bapNumber;
+            currentSample.status = 'BAP Complete';
+            currentSample.bapDetails = {
+                technician: techInitials,
+                startTime: startTime,
+                lot: bapLot,
+                temperature: incubationTemp,
+                incubator: incubator,
+                completedDate: new Date().toLocaleDateString()
+            };
+            
+            nextBapNumber++;
+            displaySamples();
+            closeBapModal();
+            
+            alert(`BAP ${bapNumber} completed for ${currentSample.id}!`);
+        }
+
+        function displaySamples() {
+            const container = document.getElementById('sampleContainer');
+            
+            if (samples.length === 0) {
+                container.innerHTML = '<p>No samples yet. Add one above!</p>';
+                return;
+            }
+            
+            container.innerHTML = samples.map(sample => `
+                <div class="sample-item">
+                    <div class="sample-info">
+                        <strong>${sample.id}</strong> 
+                        <span class="status status-${sample.status.toLowerCase().replace(' ', '-')}">${sample.status}</span>
+                        <br>
+                        <small>Added: ${sample.dateAdded} | Initials: ${sample.initials}</small>
+                        ${sample.bapDetails ? `
+                            <br><strong>BAP Number: ${sample.bapNumber}</strong> | Completed: ${sample.bapDetails.completedDate}
+                            <br><small>Tech: ${sample.bapDetails.technician} | Started: ${new Date(sample.bapDetails.startTime).toLocaleString()}</small>
+                            <br><small>Lot: ${sample.bapDetails.lot} | ${sample.bapDetails.temperature}°C | ${sample.bapDetails.incubator}</small>
+                        ` : ''}
+                    </div>
+                    <div class="sample-actions">
+                        ${sample.status === 'Received' ? 
+                            `<button onclick="startBAP('${sample.id}')">Start BAP</button>` : 
+                            `<div style="color: green; font-weight: bold; text-align: center;">
+                                ✓ ${sample.bapNumber}<br>
+                                <small>${sample.bapDetails.completedDate}</small><br>
+                                <small>${sample.bapDetails.incubator}</small>
+                            </div>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Set up the add button
+        document.getElementById('addBtn').onclick = addSample;
+        
+        // Allow Enter key to add sample
+        document.getElementById('initials').onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                addSample();
+            }
+        };
+        
+        // Show initial state
+        displaySamples();
+        
+        console.log('BAP Tracker loaded successfully!');
+    </script>
+</body>
+</html>
