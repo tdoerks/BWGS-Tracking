@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Workflow Tracker - Working Version</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .add-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .sample-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        input, select, button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        .sample-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .sample-info {
+            flex: 1;
+        }
+        
+        .sample-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-received { background: #e9ecef; color: #495057; }
+        .status-bap-complete { background: #d4edda; color: #155724; }
+        .status-tsb-complete { background: #fff3cd; color: #856404; }
+        .status-extraction-complete { background: #f3e5f5; color: #7b1fa2; }
+        .status-clean-extraction-complete { background: #e8f5e8; color: #2e7d32; }
+        .status-indexing-complete { background: #e3f2fd; color: #1976d2; }
+        .status-qubit-complete { background: #fff3e0; color: #f57c00; }
+        .status-clean-extraction-qubit-complete { background: #e8f4fd; color: #1565c0; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+        }
+        
+        .batch-controls {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #2196f3;
+        }
+        
+        .batch-controls h4 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        
+        .sample-checkbox {
+            margin-right: 8px;
+        }
+        
+        .btn-batch {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .btn-batch:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 Complete Lab Workflow Tracker</h1>
+        <p>BAP → TSB → Extraction → Clean Extraction → Qubit → Indexing → Final Qubit</p>
+    </div>
+
+    <div class="add-section">
+        <h3>Add New Samples</h3>
+        
+        <!-- Single Sample Input -->
+        <div id="singleInput">
+            <h4>Single Sample:</h4>
+            <input type="text" id="sampleId" placeholder="Sample ID">
+            <input type="text" id="initials" placeholder="Initials" maxlength="3">
+            <button onclick="addSample()">Add Sample</button>
+        </div>
+        
+        <!-- Toggle Button -->
+        <div style="margin: 20px 0; text-align: center;">
+            <button id="toggleBulk" onclick="toggleBulkInput()">Switch to Bulk Input</button>
+        </div>
+        
+        <!-- Bulk Sample Input -->
+        <div id="bulkInput" style="display: none;">
+            <h4>Bulk Sample Input:</h4>
+            <p><small>Paste sample IDs (one per line). Your initials will be applied to all samples.</small></p>
+            <input type="text" id="bulkInitials" placeholder="Your initials (for all samples)" maxlength="3">
+            <textarea id="bulkSamples" rows="6" placeholder="Paste sample IDs here, one per line:&#10;25KS01-001&#10;25KS01-002&#10;25KS01-003" style="width: 100%; margin: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+            <button onclick="addBulkSamples()">Add All Samples</button>
+        </div>
+    </div>
+
+    <div class="sample-list">
+        <h3>Samples</h3>
+        
+        <div class="batch-controls" id="batchControls" style="display: none;">
+            <h4>🧪 Batch Processing</h4>
+            <p><span id="selectedCount">0</span> samples selected</p>
+            <button class="btn-batch" id="batchBtn" disabled onclick="startBatchProcess()">Start Batch</button>
+            <button onclick="clearSelection()">Clear Selection</button>
+        </div>
+        
+        <div id="sampleContainer"></div>
+    </div>
+
+    <!-- Batch Modal -->
+    <div id="batchModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeBatchModal()">&times;</span>
+            <h3 id="batchModalTitle">Batch Processing</h3>
+            <p>Processing <strong id="batchSampleCount">0</strong> samples</p>
+            <p id="batchNumbers"></p>
+            
+            <div class="form-group">
+                <label>Technician Initials:</label>
+                <input type="text" id="batchTechInitials" maxlength="3">
+            </div>
+            
+            <div class="form-group">
+                <label>Lot Number:</label>
+                <input type="text" id="batchLotNumber">
+            </div>
+            
+            <div class="form-group">
+                <label>Temperature:</label>
+                <select id="batchTemperature">
+                    <option value="37">37°C</option>
+                    <option value="35">35°C</option>
+                    <option value="42">42°C</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Incubator:</label>
+                <select id="batchIncubator">
+                    <option value="INC-1">Incubator 1</option>
+                    <option value="INC-2">Incubator 2</option>
+                </select>
+            </div>
+            
+            <button onclick="completeBatchProcess()">Complete Batch</button>
+            <button class="btn-cancel" onclick="closeBatchModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Individual Modal -->
+    <div id="processModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">Process Sample</h3>
+            <p>Sample: <strong id="modalSampleId"></strong></p>
+            <p id="modalNumber"></p>
+            
+            <div class="form-group">
+                <label>Technician Initials:</label>
+                <input type="text" id="techInitials" maxlength="3">
+            </div>
+            
+            <div class="form-group">
+                <label>Lot Number:</label>
+                <input type="text" id="lotNumber">
+            </div>
+            
+            <div class="form-group">
+                <label>Temperature:</label>
+                <select id="temperature">
+                    <option value="37">37°C</option>
+                    <option value="35">35°C</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Incubator:</label>
+                <select id="incubator">
+                    <option value="INC-1">Incubator 1</option>
+                    <option value="INC-2">Incubator 2</option>
+                </select>
+            </div>
+            
+            <div id="specificFields"></div>
+            
+            <button onclick="completeProcess()">Complete</button>
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        var samples = [];
+        var nextBapNumber = 1;
+        var nextTsbNumber = 1;
+        var nextExtractionNumber = 1;
+        var nextExtractionRun = 1;
+        var nextCleanExtractionNumber = 1;
+        var nextCleanExtractionPlate = 1;
+        var nextIndexingNumber = 1;
+        var nextIndexingPlate = 1;
+        var currentProcessType = '';
+        var selectedSamples = [];
+        var currentBatchSamples = [];
+        var currentBatchType = '';
+
+        function generateWellPosition(index) {
+            var rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            var row = rows[index % 8];
+            var col = String(Math.floor(index / 8) + 1);
+            if (col.length === 1) col = '0' + col;
+            return row + col;
+        }
+
+        function createReferenceTable(sampleIds, sourceType, targetType, targetStartNumber) {
+            var html = '<div style="overflow-x: auto;">';
+            html += '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
+            html += '<tr style="background: #f5f5f5;">';
+            html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Sample ID</th>';
+            html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Use ' + sourceType.toUpperCase() + '</th>';
+            html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">New ' + targetType.toUpperCase() + '</th>';
+            html += '</tr>';
+            
+            for (var i = 0; i < sampleIds.length; i++) {
+                var sampleId = sampleIds[i];
+                var sample = null;
+                for (var j = 0; j < samples.length; j++) {
+                    if (samples[j].id === sampleId) {
+                        sample = samples[j];
+                        break;
+                    }
+                }
+                
+                var sourceNumber = 'N/A';
+                var targetNumber = 'N/A';
+                
+                if (sourceType === 'bap' && sample && sample.bapNumber) {
+                    sourceNumber = sample.bapNumber;
+                } else if (sourceType === 'tsb' && sample && sample.tsbNumber) {
+                    sourceNumber = sample.tsbNumber;
+                } else if (sourceType === 'extraction' && sample && sample.extractionNumber) {
+                    sourceNumber = sample.extractionNumber;
+                } else if (sourceType === 'cleanExtraction' && sample && sample.cleanExtractionNumber) {
+                    sourceNumber = sample.cleanExtractionNumber;
+                } else if (sourceType === 'indexing' && sample && sample.indexingNumber) {
+                    sourceNumber = sample.indexingNumber;
+                }
+                
+                if (targetType === 'TSB') {
+                    targetNumber = '25T' + String(targetStartNumber + i).padStart(3, '0');
+                } else if (targetType === 'Extraction') {
+                    targetNumber = '25E' + String(targetStartNumber + i).padStart(3, '0');
+                } else if (targetType === 'Clean Extraction') {
+                    targetNumber = '25CE' + String(targetStartNumber + i).padStart(3, '0');
+                } else if (targetType === 'Indexing') {
+                    targetNumber = '25XT' + String(targetStartNumber + i).padStart(3, '0');
+                } else if (targetType === 'Qubit') {
+                    targetNumber = 'Qubit Analysis';
+                }
+                
+                html += '<tr>';
+                html += '<td style="padding: 8px; border: 1px solid #ddd;"><strong>' + sampleId + '</strong></td>';
+                html += '<td style="padding: 8px; border: 1px solid #ddd; color: #1976d2;"><strong>' + sourceNumber + '</strong></td>';
+                html += '<td style="padding: 8px; border: 1px solid #ddd; color: #2e7d32;"><strong>' + targetNumber + '</strong></td>';
+                html += '</tr>';
+            }
+            
+            html += '</table>';
+            html += '</div>';
+            
+            return html;
+        }
+
+        function addSample() {
+            var sampleId = document.getElementById('sampleId').value.trim();
+            var initials = document.getElementById('initials').value.trim().toUpperCase();
+            
+            if (!sampleId || !initials) {
+                alert('Please fill in both fields');
+                return;
+            }
+            
+            // Check for duplicates
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    alert('Sample ' + sampleId + ' already exists!');
+                    return;
+                }
+            }
+            
+            var newSample = {
+                id: sampleId,
+                initials: initials,
+                status: 'Received',
+                dateAdded: new Date().toLocaleDateString(),
+                bapNumber: null,
+                bapDetails: null,
+                tsbNumber: null,
+                tsbDetails: null,
+                extractionNumber: null,
+                extractionDetails: null,
+                cleanExtractionNumber: null,
+                cleanExtractionDetails: null,
+                indexingNumber: null,
+                indexingDetails: null,
+                qubitDetails: null
+            };
+            
+            samples.push(newSample);
+            renderSamples();
+            
+            document.getElementById('sampleId').value = '';
+            document.getElementById('initials').value = '';
+        }
+
+        function toggleBulkInput() {
+            var single = document.getElementById('singleInput');
+            var bulk = document.getElementById('bulkInput');
+            var btn = document.getElementById('toggleBulk');
+            
+            if (single.style.display === 'none') {
+                single.style.display = 'block';
+                bulk.style.display = 'none';
+                btn.textContent = 'Switch to Bulk Input';
+            } else {
+                single.style.display = 'none';
+                bulk.style.display = 'block';
+                btn.textContent = 'Switch to Single Input';
+            }
+        }
+
+        function addBulkSamples() {
+            var text = document.getElementById('bulkSamples').value.trim();
+            var initials = document.getElementById('bulkInitials').value.trim().toUpperCase();
+            
+            if (!text || !initials) {
+                alert('Please enter initials and paste sample IDs');
+                return;
+            }
+            
+            var lines = text.split('\n');
+            var sampleIds = [];
+            
+            // Clean up the input lines
+            for (var i = 0; i < lines.length; i++) {
+                var id = lines[i].trim();
+                if (id.length > 0) {
+                    sampleIds.push(id);
+                }
+            }
+            
+            if (sampleIds.length === 0) {
+                alert('No valid sample IDs found');
+                return;
+            }
+            
+            var added = 0;
+            var duplicates = [];
+            
+            for (var i = 0; i < sampleIds.length; i++) {
+                var sampleId = sampleIds[i];
+                
+                // Check for duplicates
+                var isDuplicate = false;
+                for (var j = 0; j < samples.length; j++) {
+                    if (samples[j].id === sampleId) {
+                        duplicates.push(sampleId);
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+                
+                if (!isDuplicate) {
+                    var newSample = {
+                        id: sampleId,
+                        initials: initials,
+                        status: 'Received',
+                        dateAdded: new Date().toLocaleDateString(),
+                        bapNumber: null,
+                        bapDetails: null,
+                        tsbNumber: null,
+                        tsbDetails: null,
+                        extractionNumber: null,
+                        extractionDetails: null,
+                        cleanExtractionNumber: null,
+                        cleanExtractionDetails: null,
+                        indexingNumber: null,
+                        indexingDetails: null,
+                        qubitDetails: null
+                    };
+                    
+                    samples.push(newSample);
+                    added++;
+                }
+            }
+            
+            renderSamples();
+            
+            // Clear the form
+            document.getElementById('bulkSamples').value = '';
+            document.getElementById('bulkInitials').value = '';
+            
+            // Show results
+            var message = 'Successfully added ' + added + ' new samples!';
+            if (duplicates.length > 0) {
+                message += '\n\nSkipped ' + duplicates.length + ' duplicates: ' + duplicates.join(', ');
+            }
+            alert(message);
+        }
+
+        function startProcess(sampleId, type) {
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+            if (!sample) return;
+            
+            currentProcessType = type;
+            var number = '';
+            
+            if (type === 'BAP') {
+                number = '25B' + String(nextBapNumber).padStart(3, '0');
+            } else if (type === 'TSB') {
+                number = '25T' + String(nextTsbNumber).padStart(3, '0');
+            } else if (type === 'Extraction') {
+                number = '25E' + String(nextExtractionNumber).padStart(3, '0');
+            } else if (type === 'Clean Extraction') {
+                number = '25CE' + String(nextCleanExtractionNumber).padStart(3, '0');
+            } else if (type === 'Indexing') {
+                number = '25XT' + String(nextIndexingNumber).padStart(3, '0');
+            } else if (type === 'Qubit') {
+                number = 'Qubit Analysis';
+            }
+            
+            document.getElementById('modalTitle').textContent = 'Start ' + type;
+            document.getElementById('modalSampleId').textContent = sampleId;
+            document.getElementById('modalNumber').innerHTML = '<strong>' + number + '</strong>';
+            
+            showSpecificFields(type);
+            document.getElementById('processModal').style.display = 'block';
+        }
+
+        function showSpecificFields(type) {
+            var container = document.getElementById('specificFields');
+            var html = '';
+            
+            if (type === 'TSB') {
+                // Add BAP reference for TSB
+                var sampleId = document.getElementById('modalSampleId').textContent;
+                var sample = null;
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === sampleId) {
+                        sample = samples[i];
+                        break;
+                    }
+                }
+                
+                if (sample && sample.bapDetails) {
+                    html += '<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #2196f3;">';
+                    html += '<h4 style="margin: 0 0 10px 0; color: #1976d2;">📋 BAP Reference</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">';
+                    html += '<div><strong>Sample:</strong> ' + sample.id + '</div>';
+                    html += '<div><strong>Use BAP:</strong> ' + sample.bapNumber + '</div>';
+                    html += '<div><strong>BAP Tech:</strong> ' + sample.bapDetails.technician + '</div>';
+                    html += '<div><strong>BAP Date:</strong> ' + sample.bapDetails.completedDate + '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+            } else if (type === 'Extraction') {
+                // Add TSB reference for Extraction
+                var sampleId = document.getElementById('modalSampleId').textContent;
+                var sample = null;
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === sampleId) {
+                        sample = samples[i];
+                        break;
+                    }
+                }
+                
+                if (sample && sample.tsbDetails) {
+                    html += '<div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #ffc107;">';
+                    html += '<h4 style="margin: 0 0 10px 0; color: #856404;">🧫 TSB Reference</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">';
+                    html += '<div><strong>Sample:</strong> ' + sample.id + '</div>';
+                    html += '<div><strong>Use TSB:</strong> ' + sample.tsbNumber + '</div>';
+                    html += '<div><strong>TSB Tech:</strong> ' + sample.tsbDetails.technician + '</div>';
+                    html += '<div><strong>TSB Date:</strong> ' + sample.tsbDetails.completedDate + '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                // Add extraction-specific fields
+                html += '<h4 style="margin: 20px 0 10px 0; color: #7b1fa2;">Extraction Details</h4>';
+                
+                html += '<div class="form-group">';
+                html += '<label>Extraction Run:</label>';
+                html += '<input type="text" id="extractionRun" value="25-' + nextExtractionRun + '" readonly style="background-color: #f0f0f0;">';
+                html += '</div>';
+                
+                html += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Reagent Lots:</h5>';
+                html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">AW1 Lot:</label>';
+                html += '<input type="text" id="aw1Lot" placeholder="AW1LOT123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">AW2 Lot:</label>';
+                html += '<input type="text" id="aw2Lot" placeholder="AW2LOT123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Ethanol Lot:</label>';
+                html += '<input type="text" id="ethanolLot" placeholder="ETH123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Buffer AL Lot:</label>';
+                html += '<input type="text" id="bufferALLot" placeholder="AL123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Buffer ATL Lot:</label>';
+                html += '<input type="text" id="bufferATLLot" placeholder="ATL123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Buffer AE Lot:</label>';
+                html += '<input type="text" id="bufferAELot" placeholder="AE123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Proteinase K Lot:</label>';
+                html += '<input type="text" id="proteinaseKLot" placeholder="PK123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">DNeasy Column Lot:</label>';
+                html += '<input type="text" id="dneasyLot" placeholder="COL123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '</div>';
+            } else if (type === 'Clean Extraction') {
+                // Add Extraction reference for Clean Extraction
+                var sampleId = document.getElementById('modalSampleId').textContent;
+                var sample = null;
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === sampleId) {
+                        sample = samples[i];
+                        break;
+                    }
+                }
+                
+                if (sample && sample.extractionDetails) {
+                    html += '<div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #9c27b0;">';
+                    html += '<h4 style="margin: 0 0 10px 0; color: #7b1fa2;">🧬 Extraction Reference</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">';
+                    html += '<div><strong>Sample:</strong> ' + sample.id + '</div>';
+                    html += '<div><strong>Use Extraction:</strong> ' + sample.extractionNumber + '</div>';
+                    html += '<div><strong>Extraction Tech:</strong> ' + sample.extractionDetails.technician + '</div>';
+                    html += '<div><strong>Extraction Date:</strong> ' + sample.extractionDetails.completedDate + '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                // Add clean extraction specific fields
+                html += '<h4 style="margin: 20px 0 10px 0; color: #2e7d32;">Clean Extraction Details</h4>';
+                
+                html += '<div class="form-group">';
+                html += '<label>Storage Plate:</label>';
+                html += '<input type="text" id="storagePlate" value="25CEP' + String(nextCleanExtractionPlate).padStart(2, '0') + '" readonly style="background-color: #f0f0f0;">';
+                html += '</div>';
+                
+                html += '<div class="form-group">';
+                html += '<label>Well Position:</label>';
+                html += '<input type="text" id="wellPosition" value="A01" style="width: 80px;">';
+                html += '<small style="color: #666; margin-left: 10px;">Auto-assigned, editable</small>';
+                html += '</div>';
+                
+                html += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Reagent Lots:</h5>';
+                html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Bead Lot:</label>';
+                html += '<input type="text" id="beadLot" placeholder="BEAD123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">NF H2O ETOH Dilution:</label>';
+                html += '<input type="text" id="nfH2oEtohLot" placeholder="NFH2O123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">EtOH Dilution:</label>';
+                html += '<input type="text" id="etohDilutionLot" placeholder="ETOH123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">NF H2O Elution:</label>';
+                html += '<input type="text" id="nfH2oElutionLot" placeholder="ELUT123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Qubit Reagent:</label>';
+                html += '<input type="text" id="qubitReagentLot" placeholder="QUBIT123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '</div>';
+                
+                html += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Volumes:</h5>';
+                html += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Cleanup Volume:</label>';
+                html += '<input type="text" id="cleanupVolume" placeholder="1.2x" style="width: 80px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Elution In:</label>';
+                html += '<input type="text" id="elutionVolumeIn" placeholder="50uL" style="width: 80px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Elution Out:</label>';
+                html += '<input type="text" id="elutionVolumeOut" placeholder="45uL" style="width: 80px;">';
+                html += '</div>';
+                
+                html += '</div>';
+            } else if (type === 'Indexing') {
+                // Add Clean Extraction reference for Indexing
+                var sampleId = document.getElementById('modalSampleId').textContent;
+                var sample = null;
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === sampleId) {
+                        sample = samples[i];
+                        break;
+                    }
+                }
+                
+                if (sample && sample.cleanExtractionDetails) {
+                    html += '<div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #4caf50;">';
+                    html += '<h4 style="margin: 0 0 10px 0; color: #2e7d32;">🧽 Clean Extraction Reference</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">';
+                    html += '<div><strong>Sample:</strong> ' + sample.id + '</div>';
+                    html += '<div><strong>Use Clean Extraction:</strong> ' + sample.cleanExtractionNumber + '</div>';
+                    html += '<div><strong>Clean Extraction Tech:</strong> ' + sample.cleanExtractionDetails.technician + '</div>';
+                    html += '<div><strong>Clean Extraction Date:</strong> ' + sample.cleanExtractionDetails.completedDate + '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                // Add indexing specific fields
+                html += '<h4 style="margin: 20px 0 10px 0; color: #1976d2;">Indexing (XT) Details</h4>';
+                
+                html += '<div class="form-group">';
+                html += '<label>Storage Plate:</label>';
+                html += '<input type="text" id="indexingStoragePlate" value="25XLP' + String(nextIndexingPlate).padStart(2, '0') + '" readonly style="background-color: #f0f0f0;">';
+                html += '</div>';
+                
+                html += '<div class="form-group">';
+                html += '<label>Well Position:</label>';
+                html += '<input type="text" id="indexingWellPosition" value="A01" style="width: 80px;">';
+                html += '<small style="color: #666; margin-left: 10px;">Auto-assigned, editable</small>';
+                html += '</div>';
+                
+                html += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Index Assignment:</h5>';
+                html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">i5 Index:</label>';
+                html += '<input type="text" id="i5Index" placeholder="i5-001" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">i7 Index:</label>';
+                html += '<input type="text" id="i7Index" placeholder="i7-001" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">i5 Thaws:</label>';
+                html += '<input type="number" id="i5Thaws" placeholder="1" min="0" style="width: 60px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">i7 Thaws:</label>';
+                html += '<input type="number" id="i7Thaws" placeholder="1" min="0" style="width: 60px;">';
+                html += '</div>';
+                
+                html += '</div>';
+                
+                html += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Reagent Lots:</h5>';
+                html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">TD Buffer:</label>';
+                html += '<input type="text" id="tdBufferLot" placeholder="TD123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">ATM Buffer:</label>';
+                html += '<input type="text" id="atmBufferLot" placeholder="ATM123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">NT Buffer:</label>';
+                html += '<input type="text" id="ntBufferLot" placeholder="NT123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">NPM:</label>';
+                html += '<input type="text" id="npmLot" placeholder="NPM123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Resuspension Buffer:</label>';
+                html += '<input type="text" id="resuspensionBufferLot" placeholder="RES123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Indexes Kit:</label>';
+                html += '<input type="text" id="indexesKitLot" placeholder="IDX123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Beads:</label>';
+                html += '<input type="text" id="indexingBeadsLot" placeholder="BEAD123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">EtOH:</label>';
+                html += '<input type="text" id="indexingEtohLot" placeholder="ETOH123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">NF H2O:</label>';
+                html += '<input type="text" id="indexingNfH2oLot" placeholder="H2O123" style="width: 120px;">';
+                html += '</div>';
+                
+                html += '</div>';
+                
+                html += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Double-Sided Clean Up:</h5>';
+                html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Step 1 Concentrations:</label>';
+                html += '<input type="text" id="cleanup1Concentrations" placeholder="0.5x/1x (40uL + 20uL)" style="width: 160px;">';
+                html += '</div>';
+                
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<label style="font-size: 12px;">Step 2 Concentrations:</label>';
+                html += '<input type="text" id="cleanup2Concentrations" placeholder="55uL + 15uL beads" style="width: 160px;">';
+                html += '</div>';
+                
+                html += '</div>';
+                } else if (type === 'Clean Extraction Qubit') {
+    // Add Clean Extraction reference for Clean Extraction Qubit
+    var sampleId = document.getElementById('modalSampleId').textContent;
+    var sample = null;
+    for (var i = 0; i < samples.length; i++) {
+        if (samples[i].id === sampleId) {
+            sample = samples[i];
+            break;
+        }
+    }
+    
+    if (sample && sample.cleanExtractionDetails) {
+        html += '<div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #4caf50;">';
+        html += '<h4 style="margin: 0 0 10px 0; color: #2e7d32;">🧽 Clean Extraction Reference</h4>';
+        html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">';
+        html += '<div><strong>Sample:</strong> ' + sample.id + '</div>';
+        html += '<div><strong>Use Clean Extraction:</strong> ' + sample.cleanExtractionNumber + '</div>';
+        html += '<div><strong>Clean Extraction Tech:</strong> ' + sample.cleanExtractionDetails.technician + '</div>';
+        html += '<div><strong>Clean Extraction Date:</strong> ' + sample.cleanExtractionDetails.completedDate + '</div>';
+        html += '</div>';
+        html += '</div>';
+    }
+    
+    // Add Clean Extraction Qubit-specific fields
+    html += '<h4 style="margin: 20px 0 10px 0; color: #1565c0;">📊 Clean Extraction Qubit Analysis</h4>';
+    
+    html += '<div class="form-group">';
+    html += '<label>Concentration (ng/uL):</label>';
+    html += '<input type="number" id="qubitConcentration" step="0.1">';
+    html += '</div>';
+    
+    html += '<div class="form-group">';
+    html += '<label>Qubit Reagent Lot:</label>';
+    html += '<input type="text" id="qubitReagentLot" placeholder="QR123">';
+    html += '</div>';
+    
+    html += '<div class="form-group">';
+    html += '<label>Date Qubited:</label>';
+    html += '<input type="date" id="qubitDate" value="' + new Date().toISOString().split('T')[0] + '">';
+    html += '</div>';
+            } else if (type === 'Final Qubit') {
+                            // Add Indexing reference for Qubit
+                var sampleId = document.getElementById('modalSampleId').textContent;
+                var sample = null;
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === sampleId) {
+                        sample = samples[i];
+                        break;
+                    }
+                }
+                
+                if (sample && sample.indexingDetails) {
+                    html += '<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #2196f3;">';
+                    html += '<h4 style="margin: 0 0 10px 0; color: #1976d2;">🔬 Indexing Reference</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">';
+                    html += '<div><strong>Sample:</strong> ' + sample.id + '</div>';
+                    html += '<div><strong>Use Indexing:</strong> ' + sample.indexingNumber + '</div>';
+                    html += '<div><strong>Indexing Tech:</strong> ' + sample.indexingDetails.technician + '</div>';
+                    html += '<div><strong>Indexing Date:</strong> ' + sample.indexingDetails.completedDate + '</div>';
+                    if (sample.indexingDetails.i5 && sample.indexingDetails.i7) {
+                        html += '<div><strong>i5 Index:</strong> ' + sample.indexingDetails.i5 + '</div>';
+                        html += '<div><strong>i7 Index:</strong> ' + sample.indexingDetails.i7 + '</div>';
+                    }
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                html += '<h4 style="margin: 20px 0 10px 0; color: #f57c00;">📊 Qubit Analysis</h4>';
+
+html += '<div class="form-group">';
+html += '<label>Concentration (ng/uL):</label>';
+html += '<input type="number" id="qubitConcentration" step="0.1">';
+html += '</div>';
+
+html += '<div class="form-group">';
+html += '<label>Qubit Reagent Lot:</label>';
+html += '<input type="text" id="qubitReagentLot" placeholder="QR123">';
+html += '</div>';
+
+html += '<div class="form-group">';
+html += '<label>Date Qubited:</label>';
+html += '<input type="date" id="qubitDate" value="' + new Date().toISOString().split('T')[0] + '">';
+html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function completeProcess() {
+            var tech = document.getElementById('techInitials').value.trim();
+            var lot = document.getElementById('lotNumber').value.trim();
+            var temp = document.getElementById('temperature').value;
+            var inc = document.getElementById('incubator').value;
+            
+            if (!tech || !lot) {
+                alert('Please fill in required fields');
+                return;
+            }
+            
+            var sampleId = document.getElementById('modalSampleId').textContent;
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+            
+            if (sample) {
+                var today = new Date().toLocaleDateString();
+                
+                if (currentProcessType === 'BAP') {
+                    sample.bapNumber = '25B' + String(nextBapNumber).padStart(3, '0');
+                    sample.status = 'BAP Complete';
+                    sample.bapDetails = { technician: tech, lot: lot, completedDate: today };
+                    nextBapNumber++;
+                } else if (currentProcessType === 'TSB') {
+                    sample.tsbNumber = '25T' + String(nextTsbNumber).padStart(3, '0');
+                    sample.status = 'TSB Complete';
+                    sample.tsbDetails = { technician: tech, lot: lot, completedDate: today };
+                    nextTsbNumber++;
+                } else if (currentProcessType === 'Extraction') {
+                    sample.extractionNumber = '25E' + String(nextExtractionNumber).padStart(3, '0');
+                    sample.status = 'Extraction Complete';
+                    sample.extractionDetails = { 
+                        technician: tech, 
+                        lot: lot, 
+                        completedDate: today,
+                        extractionRun: document.getElementById('extractionRun').value,
+                        reagentLots: {
+                            aw1: document.getElementById('aw1Lot').value,
+                            aw2: document.getElementById('aw2Lot').value,
+                            ethanol: document.getElementById('ethanolLot').value,
+                            bufferAL: document.getElementById('bufferALLot').value,
+                            bufferATL: document.getElementById('bufferATLLot').value,
+                            bufferAE: document.getElementById('bufferAELot').value,
+                            proteinaseK: document.getElementById('proteinaseKLot').value,
+                            dneasy: document.getElementById('dneasyLot').value
+                        }
+                    };
+                    nextExtractionNumber++;
+                    if (nextExtractionNumber % 24 === 1) {
+                        nextExtractionRun++;
+                    }
+                } else if (currentProcessType === 'Clean Extraction') {
+                    sample.cleanExtractionNumber = '25CE' + String(nextCleanExtractionNumber).padStart(3, '0');
+                    sample.status = 'Clean Extraction Complete';
+                    sample.cleanExtractionDetails = { 
+                        technician: tech, 
+                        lot: lot, 
+                        completedDate: today,
+                        storagePlate: document.getElementById('storagePlate').value,
+                        wellPosition: document.getElementById('wellPosition').value,
+                        reagentLots: {
+                            bead: document.getElementById('beadLot').value,
+                            nfH2oEtoh: document.getElementById('nfH2oEtohLot').value,
+                            etohDilution: document.getElementById('etohDilutionLot').value,
+                            nfH2oElution: document.getElementById('nfH2oElutionLot').value,
+                            qubitReagent: document.getElementById('qubitReagentLot').value
+                        },
+                        volumes: {
+                            cleanup: document.getElementById('cleanupVolume').value,
+                            elutionIn: document.getElementById('elutionVolumeIn').value,
+                            elutionOut: document.getElementById('elutionVolumeOut').value
+                        }
+                    };
+                    nextCleanExtractionNumber++;
+                    nextCleanExtractionPlate++;
+                } else if (currentProcessType === 'Indexing') {
+                    sample.indexingNumber = '25XT' + String(nextIndexingNumber).padStart(3, '0');
+                    sample.status = 'Indexing Complete';
+                    sample.indexingDetails = { 
+                        technician: tech, 
+                        lot: lot, 
+                        completedDate: today,
+                        storagePlate: document.getElementById('indexingStoragePlate').value,
+                        wellPosition: document.getElementById('indexingWellPosition').value,
+                        indexes: {
+                            i5: document.getElementById('i5Index').value,
+                            i7: document.getElementById('i7Index').value,
+                            i5Thaws: document.getElementById('i5Thaws').value,
+                            i7Thaws: document.getElementById('i7Thaws').value
+                        },
+                        reagentLots: {
+                            tdBuffer: document.getElementById('tdBufferLot').value,
+                            atmBuffer: document.getElementById('atmBufferLot').value,
+                            ntBuffer: document.getElementById('ntBufferLot').value,
+                            npm: document.getElementById('npmLot').value,
+                            resuspensionBuffer: document.getElementById('resuspensionBufferLot').value,
+                            indexesKit: document.getElementById('indexesKitLot').value,
+                            beads: document.getElementById('indexingBeadsLot').value,
+                            etoh: document.getElementById('indexingEtohLot').value,
+                            nfH2o: document.getElementById('indexingNfH2oLot').value
+                        },
+                        cleanupConcentrations: {
+                            step1: document.getElementById('cleanup1Concentrations').value,
+                            step2: document.getElementById('cleanup2Concentrations').value
+                        }
+                    };
+                    nextIndexingNumber++;
+                    nextIndexingPlate++;
+                } else if (currentProcessType === 'Clean Extraction Qubit') {
+                    sample.status = 'Clean Extraction Qubit Complete';
+                    sample.cleanExtractionQubitDetails = { 
+                        concentration: document.getElementById('qubitConcentration').value,
+                        reagentLot: document.getElementById('qubitReagentLot').value,
+                        dateQubited: document.getElementById('qubitDate').value,
+                        technician: tech,
+                        completedDate: today
+                    };
+                } else if (currentProcessType === 'Final Qubit') {
+                    sample.status = 'Qubit Complete';
+                    sample.qubitDetails = { 
+                        concentration: document.getElementById('qubitConcentration').value,
+                        reagentLot: document.getElementById('qubitReagentLot').value,
+                        dateQubited: document.getElementById('qubitDate').value,
+                        technician: tech,
+                        completedDate: today
+                    };
+                }
+                
+                renderSamples();
+                closeModal();
+                alert(currentProcessType + ' completed!');
+            }
+        }
+
+        function startBatchProcess() {
+            console.log('Batch process started');
+            
+            var receivedSamples = [];
+            var bapSamples = [];
+            var tsbSamples = [];
+            var extractionSamples = [];
+            var cleanExtractionSamples = [];
+            var indexingSamples = [];
+            var cleanExtractionQubitSamples = [];
+            
+            for (var i = 0; i < selectedSamples.length; i++) {
+                var id = selectedSamples[i];
+                var sample = null;
+                for (var j = 0; j < samples.length; j++) {
+                    if (samples[j].id === id) {
+                        sample = samples[j];
+                        break;
+                    }
+                }
+                
+                if (sample) {
+    if (sample.status === 'Received') receivedSamples.push(id);
+    else if (sample.status === 'BAP Complete') bapSamples.push(id);
+    else if (sample.status === 'TSB Complete') tsbSamples.push(id);
+    else if (sample.status === 'Extraction Complete') extractionSamples.push(id);
+    else if (sample.status === 'Clean Extraction Complete') cleanExtractionSamples.push(id);
+    else if (sample.status === 'Clean Extraction Qubit Complete') cleanExtractionQubitSamples.push(id);
+    else if (sample.status === 'Indexing Complete') indexingSamples.push(id);
+}
+            }
+            
+            console.log('Batch counts: received=' + receivedSamples.length + ' indexing=' + indexingSamples.length);
+            
+            if (receivedSamples.length >= 2) {
+    openBatchModal(receivedSamples, 'BAP');
+} else if (bapSamples.length >= 2) {
+    openBatchModal(bapSamples, 'TSB');
+} else if (tsbSamples.length >= 2) {
+    openBatchModal(tsbSamples, 'Extraction');
+} else if (extractionSamples.length >= 2) {
+    openBatchModal(extractionSamples, 'Clean Extraction');
+} else if (cleanExtractionSamples.length >= 2) {
+    openBatchModal(cleanExtractionSamples, 'Clean Extraction Qubit');
+} else if (cleanExtractionQubitSamples.length >= 2) {
+    openBatchModal(cleanExtractionQubitSamples, 'Indexing');
+} else if (indexingSamples.length >= 2) {
+    openBatchModal(indexingSamples, 'Final Qubit');
+} else {
+    alert('Please select samples of the same type');
+}
+        }
+
+        function openBatchModal(sampleIds, type) {
+            console.log('Opening batch modal for type: ' + type);
+            currentBatchSamples = sampleIds;
+            currentBatchType = type;
+            
+            document.getElementById('batchModalTitle').textContent = 'Batch ' + type;
+            document.getElementById('batchSampleCount').textContent = sampleIds.length;
+            
+            var numbersHtml = '<strong>Processing ' + sampleIds.length + ' samples</strong>';
+            
+            // Add reference tables for each workflow step
+            if (type === 'TSB') {
+                numbersHtml += '<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #2196f3;">';
+                numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #1976d2;">📋 BAP → TSB Reference</h4>';
+                numbersHtml += createReferenceTable(sampleIds, 'bap', 'TSB', nextTsbNumber);
+                numbersHtml += '<p style="margin: 10px 0 0 0; font-size: 11px; color: #666;">Use the BAP plates listed above for each corresponding TSB</p>';
+                numbersHtml += '</div>';
+            } else if (type === 'Extraction') {
+                numbersHtml += '<div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #ffc107;">';
+                numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #856404;">🧫 TSB → Extraction Reference</h4>';
+                numbersHtml += createReferenceTable(sampleIds, 'tsb', 'Extraction', nextExtractionNumber);
+                numbersHtml += '<p style="margin: 10px 0 0 0; font-size: 11px; color: #666;">Use the TSB plates listed above for each corresponding Extraction</p>';
+                numbersHtml += '</div>';
+                
+                // Add extraction reagent fields
+                numbersHtml += '<div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #9c27b0;">';
+                numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #7b1fa2;">🧬 Extraction Reagent Lots</h4>';
+                numbersHtml += '<div class="form-group">';
+                numbersHtml += '<label>Extraction Run:</label>';
+                numbersHtml += '<input type="text" id="batchExtractionRun" value="25-' + nextExtractionRun + '" readonly style="background-color: #f0f0f0; width: 100px;">';
+                numbersHtml += '</div>';
+                numbersHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">AW1 Lot:</label><input type="text" id="batchAw1Lot" placeholder="AW1LOT123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">AW2 Lot:</label><input type="text" id="batchAw2Lot" placeholder="AW2LOT123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Ethanol Lot:</label><input type="text" id="batchEthanolLot" placeholder="ETH123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Buffer AL Lot:</label><input type="text" id="batchBufferALLot" placeholder="AL123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Buffer ATL Lot:</label><input type="text" id="batchBufferATLLot" placeholder="ATL123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Buffer AE Lot:</label><input type="text" id="batchBufferAELot" placeholder="AE123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Proteinase K Lot:</label><input type="text" id="batchProteinaseKLot" placeholder="PK123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">DNeasy Column Lot:</label><input type="text" id="batchDneasyLot" placeholder="COL123" style="width: 120px;"></div>';
+                numbersHtml += '</div>';
+                numbersHtml += '</div>';
+            } else if (type === 'Clean Extraction') {
+                numbersHtml += '<div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #9c27b0;">';
+                numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #7b1fa2;">🧬 Extraction → Clean Extraction Reference</h4>';
+                numbersHtml += createReferenceTable(sampleIds, 'extraction', 'Clean Extraction', nextCleanExtractionNumber);
+                numbersHtml += '<p style="margin: 10px 0 0 0; font-size: 11px; color: #666;">Use the Extraction plates listed above for each corresponding Clean Extraction</p>';
+                numbersHtml += '</div>';
+                
+                // Add clean extraction reagent fields
+                numbersHtml += '<div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #4caf50;">';
+                numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #2e7d32;">🧽 Clean Extraction Reagents & Volumes</h4>';
+                numbersHtml += '<div class="form-group">';
+                numbersHtml += '<label>Storage Plate:</label>';
+                numbersHtml += '<input type="text" id="batchStoragePlate" value="25CEP' + String(nextCleanExtractionPlate).padStart(2, '0') + '" readonly style="background-color: #f0f0f0; width: 100px;">';
+                numbersHtml += '</div>';
+                numbersHtml += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Reagent Lots:</h5>';
+                numbersHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Bead Lot:</label><input type="text" id="batchBeadLot" placeholder="BEAD123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">NF H2O ETOH:</label><input type="text" id="batchNfH2oEtohLot" placeholder="NFH2O123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">EtOH Dilution:</label><input type="text" id="batchEtohDilutionLot" placeholder="ETOH123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">NF H2O Elution:</label><input type="text" id="batchNfH2oElutionLot" placeholder="ELUT123" style="width: 120px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Qubit Reagent:</label><input type="text" id="batchQubitReagentLot" placeholder="QUBIT123" style="width: 120px;"></div>';
+                numbersHtml += '</div>';
+                numbersHtml += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Volumes:</h5>';
+                numbersHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Cleanup Volume:</label><input type="text" id="batchCleanupVolume" placeholder="1.2x" style="width: 80px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Elution In:</label><input type="text" id="batchElutionVolumeIn" placeholder="50uL" style="width: 80px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Elution Out:</label><input type="text" id="batchElutionVolumeOut" placeholder="45uL" style="width: 80px;"></div>';
+                numbersHtml += '</div>';
+                numbersHtml += '</div>';
+            } else if (type === 'Indexing') {
+                numbersHtml += '<div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #4caf50;">';
+                numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #2e7d32;">🧽 Clean Extraction → Indexing Reference</h4>';
+                numbersHtml += createReferenceTable(sampleIds, 'cleanExtraction', 'Indexing', nextIndexingNumber);
+                numbersHtml += '<p style="margin: 10px 0 0 0; font-size: 11px; color: #666;">Use the Clean Extraction plates listed above for each corresponding Indexing</p>';
+                numbersHtml += '</div>';
+                
+                // Add indexing reagent fields with well positions and indexes
+                numbersHtml += '<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #2196f3;">';
+                numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #1976d2;">🔬 Indexing (XT) Details</h4>';
+                numbersHtml += '<div class="form-group">';
+                numbersHtml += '<label>Storage Plate:</label>';
+                numbersHtml += '<input type="text" id="batchIndexingStoragePlate" value="25XLP' + String(nextIndexingPlate).padStart(2, '0') + '" readonly style="background-color: #f0f0f0; width: 100px;">';
+                numbersHtml += '</div>';
+                
+                // Well positions and indexes for each sample
+                numbersHtml += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Well Positions & Indexes (unique per sample):</h5>';
+                numbersHtml += '<div id="batchIndexingWellPositions" style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; max-height: 200px; overflow-y: auto;">';
+                
+                for (var i = 0; i < sampleIds.length; i++) {
+                    var sampleId = sampleIds[i];
+                    var autoWell = generateWellPosition(i);
+                    numbersHtml += '<div style="display: grid; grid-template-columns: 100px 60px 80px 80px 40px 40px; gap: 5px; align-items: center; margin-bottom: 8px; padding: 5px; background: white; border-radius: 4px;">';
+                    numbersHtml += '<span style="font-weight: bold; font-size: 11px;">' + sampleId + '</span>';
+                    numbersHtml += '<input type="text" id="batchIndexingWell_' + i + '" value="' + autoWell + '" style="width: 50px; font-size: 11px;" placeholder="A01">';
+                    numbersHtml += '<input type="text" id="batchI5Index_' + i + '" placeholder="i5-001" style="width: 70px; font-size: 11px;">';
+                    numbersHtml += '<input type="text" id="batchI7Index_' + i + '" placeholder="i7-001" style="width: 70px; font-size: 11px;">';
+                    numbersHtml += '<input type="number" id="batchI5Thaws_' + i + '" placeholder="1" min="0" style="width: 35px; font-size: 11px;">';
+                    numbersHtml += '<input type="number" id="batchI7Thaws_' + i + '" placeholder="1" min="0" style="width: 35px; font-size: 11px;">';
+                    numbersHtml += '</div>';
+                }
+                
+                numbersHtml += '</div>';
+                numbersHtml += '<small style="color: #666; font-size: 11px;">Each sample needs unique i5/i7 combination</small>';
+                
+                // Shared reagent lots
+                numbersHtml += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Shared Reagent Lots:</h5>';
+                numbersHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">TD Buffer:</label><input type="text" id="batchTdBufferLot" placeholder="TD123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">ATM Buffer:</label><input type="text" id="batchAtmBufferLot" placeholder="ATM123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">NT Buffer:</label><input type="text" id="batchNtBufferLot" placeholder="NT123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">NPM:</label><input type="text" id="batchNpmLot" placeholder="NPM123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">Resuspension Buffer:</label><input type="text" id="batchResuspensionBufferLot" placeholder="RES123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">Indexes Kit:</label><input type="text" id="batchIndexesKitLot" placeholder="IDX123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">Beads:</label><input type="text" id="batchIndexingBeadsLot" placeholder="BEAD123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">EtOH:</label><input type="text" id="batchIndexingEtohLot" placeholder="ETOH123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 6px;"><label style="font-size: 11px;">NF H2O:</label><input type="text" id="batchIndexingNfH2oLot" placeholder="H2O123" style="width: 100px; font-size: 11px;"></div>';
+                numbersHtml += '</div>';
+                
+                // Cleanup concentrations
+                numbersHtml += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Cleanup Concentrations:</h5>';
+                numbersHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Step 1:</label><input type="text" id="batchCleanup1Concentrations" placeholder="0.5x/1x (40uL + 20uL)" style="width: 160px;"></div>';
+                numbersHtml += '<div class="form-group" style="margin-bottom: 8px;"><label style="font-size: 12px;">Step 2:</label><input type="text" id="batchCleanup2Concentrations" placeholder="55uL + 15uL beads" style="width: 160px;"></div>';
+                numbersHtml += '</div>';
+                numbersHtml += '</div>';
+                } else if (type === 'Clean Extraction Qubit') {
+    numbersHtml += '<div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #4caf50;">';
+    numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #2e7d32;">🧽 Clean Extraction → Clean Extraction Qubit Reference</h4>';
+    numbersHtml += createReferenceTable(sampleIds, 'cleanExtraction', 'Qubit', 0);
+    numbersHtml += '<p style="margin: 10px 0 0 0; font-size: 11px; color: #666;">Use the Clean Extraction plates listed above for each corresponding Qubit</p>';
+    numbersHtml += '</div>';
+    
+    // Add batch Clean Extraction Qubit specific fields
+    numbersHtml += '<div style="background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #1565c0;">';
+    numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #1565c0;">📊 Batch Clean Extraction Qubit Details</h4>';
+    numbersHtml += '<div class="form-group">';
+    numbersHtml += '<label>Qubit Reagent Lot:</label>';
+    numbersHtml += '<input type="text" id="batchCleanExtractionQubitReagentLot" placeholder="QR123">';
+    numbersHtml += '</div>';
+    numbersHtml += '<div class="form-group">';
+    numbersHtml += '<label>Date Qubited:</label>';
+    numbersHtml += '<input type="date" id="batchCleanExtractionQubitDate" value="' + new Date().toISOString().split('T')[0] + '">';
+    numbersHtml += '</div>';
+    numbersHtml += '</div>';
+            } else if (type === 'Final Qubit') {
+    numbersHtml += '<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #2196f3;">';
+    numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #1976d2;">🔬 Indexing → Qubit Reference</h4>';
+    numbersHtml += createReferenceTable(sampleIds, 'indexing', 'Final Qubit', 0);
+    numbersHtml += '<p style="margin: 10px 0 0 0; font-size: 11px; color: #666;">Use the Indexing plates listed above for each corresponding Qubit</p>';
+    numbersHtml += '</div>';
+    
+    // Add batch Qubit specific fields
+    numbersHtml += '<div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #ff9800;">';
+    numbersHtml += '<h4 style="margin: 0 0 10px 0; color: #f57c00;">📊 Batch Final Qubit Details</h4>';
+    numbersHtml += '<div class="form-group">';
+    numbersHtml += '<label>Qubit Reagent Lot:</label>';
+    numbersHtml += '<input type="text" id="batchQubitReagentLot" placeholder="QR123">';
+    numbersHtml += '</div>';
+    numbersHtml += '<div class="form-group">';
+    numbersHtml += '<label>Date Qubited:</label>';
+    numbersHtml += '<input type="date" id="batchQubitDate" value="' + new Date().toISOString().split('T')[0] + '">';
+    numbersHtml += '</div>';
+    numbersHtml += '</div>';
+}
+            
+            document.getElementById('batchNumbers').innerHTML = numbersHtml;
+            document.getElementById('batchModal').style.display = 'block';
+        }
+
+        function completeBatchProcess() {
+            var tech = document.getElementById('batchTechInitials').value.trim();
+            var lot = document.getElementById('batchLotNumber').value.trim();
+            
+            if (!tech || !lot) {
+                alert('Please fill in required fields');
+                return;
+            }
+            
+            var today = new Date().toLocaleDateString();
+            
+            for (var i = 0; i < currentBatchSamples.length; i++) {
+                var sampleId = currentBatchSamples[i];
+                var sample = null;
+                for (var j = 0; j < samples.length; j++) {
+                    if (samples[j].id === sampleId) {
+                        sample = samples[j];
+                        break;
+                    }
+                }
+                
+                if (sample) {
+                    if (currentBatchType === 'BAP') {
+                        sample.bapNumber = '25B' + String(nextBapNumber + i).padStart(3, '0');
+                        sample.status = 'BAP Complete';
+                        sample.bapDetails = { technician: tech, lot: lot, completedDate: today };
+                    } else if (currentBatchType === 'TSB') {
+                        sample.tsbNumber = '25T' + String(nextTsbNumber + i).padStart(3, '0');
+                        sample.status = 'TSB Complete';
+                        sample.tsbDetails = { technician: tech, lot: lot, completedDate: today };
+                    } else if (currentBatchType === 'Extraction') {
+                        sample.extractionNumber = '25E' + String(nextExtractionNumber + i).padStart(3, '0');
+                        sample.status = 'Extraction Complete';
+                        sample.extractionDetails = { 
+                            technician: tech, 
+                            lot: lot, 
+                            completedDate: today,
+                            extractionRun: document.getElementById('batchExtractionRun') ? document.getElementById('batchExtractionRun').value : '25-' + nextExtractionRun,
+                            reagentLots: {
+                                aw1: document.getElementById('batchAw1Lot') ? document.getElementById('batchAw1Lot').value : '',
+                                aw2: document.getElementById('batchAw2Lot') ? document.getElementById('batchAw2Lot').value : '',
+                                ethanol: document.getElementById('batchEthanolLot') ? document.getElementById('batchEthanolLot').value : '',
+                                bufferAL: document.getElementById('batchBufferALLot') ? document.getElementById('batchBufferALLot').value : '',
+                                bufferATL: document.getElementById('batchBufferATLLot') ? document.getElementById('batchBufferATLLot').value : '',
+                                bufferAE: document.getElementById('batchBufferAELot') ? document.getElementById('batchBufferAELot').value : '',
+                                proteinaseK: document.getElementById('batchProteinaseKLot') ? document.getElementById('batchProteinaseKLot').value : '',
+                                dneasy: document.getElementById('batchDneasyLot') ? document.getElementById('batchDneasyLot').value : ''
+                            }
+                        };
+                    } else if (currentBatchType === 'Clean Extraction') {
+                        sample.cleanExtractionNumber = '25CE' + String(nextCleanExtractionNumber + i).padStart(3, '0');
+                        sample.status = 'Clean Extraction Complete';
+                        sample.cleanExtractionDetails = { 
+                            technician: tech, 
+                            lot: lot, 
+                            completedDate: today,
+                            storagePlate: document.getElementById('batchStoragePlate') ? document.getElementById('batchStoragePlate').value : '25CEP' + String(nextCleanExtractionPlate).padStart(2, '0'),
+                            wellPosition: generateWellPosition(i),
+                            reagentLots: {
+                                bead: document.getElementById('batchBeadLot') ? document.getElementById('batchBeadLot').value : '',
+                                nfH2oEtoh: document.getElementById('batchNfH2oEtohLot') ? document.getElementById('batchNfH2oEtohLot').value : '',
+                                etohDilution: document.getElementById('batchEtohDilutionLot') ? document.getElementById('batchEtohDilutionLot').value : '',
+                                nfH2oElution: document.getElementById('batchNfH2oElutionLot') ? document.getElementById('batchNfH2oElutionLot').value : '',
+                                qubitReagent: document.getElementById('batchQubitReagentLot') ? document.getElementById('batchQubitReagentLot').value : ''
+                            },
+                            volumes: {
+                                cleanup: document.getElementById('batchCleanupVolume') ? document.getElementById('batchCleanupVolume').value : '',
+                                elutionIn: document.getElementById('batchElutionVolumeIn') ? document.getElementById('batchElutionVolumeIn').value : '',
+                                elutionOut: document.getElementById('batchElutionVolumeOut') ? document.getElementById('batchElutionVolumeOut').value : ''
+                            }
+                        };
+                        } else if (currentBatchType === 'Clean Extraction Qubit') {
+    sample.status = 'Clean Extraction Qubit Complete';
+    sample.cleanExtractionQubitDetails = { 
+        technician: tech, 
+        completedDate: today, 
+        concentration: '0.0',
+        reagentLot: document.getElementById('batchCleanExtractionQubitReagentLot') ? document.getElementById('batchCleanExtractionQubitReagentLot').value : '',
+        dateQubited: document.getElementById('batchCleanExtractionQubitDate') ? document.getElementById('batchCleanExtractionQubitDate').value : today
+    };
+                    } else if (currentBatchType === 'Indexing') {
+                        sample.indexingNumber = '25XT' + String(nextIndexingNumber + i).padStart(3, '0');
+                        sample.status = 'Indexing Complete';
+                        
+                        // Get custom well position and indexes from inputs
+                        var wellPosition = generateWellPosition(i);
+                        var wellInput = document.getElementById('batchIndexingWell_' + i);
+                        if (wellInput && wellInput.value.trim()) {
+                            wellPosition = wellInput.value.trim().toUpperCase();
+                        }
+                        
+                        var i5Index = document.getElementById('batchI5Index_' + i) ? document.getElementById('batchI5Index_' + i).value : '';
+                        var i7Index = document.getElementById('batchI7Index_' + i) ? document.getElementById('batchI7Index_' + i).value : '';
+                        var i5Thaws = document.getElementById('batchI5Thaws_' + i) ? document.getElementById('batchI5Thaws_' + i).value : '1';
+                        var i7Thaws = document.getElementById('batchI7Thaws_' + i) ? document.getElementById('batchI7Thaws_' + i).value : '1';
+                        
+                        sample.indexingDetails = { 
+                            technician: tech, 
+                            lot: lot, 
+                            completedDate: today,
+                            storagePlate: document.getElementById('batchIndexingStoragePlate') ? document.getElementById('batchIndexingStoragePlate').value : '25XLP' + String(nextIndexingPlate).padStart(2, '0'),
+                            wellPosition: wellPosition,
+                            indexes: {
+                                i5: i5Index,
+                                i7: i7Index,
+                                i5Thaws: i5Thaws,
+                                i7Thaws: i7Thaws
+                            },
+                            reagentLots: {
+                                tdBuffer: document.getElementById('batchTdBufferLot') ? document.getElementById('batchTdBufferLot').value : '',
+                                atmBuffer: document.getElementById('batchAtmBufferLot') ? document.getElementById('batchAtmBufferLot').value : '',
+                                ntBuffer: document.getElementById('batchNtBufferLot') ? document.getElementById('batchNtBufferLot').value : '',
+                                npm: document.getElementById('batchNpmLot') ? document.getElementById('batchNpmLot').value : '',
+                                resuspensionBuffer: document.getElementById('batchResuspensionBufferLot') ? document.getElementById('batchResuspensionBufferLot').value : '',
+                                indexesKit: document.getElementById('batchIndexesKitLot') ? document.getElementById('batchIndexesKitLot').value : '',
+                                beads: document.getElementById('batchIndexingBeadsLot') ? document.getElementById('batchIndexingBeadsLot').value : '',
+                                etoh: document.getElementById('batchIndexingEtohLot') ? document.getElementById('batchIndexingEtohLot').value : '',
+                                nfH2o: document.getElementById('batchIndexingNfH2oLot') ? document.getElementById('batchIndexingNfH2oLot').value : ''
+                            },
+                            cleanupConcentrations: {
+                                step1: document.getElementById('batchCleanup1Concentrations') ? document.getElementById('batchCleanup1Concentrations').value : '',
+                                step2: document.getElementById('batchCleanup2Concentrations') ? document.getElementById('batchCleanup2Concentrations').value : ''
+                            }
+                        };
+                    } else if (currentBatchType === 'Final Qubit') {
+    sample.status = 'Qubit Complete';
+    sample.qubitDetails = { 
+        technician: tech, 
+        completedDate: today, 
+        concentration: '0.0',
+        reagentLot: document.getElementById('batchQubitReagentLot') ? document.getElementById('batchQubitReagentLot').value : '',
+        dateQubited: document.getElementById('batchQubitDate') ? document.getElementById('batchQubitDate').value : today
+    };
+}
+                }
+            }
+            
+            if (currentBatchType === 'BAP') nextBapNumber += currentBatchSamples.length;
+            else if (currentBatchType === 'TSB') nextTsbNumber += currentBatchSamples.length;
+            else if (currentBatchType === 'Extraction') nextExtractionNumber += currentBatchSamples.length;
+            else if (currentBatchType === 'Clean Extraction') nextCleanExtractionNumber += currentBatchSamples.length;
+            else if (currentBatchType === 'Indexing') nextIndexingNumber += currentBatchSamples.length;
+            
+            clearSelection();
+            renderSamples();
+            closeBatchModal();
+            alert('Batch ' + currentBatchType + ' completed!');
+        }
+
+        function closeBatchModal() {
+            document.getElementById('batchModal').style.display = 'none';
+            currentBatchSamples = [];
+            currentBatchType = '';
+        }
+
+        function closeModal() {
+            document.getElementById('processModal').style.display = 'none';
+        }
+
+        function updateSelection() {
+            var checkboxes = document.querySelectorAll('.sample-checkbox:checked');
+            selectedSamples = [];
+            for (var i = 0; i < checkboxes.length; i++) {
+                selectedSamples.push(checkboxes[i].value);
+            }
+            
+            console.log('Selected samples: ' + selectedSamples.join(','));
+            
+            var count = document.getElementById('selectedCount');
+            var batchBtn = document.getElementById('batchBtn');
+            var batchControls = document.getElementById('batchControls');
+            
+            count.textContent = selectedSamples.length;
+            
+            if (selectedSamples.length >= 2) {
+                batchControls.style.display = 'block';
+                batchBtn.disabled = false;
+                batchBtn.textContent = 'Start Batch Processing';
+            } else {
+                batchControls.style.display = 'none';
+                batchBtn.disabled = true;
+            }
+        }
+
+        function clearSelection() {
+            var checkboxes = document.querySelectorAll('.sample-checkbox:checked');
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = false;
+            }
+            selectedSamples = [];
+            updateSelection();
+        }
+
+        function viewSample(sampleId) {
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+            if (!sample) return;
+            
+            var chain = 'SAMPLE: ' + sample.id + '\n';
+            chain += 'Status: ' + sample.status + '\n';
+            chain += 'Added: ' + sample.dateAdded + ' by ' + sample.initials + '\n\n';
+            
+            if (sample.bapDetails) chain += 'BAP: ' + sample.bapNumber + '\n';
+            if (sample.tsbDetails) chain += 'TSB: ' + sample.tsbNumber + '\n';
+            if (sample.extractionDetails) chain += 'Extraction: ' + sample.extractionNumber + '\n';
+            if (sample.cleanExtractionDetails) chain += 'Clean Extraction: ' + sample.cleanExtractionNumber + '\n';
+            if (sample.indexingDetails) chain += 'Indexing: ' + sample.indexingNumber + '\n';
+            if (sample.qubitDetails) chain += 'Qubit: ' + sample.qubitDetails.concentration + ' ng/uL\n';
+            
+            alert(chain);
+        }
+
+        function renderSamples() {
+            var container = document.getElementById('sampleContainer');
+            
+            if (samples.length === 0) {
+                container.innerHTML = '<p>No samples yet. Add one above!</p>';
+                return;
+            }
+            
+            var receivedCount = 0;
+var bapCount = 0;
+var tsbCount = 0;
+var extractionCount = 0;
+var cleanExtractionCount = 0;
+var cleanExtractionQubitCount = 0;
+var indexingCount = 0;
+            
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].status === 'Received') receivedCount++;
+else if (samples[i].status === 'BAP Complete') bapCount++;
+else if (samples[i].status === 'TSB Complete') tsbCount++;
+else if (samples[i].status === 'Extraction Complete') extractionCount++;
+else if (samples[i].status === 'Clean Extraction Complete') cleanExtractionCount++;
+else if (samples[i].status === 'Clean Extraction Qubit Complete') cleanExtractionQubitCount++;
+else if (samples[i].status === 'Indexing Complete') indexingCount++;
+            }
+            
+            var html = '';
+            for (var i = 0; i < samples.length; i++) {
+                var sample = samples[i];
+                var showCheckbox = false;
+                
+                if (receivedCount >= 2 && sample.status === 'Received') showCheckbox = true;
+                else if (bapCount >= 2 && sample.status === 'BAP Complete') showCheckbox = true;
+                else if (tsbCount >= 2 && sample.status === 'TSB Complete') showCheckbox = true;
+                else if (extractionCount >= 2 && sample.status === 'Extraction Complete') showCheckbox = true;
+                else if (cleanExtractionCount >= 2 && sample.status === 'Clean Extraction Complete') showCheckbox = true;
+                else if (cleanExtractionQubitCount >= 2 && sample.status === 'Clean Extraction Qubit Complete') showCheckbox = true;
+                else if (indexingCount >= 2 && sample.status === 'Indexing Complete') showCheckbox = true;
+                
+                html += '<div class="sample-item">';
+                html += '<div class="sample-info">';
+                
+                if (showCheckbox) {
+                    html += '<input type="checkbox" class="sample-checkbox" value="' + sample.id + '" onchange="updateSelection()">';
+                }
+                
+                html += '<strong>' + sample.id + '</strong> ';
+                html += '<span class="status status-' + sample.status.toLowerCase().replace(/ /g, '-') + '">' + sample.status + '</span>';
+                html += '<br><small>Added: ' + sample.dateAdded + ' | ' + sample.initials + '</small>';
+                
+                if (sample.bapDetails) html += '<br>BAP: ' + sample.bapNumber;
+                if (sample.tsbDetails) html += '<br>TSB: ' + sample.tsbNumber;
+                if (sample.extractionDetails) {
+                    html += '<br>Extraction: ' + sample.extractionNumber + ' | Run: ' + sample.extractionDetails.extractionRun;
+                    if (sample.extractionDetails.reagentLots && sample.extractionDetails.reagentLots.aw1) {
+                        html += '<br><small>AW1: ' + sample.extractionDetails.reagentLots.aw1 + ' | AW2: ' + sample.extractionDetails.reagentLots.aw2 + '</small>';
+                    }
+                }
+                if (sample.cleanExtractionDetails) {
+                    html += '<br>Clean Extraction: ' + sample.cleanExtractionNumber + ' | Plate: ' + sample.cleanExtractionDetails.storagePlate + ' | Well: ' + sample.cleanExtractionDetails.wellPosition;
+                    if (sample.cleanExtractionDetails.volumes && sample.cleanExtractionDetails.volumes.cleanup) {
+                        html += '<br><small>Cleanup: ' + sample.cleanExtractionDetails.volumes.cleanup + ' | In: ' + sample.cleanExtractionDetails.volumes.elutionIn + ' | Out: ' + sample.cleanExtractionDetails.volumes.elutionOut + '</small>';
+                    }
+                }
+                if (sample.indexingDetails) {
+                    html += '<br>Indexing: ' + sample.indexingNumber + ' | Plate: ' + sample.indexingDetails.storagePlate + ' | Well: ' + sample.indexingDetails.wellPosition;
+                    if (sample.indexingDetails.indexes && sample.indexingDetails.indexes.i5 && sample.indexingDetails.indexes.i7) {
+                        html += '<br><small>i5: ' + sample.indexingDetails.indexes.i5 + ' | i7: ' + sample.indexingDetails.indexes.i7 + ' | Thaws: ' + sample.indexingDetails.indexes.i5Thaws + '/' + sample.indexingDetails.indexes.i7Thaws + '</small>';
+                    }
+                }
+                if (sample.cleanExtractionQubitDetails) {
+    html += '<br>Clean Extraction Qubit: ' + sample.cleanExtractionQubitDetails.concentration + ' ng/uL';
+    if (sample.cleanExtractionQubitDetails.reagentLot) {
+        html += '<br><small>CE Qubit Reagent: ' + sample.cleanExtractionQubitDetails.reagentLot + ' | Date: ' + (sample.cleanExtractionQubitDetails.dateQubited || sample.cleanExtractionQubitDetails.completedDate) + '</small>';
+    }
+}
+if (sample.qubitDetails) {
+    html += '<br>Final Qubit: ' + sample.qubitDetails.concentration + ' ng/uL';
+    if (sample.qubitDetails.reagentLot) {
+        html += '<br><small>Final Qubit Reagent: ' + sample.qubitDetails.reagentLot + ' | Date: ' + (sample.qubitDetails.dateQubited || sample.qubitDetails.completedDate) + '</small>';
+    }
+}
+                
+                html += '</div>';
+                html += '<div class="sample-actions">';
+                html += '<button onclick="viewSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">View</button><br>';
+                
+                if (sample.status === 'Received') {
+                    html += '<button onclick="startProcess(\'' + sample.id + '\', \'BAP\')">Start BAP</button>';
+                } else if (sample.status === 'BAP Complete') {
+                    html += '<button onclick="startProcess(\'' + sample.id + '\', \'TSB\')">Start TSB</button>';
+                } else if (sample.status === 'TSB Complete') {
+                    html += '<button onclick="startProcess(\'' + sample.id + '\', \'Extraction\')">Start Extraction</button>';
+                } else if (sample.status === 'Extraction Complete') {
+                    html += '<button onclick="startProcess(\'' + sample.id + '\', \'Clean Extraction\')">Start Clean Extraction</button>';
+                } else if (sample.status === 'Clean Extraction Complete') {
+    html += '<button onclick="startProcess(\'' + sample.id + '\', \'Clean Extraction Qubit\')">Start Qubit</button>';
+} else if (sample.status === 'Clean Extraction Qubit Complete') {
+    html += '<button onclick="startProcess(\'' + sample.id + '\', \'Indexing\')">Start Indexing</button>';
+} else if (sample.status === 'Indexing Complete') {
+    html += '<button onclick="startProcess(\'' + sample.id + '\', \'Final Qubit\')">Start Final Qubit</button>';
+                } else {
+                    html += '<div style="color: green; font-weight: bold; text-align: center;">✓ Complete</div>';
+                }
+                
+                html += '</div></div>';
+            }
+            
+            container.innerHTML = html;
+            updateSelection();
+        }
+
+        renderSamples();
+        console.log('Lab Workflow Tracker loaded successfully!');
+    </script>
+</body>
+</html>>
