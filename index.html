@@ -727,6 +727,15 @@
                     <input type="radio" name="statusFilter" value="Complete" onchange="filterSamples()"> Complete
                 </label>
             </div>
+
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                <strong style="margin-right: 10px;">📅 Date Range:</strong>
+                <button onclick="filterByDate('all')" id="dateFilterAll" class="date-filter-btn active" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #007bff; background: #007bff; color: white; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">All Time</button>
+                <button onclick="filterByDate('today')" id="dateFilterToday" class="date-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #007bff; background: white; color: #007bff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Today</button>
+                <button onclick="filterByDate('week')" id="dateFilterWeek" class="date-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #007bff; background: white; color: #007bff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">This Week</button>
+                <button onclick="filterByDate('month')" id="dateFilterMonth" class="date-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #007bff; background: white; color: #007bff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">This Month</button>
+                <button onclick="filterByDate('30days')" id="dateFilter30Days" class="date-filter-btn" style="padding: 6px 12px; border: 2px solid #007bff; background: white; color: #007bff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Last 30 Days</button>
+            </div>
         </div>
 
         <div class="batch-controls" id="batchControls" style="display: none;">
@@ -1255,6 +1264,7 @@
         var reagentLotHistory = {}; // Store recently used lot numbers by field name
         var currentBatchSamples = [];
         var currentBatchType = '';
+        var currentDateFilter = 'all'; // Track current date filter
 
         function generateWellPosition(index) {
             var rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -1343,6 +1353,62 @@
 
             durationText.innerHTML = durationStr + warning;
             durationDiv.style.display = 'block';
+        }
+
+        // Date filtering functions
+        function filterByDate(period) {
+            currentDateFilter = period;
+
+            // Update button styles
+            var buttons = document.querySelectorAll('.date-filter-btn');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].style.background = 'white';
+                buttons[i].style.color = '#007bff';
+            }
+
+            var activeBtn = document.getElementById('dateFilter' + period.charAt(0).toUpperCase() + period.slice(1));
+            if (period === 'all') activeBtn = document.getElementById('dateFilterAll');
+            if (period === '30days') activeBtn = document.getElementById('dateFilter30Days');
+
+            if (activeBtn) {
+                activeBtn.style.background = '#007bff';
+                activeBtn.style.color = 'white';
+            }
+
+            filterSamples();
+        }
+
+        function isWithinDateFilter(dateString) {
+            if (currentDateFilter === 'all') return true;
+
+            var sampleDate = new Date(dateString);
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (currentDateFilter === 'today') {
+                sampleDate.setHours(0, 0, 0, 0);
+                return sampleDate.getTime() === today.getTime();
+            }
+
+            if (currentDateFilter === 'week') {
+                var weekAgo = new Date(today);
+                weekAgo.setDate(today.getDate() - 7);
+                return sampleDate >= weekAgo;
+            }
+
+            if (currentDateFilter === 'month') {
+                var monthAgo = new Date(today);
+                monthAgo.setMonth(today.getMonth() - 1);
+                return sampleDate >= monthAgo;
+            }
+
+            if (currentDateFilter === '30days') {
+                var thirtyDaysAgo = new Date(today);
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                return sampleDate >= thirtyDaysAgo;
+            }
+
+            return true;
         }
 
         // Track recently used lot numbers
@@ -2706,15 +2772,26 @@ html += '</div>';
             var sampleItems = document.querySelectorAll('.sample-item');
             for (var i = 0; i < sampleItems.length; i++) {
                 var item = sampleItems[i];
-                var sampleId = item.querySelector('strong').textContent.toLowerCase();
+                var sampleId = item.querySelector('strong').textContent.trim();
+                var sampleIdLower = sampleId.toLowerCase();
                 var status = item.querySelector('.status').textContent;
 
-                var matchesSearch = sampleId.includes(searchText);
+                // Find the actual sample object to get the date
+                var sample = null;
+                for (var j = 0; j < samples.length; j++) {
+                    if (samples[j].id === sampleId) {
+                        sample = samples[j];
+                        break;
+                    }
+                }
+
+                var matchesSearch = sampleIdLower.includes(searchText);
                 var matchesStatus = statusFilter === 'all' ||
                                   status === statusFilter ||
                                   (statusFilter === 'Complete' && status === 'Qubit Complete');
+                var matchesDate = sample ? isWithinDateFilter(sample.dateAdded) : true;
 
-                if (matchesSearch && matchesStatus) {
+                if (matchesSearch && matchesStatus && matchesDate) {
                     item.style.display = 'flex';
                 } else {
                     item.style.display = 'none';
