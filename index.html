@@ -776,12 +776,16 @@
 
             <div class="form-group">
                 <label>Time In:</label>
-                <input type="time" id="batchTimeIn" placeholder="HH:MM">
+                <input type="time" id="batchTimeIn" placeholder="HH:MM" onchange="calculateBatchIncubationDuration()">
             </div>
 
             <div class="form-group">
                 <label>Time Out:</label>
-                <input type="time" id="batchTimeOut" placeholder="HH:MM">
+                <input type="time" id="batchTimeOut" placeholder="HH:MM" onchange="calculateBatchIncubationDuration()">
+            </div>
+
+            <div id="batchIncubationDuration" style="padding: 10px; background: #e8f5e9; border-radius: 4px; margin: 10px 0; display: none;">
+                <strong>Duration:</strong> <span id="batchDurationText"></span>
             </div>
 
             <button onclick="completeBatchProcess()">Complete Batch</button>
@@ -825,12 +829,16 @@
 
             <div class="form-group">
                 <label>Time In:</label>
-                <input type="time" id="timeIn" placeholder="HH:MM">
+                <input type="time" id="timeIn" placeholder="HH:MM" onchange="calculateIncubationDuration()">
             </div>
 
             <div class="form-group">
                 <label>Time Out:</label>
-                <input type="time" id="timeOut" placeholder="HH:MM">
+                <input type="time" id="timeOut" placeholder="HH:MM" onchange="calculateIncubationDuration()">
+            </div>
+
+            <div id="incubationDuration" style="padding: 10px; background: #e8f5e9; border-radius: 4px; margin: 10px 0; display: none;">
+                <strong>Duration:</strong> <span id="durationText"></span>
             </div>
 
             <div id="specificFields"></div>
@@ -1254,6 +1262,87 @@
             var col = String(Math.floor(index / 8) + 1);
             if (col.length === 1) col = '0' + col;
             return row + col;
+        }
+
+        // Calculate incubation duration
+        function calculateIncubationDuration() {
+            var timeIn = document.getElementById('timeIn').value;
+            var timeOut = document.getElementById('timeOut').value;
+            var durationDiv = document.getElementById('incubationDuration');
+            var durationText = document.getElementById('durationText');
+
+            if (!timeIn || !timeOut) {
+                durationDiv.style.display = 'none';
+                return;
+            }
+
+            // Parse times
+            var inParts = timeIn.split(':');
+            var outParts = timeOut.split(':');
+            var inMinutes = parseInt(inParts[0]) * 60 + parseInt(inParts[1]);
+            var outMinutes = parseInt(outParts[0]) * 60 + parseInt(outParts[1]);
+
+            // Calculate difference (handle overnight incubations)
+            var diffMinutes = outMinutes - inMinutes;
+            if (diffMinutes < 0) {
+                diffMinutes += 24 * 60; // Add 24 hours if overnight
+            }
+
+            var hours = Math.floor(diffMinutes / 60);
+            var minutes = diffMinutes % 60;
+
+            var durationStr = hours + 'h ' + minutes + 'm';
+
+            // Check if duration seems unusual (less than 1h or more than 24h)
+            var warning = '';
+            if (diffMinutes < 60) {
+                warning = ' ⚠️ <span style="color: #d32f2f;">Very short incubation!</span>';
+            } else if (diffMinutes > 24 * 60) {
+                warning = ' ⚠️ <span style="color: #d32f2f;">Over 24 hours!</span>';
+            }
+
+            durationText.innerHTML = durationStr + warning;
+            durationDiv.style.display = 'block';
+        }
+
+        function calculateBatchIncubationDuration() {
+            var timeIn = document.getElementById('batchTimeIn').value;
+            var timeOut = document.getElementById('batchTimeOut').value;
+            var durationDiv = document.getElementById('batchIncubationDuration');
+            var durationText = document.getElementById('batchDurationText');
+
+            if (!timeIn || !timeOut) {
+                durationDiv.style.display = 'none';
+                return;
+            }
+
+            // Parse times
+            var inParts = timeIn.split(':');
+            var outParts = timeOut.split(':');
+            var inMinutes = parseInt(inParts[0]) * 60 + parseInt(inParts[1]);
+            var outMinutes = parseInt(outParts[0]) * 60 + parseInt(outParts[1]);
+
+            // Calculate difference (handle overnight incubations)
+            var diffMinutes = outMinutes - inMinutes;
+            if (diffMinutes < 0) {
+                diffMinutes += 24 * 60; // Add 24 hours if overnight
+            }
+
+            var hours = Math.floor(diffMinutes / 60);
+            var minutes = diffMinutes % 60;
+
+            var durationStr = hours + 'h ' + minutes + 'm';
+
+            // Check if duration seems unusual
+            var warning = '';
+            if (diffMinutes < 60) {
+                warning = ' ⚠️ <span style="color: #d32f2f;">Very short incubation!</span>';
+            } else if (diffMinutes > 24 * 60) {
+                warning = ' ⚠️ <span style="color: #d32f2f;">Over 24 hours!</span>';
+            }
+
+            durationText.innerHTML = durationStr + warning;
+            durationDiv.style.display = 'block';
         }
 
         // Track recently used lot numbers
