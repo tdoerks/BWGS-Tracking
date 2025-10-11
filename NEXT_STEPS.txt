@@ -4,49 +4,22 @@ BWGS TRACKER - WHAT TO DO NEXT
 
 ✅ ALL DEVELOPMENT COMPLETE!
 
-The tracker is production-ready with tons of new features.
-All changes are staged and ready to commit.
+The tracker is production-ready with extensive advanced features.
+All changes have been committed and are ready to push.
 
 ========================================
-STEP 1: COMMIT CHANGES
+STEP 1: PUSH TO GITHUB (Ready Now!)
 ========================================
 
-Run these commands in your terminal:
+Run this command in your terminal:
 
 cd /workspace/BWGS-Tracking
-git commit -m "Add production features: search, filters, dashboard, CSV export, notes, delete
-
-New Features:
-- Real-time search by sample ID
-- Status filters (Received, BAP, TSB, Extraction, Complete)
-- Visual status dashboard with sample counts
-- CSV export for Excel/reports
-- Sample notes for observations
-- Delete sample function
-- Password protection (bwgs2025)
-- Enhanced documentation
-
-Files:
-- Enhanced index.html with all new features
-- FEATURES.md - Complete feature documentation
-- CHANGELOG.md - Version history
-- SUMMARY.md - Development summary
-- QUICK_START.md - Quick reference guide
-- Updated README.md
-
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>"
-
-========================================
-STEP 2: PUSH TO GITHUB
-========================================
-
 git push origin main
 
 (You'll need to enter your GitHub credentials)
 
 ========================================
-STEP 3: ENABLE GITHUB PAGES
+STEP 2: ENABLE GITHUB PAGES
 ========================================
 
 1. Go to: https://github.com/tdoerks/BWGS-Tracking
@@ -59,54 +32,55 @@ STEP 3: ENABLE GITHUB PAGES
    https://tdoerks.github.io/BWGS-Tracking/
 
 ========================================
-STEP 4: TEST THE LIVE SITE
+STEP 3: TEST THE LIVE SITE
 ========================================
 
 1. Visit your GitHub Pages URL
 2. Login with password: bwgs2025
 3. Add some test samples
 4. Try all features:
-   - Search
-   - Filters
-   - Dashboard
+   - Search & Filters
+   - Dashboard with stats
+   - Sample editing
+   - Sorting options
    - Notes
    - Delete
-   - Export CSV
-   - Export JSON
+   - Export CSV/JSON
+   - Print view
+   - Plate map visualizer
+   - Dark mode
+   - Keyboard shortcuts (press ⌨️ button for help)
 
 ========================================
-STEP 5: CHANGE PASSWORD (Optional)
+STEP 4: CHANGE PASSWORD (Optional)
 ========================================
 
-Edit index.html line 1840:
-var correctPassword = 'YOUR_NEW_PASSWORD';
+Search for "correctPassword" in index.html and change:
+var correctPassword = 'bwgs2025';
 
-Then commit and push again.
+To your preferred password, then commit and push again.
 
 ========================================
-NEW FEATURES ADDED
+ALL FEATURES ADDED (v2.5)
 ========================================
 
-✨ Search & Filter
+✨ Basic Features (v2.0)
    - Real-time search by sample ID
    - Status filters for each workflow stage
-
-📊 Status Dashboard
-   - Visual overview of sample distribution
-   - Color-coded cards with counts
-
-💾 Enhanced Data Export
+   - Visual status dashboard with counts
    - CSV export for Excel/reports
-   - Improved JSON export
+   - Sample notes and deletion
+   - Password protection
 
-📝 Sample Management
-   - Add notes to samples
-   - Delete samples with confirmation
-   - Enhanced view details
-
-🔐 Security
-   - Password protection on login
-   - Session-based authentication
+🚀 Advanced Features (v2.5 - NEW!)
+   - Sample editing: Edit IDs, initials, status
+   - Sorting options: By date, ID, or status
+   - QC thresholds: Automatic warnings for Qubit values
+   - Quick stats panel: Completion rate, QC failures, avg time
+   - Keyboard shortcuts: Ctrl+F, Ctrl+E, 1-5 filters, Esc
+   - Print stylesheet: Professional print layout
+   - 96-well plate map: Visual plate viewer
+   - Dark mode: Toggle light/dark themes
 
 📚 Documentation
    - FEATURES.md - All features explained
@@ -116,18 +90,14 @@ NEW FEATURES ADDED
    - Enhanced README.md
 
 ========================================
-FILES READY TO COMMIT
+COMMITS READY TO PUSH
 ========================================
 
-New files:
-- CHANGELOG.md
-- FEATURES.md
-- SUMMARY.md
-- QUICK_START.md
+Two commits ready:
+1. "Add production-ready BWGS tracker with data persistence" (v2.0)
+2. "Add advanced features: editing, sorting, QC, stats..." (v2.5)
 
-Modified files:
-- index.html (all new features!)
-- README.md (updated documentation)
+All files committed and ready to push to GitHub!
 
 ========================================
 IMPORTANT NOTES
@@ -181,9 +151,26 @@ READY TO GO!
 ========================================
 
 Just run:
-  git commit -m "..."
   git push origin main
 
 Then enable GitHub Pages and you're live!
 
 Password: bwgs2025
+
+========================================
+FEATURE HIGHLIGHTS
+========================================
+
+Power User Features:
+✅ Ctrl+F to search instantly
+✅ 1-5 number keys for quick filters
+✅ Click "Edit" to modify samples
+✅ Sorting dropdown for organization
+✅ Auto QC warnings on out-of-range values
+✅ Quick stats show completion rate
+✅ View plate maps for visual layout
+✅ Toggle dark mode for night work
+✅ Print button for professional reports
+✅ Press ⌨️ for all keyboard shortcuts
+
+Everything is ready for production use!
