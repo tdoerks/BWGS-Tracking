@@ -5,12 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lab Workflow Tracker - Working Version</title>
     <style>
+        :root {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #ddd;
+            --header-bg: #ffffff;
+            --input-bg: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border-color: #444;
+            --header-bg: #2d2d2d;
+            --input-bg: #3d3d3d;
+            --shadow: rgba(0, 0, 0, 0.5);
+        }
+
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 50px auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
         }
 
         #passwordOverlay {
@@ -60,30 +84,43 @@
         }
         
         .header {
-            background: white;
+            background: var(--header-bg);
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
             text-align: center;
+            transition: background-color 0.3s;
         }
-        
+
         .add-section {
-            background: white;
+            background: var(--bg-secondary);
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
+            transition: background-color 0.3s;
         }
-        
+
         .sample-list {
-            background: white;
+            background: var(--bg-secondary);
             padding: 20px;
             border-radius: 8px;
+            transition: background-color 0.3s;
         }
         
-        input, select, button {
+        input, select {
             padding: 8px 12px;
             margin: 5px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: none;
             border-radius: 4px;
         }
         
@@ -100,12 +137,14 @@
         
         .sample-item {
             padding: 15px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: var(--bg-secondary);
+            transition: background-color 0.3s, border-color 0.3s;
         }
         
         .sample-info {
@@ -149,7 +188,9 @@
             top: 10%;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
             padding: 20px;
             border-radius: 8px;
             width: 90%;
@@ -174,9 +215,78 @@
             cursor: pointer;
             color: #999;
         }
-        
+
         .btn-cancel {
             background: #6c757d;
+        }
+
+        kbd {
+            display: inline-block;
+            padding: 3px 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: bold;
+            line-height: 1.4;
+            color: #333;
+            background-color: #f7f7f7;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2), inset 0 0 0 2px #fff;
+            white-space: nowrap;
+        }
+
+        /* Plate Map Styles */
+        .plate-map {
+            display: inline-block;
+            border: 2px solid #333;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .plate-map table {
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+
+        .plate-map th, .plate-map td {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #999;
+            text-align: center;
+            vertical-align: middle;
+            padding: 2px;
+            position: relative;
+        }
+
+        .plate-map th {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        .plate-map td {
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .plate-map td:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .plate-map .well-occupied {
+            background: #d4edda;
+            font-weight: bold;
+        }
+
+        .plate-map .well-id {
+            display: block;
+            font-size: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .batch-controls {
@@ -205,6 +315,125 @@
             background: #ccc;
             cursor: not-allowed;
         }
+
+        /* Print Stylesheet */
+        @media print {
+            /* Hide interactive elements */
+            #passwordOverlay,
+            .add-section,
+            button,
+            input[type="text"],
+            input[type="radio"],
+            select,
+            #searchInput,
+            .modal,
+            #quickStats,
+            .close-btn {
+                display: none !important;
+            }
+
+            /* Page setup */
+            body {
+                background: white;
+                margin: 0;
+                padding: 10mm;
+                font-size: 11pt;
+            }
+
+            /* Header formatting */
+            .header {
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 18pt;
+                margin: 0;
+            }
+
+            /* Dashboard cards - show as text */
+            .dashboard-grid {
+                display: block !important;
+                margin-bottom: 20px;
+            }
+
+            .dashboard-card {
+                display: inline-block;
+                width: auto;
+                margin-right: 20px;
+                padding: 5px 10px;
+                border: 1px solid #333;
+                page-break-inside: avoid;
+            }
+
+            /* Sample list formatting */
+            .sample-list {
+                padding: 0;
+                border: none;
+            }
+
+            .sample-item {
+                border: 1px solid #333;
+                margin-bottom: 10px;
+                padding: 10px;
+                page-break-inside: avoid;
+                display: block !important;
+            }
+
+            /* Sample details */
+            .sample-item strong {
+                font-size: 12pt;
+            }
+
+            .status {
+                border: 1px solid #333 !important;
+                background: white !important;
+                color: #000 !important;
+                padding: 2px 5px;
+            }
+
+            /* Compact layout for sample details */
+            .sample-item br {
+                display: none;
+            }
+
+            .sample-item span {
+                display: inline-block;
+                margin-right: 15px;
+            }
+
+            /* Page breaks */
+            h2, h3 {
+                page-break-after: avoid;
+            }
+
+            /* Print timestamp */
+            .header::after {
+                content: "Printed: " attr(data-print-date);
+                display: block;
+                font-size: 9pt;
+                color: #666;
+                margin-top: 5px;
+            }
+
+            /* Ensure links show full URL */
+            a[href]::after {
+                content: " (" attr(href) ")";
+            }
+        }
+
+        /* Print button - only show when not printing */
+        @media screen {
+            .print-btn {
+                background: #17a2b8;
+                margin-left: 5px;
+            }
+
+            .print-btn:hover {
+                background: #138496;
+            }
+        }
     </style>
 </head>
 <body>
@@ -226,10 +455,31 @@
         <h1>🧪 Complete Lab Workflow Tracker</h1>
         <p>BAP → TSB → Extraction → Clean Extraction → Qubit → Indexing → Final Qubit</p>
         <div style="margin-top: 15px;">
-            <button onclick="exportData()" style="background: #28a745; font-size: 12px; padding: 6px 12px;">📥 Export Data</button>
+            <button onclick="exportData()" style="background: #28a745; font-size: 12px; padding: 6px 12px;">📥 Export JSON</button>
+            <button onclick="exportCSV()" style="background: #20c997; font-size: 12px; padding: 6px 12px;">📊 Export CSV</button>
+            <button onclick="window.print()" class="print-btn" style="background: #17a2b8; font-size: 12px; padding: 6px 12px;">🖨️ Print</button>
             <button onclick="importData()" style="background: #17a2b8; font-size: 12px; padding: 6px 12px;">📤 Import Data</button>
+            <button onclick="showPlateMap()" style="background: #9c27b0; font-size: 12px; padding: 6px 12px;">🧫 Plate Map</button>
             <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
+            <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
+            <button onclick="toggleDarkMode()" id="darkModeToggle" style="background: #495057; font-size: 12px; padding: 6px 12px;">🌙 Dark Mode</button>
             <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+        </div>
+    </div>
+
+    <!-- Quick Stats Panel -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white;">
+        <h3 style="margin-top: 0; color: white;">⚡ Quick Stats</h3>
+        <div id="quickStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Status Dashboard -->
+    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0;">📊 Status Dashboard</h3>
+        <div id="statusDashboard" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px;">
+            <!-- Dashboard will be populated by JavaScript -->
         </div>
     </div>
 
@@ -261,7 +511,45 @@
 
     <div class="sample-list">
         <h3>Samples</h3>
-        
+
+        <!-- Search and Filter Section -->
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <input type="text" id="searchInput" placeholder="🔍 Search by Sample ID..."
+                       onkeyup="filterSamples()"
+                       style="flex: 1; min-width: 250px; max-width: 400px; padding: 10px; font-size: 14px;">
+
+                <select id="sortSelect" onchange="sortSamples()" style="padding: 10px; font-size: 14px;">
+                    <option value="dateDesc">Sort: Newest First</option>
+                    <option value="dateAsc">Sort: Oldest First</option>
+                    <option value="idAsc">Sort: ID (A-Z)</option>
+                    <option value="idDesc">Sort: ID (Z-A)</option>
+                    <option value="status">Sort: By Status</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="statusFilter" value="all" checked onchange="filterSamples()"> All
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="statusFilter" value="Received" onchange="filterSamples()"> Received
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="statusFilter" value="BAP Complete" onchange="filterSamples()"> BAP
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="statusFilter" value="TSB Complete" onchange="filterSamples()"> TSB
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="statusFilter" value="Extraction Complete" onchange="filterSamples()"> Extraction
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="statusFilter" value="Complete" onchange="filterSamples()"> Complete
+                </label>
+            </div>
+        </div>
+
         <div class="batch-controls" id="batchControls" style="display: none;">
             <h4>🧪 Batch Processing</h4>
             <p><span id="selectedCount">0</span> samples selected</p>
@@ -353,6 +641,135 @@
         </div>
     </div>
 
+    <!-- Edit Sample Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeEditModal()">&times;</span>
+            <h3>Edit Sample</h3>
+            <p>Original Sample ID: <strong id="editOriginalId"></strong></p>
+
+            <div class="form-group">
+                <label>Sample ID:</label>
+                <input type="text" id="editSampleId">
+            </div>
+
+            <div class="form-group">
+                <label>Technician Initials:</label>
+                <input type="text" id="editInitials" maxlength="3">
+            </div>
+
+            <div class="form-group">
+                <label>Status:</label>
+                <select id="editStatus">
+                    <option value="Received">Received</option>
+                    <option value="BAP Complete">BAP Complete</option>
+                    <option value="TSB Complete">TSB Complete</option>
+                    <option value="Extraction Complete">Extraction Complete</option>
+                    <option value="Clean Extraction Complete">Clean Extraction Complete</option>
+                    <option value="Clean Extraction Qubit Complete">Clean Extraction Qubit Complete</option>
+                    <option value="Indexing Complete">Indexing Complete</option>
+                    <option value="Qubit Complete">Qubit Complete</option>
+                </select>
+            </div>
+
+            <button onclick="saveEditedSample()">Save Changes</button>
+            <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Plate Map Modal -->
+    <div id="plateMapModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; width: 90%;">
+            <span class="close-btn" onclick="closePlateMapModal()">&times;</span>
+            <h3>🧫 96-Well Plate Map</h3>
+
+            <div style="margin: 20px 0;">
+                <label><strong>Select Plate:</strong></label>
+                <select id="plateSelector" onchange="renderPlateMap()">
+                    <option value="">-- Select a plate --</option>
+                </select>
+            </div>
+
+            <div id="plateMapContainer" style="overflow-x: auto;">
+                <!-- Plate map will be rendered here -->
+            </div>
+
+            <div id="plateMapLegend" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+                <strong>Legend:</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #e9ecef; border: 1px solid #999;"></span> Empty</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #d4edda; border: 1px solid #155724;"></span> BAP Complete</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #fff3cd; border: 1px solid #856404;"></span> TSB Complete</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #f3e5f5; border: 1px solid #7b1fa2;"></span> Extraction</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #e8f5e8; border: 1px solid #2e7d32;"></span> Clean Extraction</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #e8f4fd; border: 1px solid #1565c0;"></span> CE Qubit</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #e3f2fd; border: 1px solid #1976d2;"></span> Indexing</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #fff3e0; border: 1px solid #f57c00;"></span> Complete</div>
+                </div>
+            </div>
+
+            <button class="btn-cancel" onclick="closePlateMapModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcutsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeShortcutsModal()">&times;</span>
+            <h3>⌨️ Keyboard Shortcuts</h3>
+
+            <div style="margin-top: 20px;">
+                <h4 style="color: #007bff; margin-bottom: 10px;">🔍 Navigation</h4>
+                <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + F</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Focus search box</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>1</kbd> - <kbd>5</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Quick status filters (All, Received, BAP, TSB, Extraction)</td>
+                    </tr>
+                </table>
+
+                <h4 style="color: #28a745; margin-bottom: 10px;">📊 Actions</h4>
+                <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + E</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Export JSON backup</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + Shift + E</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Export CSV</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + I</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Import data</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + N</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Focus sample input (add new)</td>
+                    </tr>
+                </table>
+
+                <h4 style="color: #6c757d; margin-bottom: 10px;">🚪 Modals</h4>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Esc</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Close any open modal</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                <small style="color: #6c757d;">
+                    <strong>Note:</strong> Number key shortcuts (1-5) only work when not typing in an input field.
+                </small>
+            </div>
+
+            <button class="btn-cancel" onclick="closeShortcutsModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
     <script>
         // Export data as JSON file
         function exportData() {
@@ -379,7 +796,72 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            alert('Data exported successfully!');
+            alert('JSON data exported successfully!');
+        }
+
+        // Export data as CSV file
+        function exportCSV() {
+            var csv = 'Sample ID,Status,Date Added,Initials,BAP Number,BAP Tech,BAP Date,TSB Number,TSB Tech,TSB Date,';
+            csv += 'Extraction Number,Extraction Run,Extraction Tech,Extraction Date,';
+            csv += 'Clean Extraction Number,CE Storage Plate,CE Well,CE Tech,CE Date,CE Qubit (ng/uL),';
+            csv += 'Indexing Number,Index Storage Plate,Index Well,i5 Index,i7 Index,Index Tech,Index Date,';
+            csv += 'Final Qubit (ng/uL),Final Qubit Date\n';
+
+            for (var i = 0; i < samples.length; i++) {
+                var s = samples[i];
+                var row = [
+                    s.id,
+                    s.status,
+                    s.dateAdded,
+                    s.initials,
+                    s.bapNumber || '',
+                    s.bapDetails ? s.bapDetails.technician : '',
+                    s.bapDetails ? s.bapDetails.completedDate : '',
+                    s.tsbNumber || '',
+                    s.tsbDetails ? s.tsbDetails.technician : '',
+                    s.tsbDetails ? s.tsbDetails.completedDate : '',
+                    s.extractionNumber || '',
+                    s.extractionDetails ? s.extractionDetails.extractionRun : '',
+                    s.extractionDetails ? s.extractionDetails.technician : '',
+                    s.extractionDetails ? s.extractionDetails.completedDate : '',
+                    s.cleanExtractionNumber || '',
+                    s.cleanExtractionDetails ? s.cleanExtractionDetails.storagePlate : '',
+                    s.cleanExtractionDetails ? s.cleanExtractionDetails.wellPosition : '',
+                    s.cleanExtractionDetails ? s.cleanExtractionDetails.technician : '',
+                    s.cleanExtractionDetails ? s.cleanExtractionDetails.completedDate : '',
+                    s.cleanExtractionQubitDetails ? s.cleanExtractionQubitDetails.concentration : '',
+                    s.indexingNumber || '',
+                    s.indexingDetails ? s.indexingDetails.storagePlate : '',
+                    s.indexingDetails ? s.indexingDetails.wellPosition : '',
+                    s.indexingDetails && s.indexingDetails.indexes ? s.indexingDetails.indexes.i5 : '',
+                    s.indexingDetails && s.indexingDetails.indexes ? s.indexingDetails.indexes.i7 : '',
+                    s.indexingDetails ? s.indexingDetails.technician : '',
+                    s.indexingDetails ? s.indexingDetails.completedDate : '',
+                    s.qubitDetails ? s.qubitDetails.concentration : '',
+                    s.qubitDetails ? s.qubitDetails.dateQubited || s.qubitDetails.completedDate : ''
+                ];
+
+                // Escape commas and quotes in CSV
+                row = row.map(function(cell) {
+                    if (cell && cell.toString().indexOf(',') > -1) {
+                        return '"' + cell.toString().replace(/"/g, '""') + '"';
+                    }
+                    return cell;
+                });
+
+                csv += row.join(',') + '\n';
+            }
+
+            var csvBlob = new Blob([csv], {type: 'text/csv'});
+            var url = URL.createObjectURL(csvBlob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = 'bwgs-tracker-export-' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            alert('CSV exported successfully! Open in Excel or Google Sheets.');
         }
 
         // Import data from JSON file
@@ -587,6 +1069,7 @@
                 initials: initials,
                 status: 'Received',
                 dateAdded: new Date().toLocaleDateString(),
+                notes: '',
                 bapNumber: null,
                 bapDetails: null,
                 tsbNumber: null,
@@ -671,6 +1154,7 @@
                         initials: initials,
                         status: 'Received',
                         dateAdded: new Date().toLocaleDateString(),
+                        notes: '',
                         bapNumber: null,
                         bapDetails: null,
                         tsbNumber: null,
@@ -1698,6 +2182,326 @@ html += '</div>';
             updateSelection();
         }
 
+        function filterSamples() {
+            var searchText = document.getElementById('searchInput').value.toLowerCase();
+            var statusFilter = document.querySelector('input[name="statusFilter"]:checked').value;
+
+            var sampleItems = document.querySelectorAll('.sample-item');
+            for (var i = 0; i < sampleItems.length; i++) {
+                var item = sampleItems[i];
+                var sampleId = item.querySelector('strong').textContent.toLowerCase();
+                var status = item.querySelector('.status').textContent;
+
+                var matchesSearch = sampleId.includes(searchText);
+                var matchesStatus = statusFilter === 'all' ||
+                                  status === statusFilter ||
+                                  (statusFilter === 'Complete' && status === 'Qubit Complete');
+
+                if (matchesSearch && matchesStatus) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            }
+        }
+
+        var currentEditingSampleId = null;
+
+        // QC Thresholds
+        var QC_THRESHOLDS = {
+            cleanExtractionQubit: {min: 5, max: 200, unit: 'ng/uL'},
+            finalQubit: {min: 1, max: 50, unit: 'ng/uL'}
+        };
+
+        function checkQCThreshold(value, type) {
+            var threshold = QC_THRESHOLDS[type];
+            if (!threshold) return {pass: true, message: ''};
+
+            var numValue = parseFloat(value);
+            if (isNaN(numValue)) return {pass: true, message: ''};
+
+            if (numValue < threshold.min) {
+                return {
+                    pass: false,
+                    message: '⚠️ Below minimum (' + threshold.min + ' ' + threshold.unit + ')'
+                };
+            } else if (numValue > threshold.max) {
+                return {
+                    pass: false,
+                    message: '⚠️ Above maximum (' + threshold.max + ' ' + threshold.unit + ')'
+                };
+            }
+            return {pass: true, message: '✅ Within range'};
+        }
+
+        function editSample(sampleId) {
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+            if (!sample) return;
+
+            currentEditingSampleId = sampleId;
+            document.getElementById('editOriginalId').textContent = sampleId;
+            document.getElementById('editSampleId').value = sample.id;
+            document.getElementById('editInitials').value = sample.initials;
+            document.getElementById('editStatus').value = sample.status;
+
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function saveEditedSample() {
+            var newId = document.getElementById('editSampleId').value.trim();
+            var newInitials = document.getElementById('editInitials').value.trim().toUpperCase();
+            var newStatus = document.getElementById('editStatus').value;
+
+            if (!newId || !newInitials) {
+                alert('Sample ID and Initials are required');
+                return;
+            }
+
+            // Check if new ID already exists (and it's not the current sample)
+            if (newId !== currentEditingSampleId) {
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === newId) {
+                        alert('Sample ID ' + newId + ' already exists!');
+                        return;
+                    }
+                }
+            }
+
+            // Find and update the sample
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === currentEditingSampleId) {
+                    samples[i].id = newId;
+                    samples[i].initials = newInitials;
+                    samples[i].status = newStatus;
+                    break;
+                }
+            }
+
+            saveData();
+            renderSamples();
+            closeEditModal();
+            alert('Sample updated successfully!');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditingSampleId = null;
+        }
+
+        function showKeyboardShortcuts() {
+            document.getElementById('shortcutsModal').style.display = 'block';
+        }
+
+        function closeShortcutsModal() {
+            document.getElementById('shortcutsModal').style.display = 'none';
+        }
+
+        function showPlateMap() {
+            // Get all unique plates from samples
+            var plates = {};
+            for (var i = 0; i < samples.length; i++) {
+                var s = samples[i];
+                // Check for plate assignments in various stages
+                if (s.tsbDetails && s.tsbDetails.storagePlate) {
+                    plates['TSB - ' + s.tsbDetails.storagePlate] = s.tsbDetails.storagePlate;
+                }
+                if (s.extractionDetails && s.extractionDetails.storagePlate) {
+                    plates['Extraction - ' + s.extractionDetails.storagePlate] = s.extractionDetails.storagePlate;
+                }
+                if (s.cleanExtractionDetails && s.cleanExtractionDetails.storagePlate) {
+                    plates['Clean Extraction - ' + s.cleanExtractionDetails.storagePlate] = s.cleanExtractionDetails.storagePlate;
+                }
+                if (s.indexingDetails && s.indexingDetails.storagePlate) {
+                    plates['Indexing - ' + s.indexingDetails.storagePlate] = s.indexingDetails.storagePlate;
+                }
+            }
+
+            // Populate plate selector
+            var selector = document.getElementById('plateSelector');
+            selector.innerHTML = '<option value="">-- Select a plate --</option>';
+            for (var plateName in plates) {
+                var option = document.createElement('option');
+                option.value = plateName;
+                option.textContent = plateName;
+                selector.appendChild(option);
+            }
+
+            // Show modal
+            document.getElementById('plateMapModal').style.display = 'block';
+
+            // If there's only one plate, auto-select it
+            if (Object.keys(plates).length === 1) {
+                selector.value = Object.keys(plates)[0];
+                renderPlateMap();
+            }
+        }
+
+        function closePlateMapModal() {
+            document.getElementById('plateMapModal').style.display = 'none';
+        }
+
+        function renderPlateMap() {
+            var selectedPlate = document.getElementById('plateSelector').value;
+            if (!selectedPlate) {
+                document.getElementById('plateMapContainer').innerHTML = '<p style="text-align: center; color: #999;">Please select a plate to view</p>';
+                return;
+            }
+
+            // Extract plate type and name
+            var parts = selectedPlate.split(' - ');
+            var plateType = parts[0];
+            var plateName = parts[1];
+
+            // Build a map of well positions to samples
+            var wellMap = {};
+            for (var i = 0; i < samples.length; i++) {
+                var s = samples[i];
+                var wellPos = null;
+                var details = null;
+
+                if (plateType === 'TSB' && s.tsbDetails && s.tsbDetails.storagePlate === plateName) {
+                    wellPos = s.tsbDetails.wellPosition;
+                    details = s;
+                } else if (plateType === 'Extraction' && s.extractionDetails && s.extractionDetails.storagePlate === plateName) {
+                    wellPos = s.extractionDetails.wellPosition;
+                    details = s;
+                } else if (plateType === 'Clean Extraction' && s.cleanExtractionDetails && s.cleanExtractionDetails.storagePlate === plateName) {
+                    wellPos = s.cleanExtractionDetails.wellPosition;
+                    details = s;
+                } else if (plateType === 'Indexing' && s.indexingDetails && s.indexingDetails.storagePlate === plateName) {
+                    wellPos = s.indexingDetails.wellPosition;
+                    details = s;
+                }
+
+                if (wellPos) {
+                    wellMap[wellPos] = details;
+                }
+            }
+
+            // Generate 96-well plate HTML
+            var html = '<div class="plate-map"><table>';
+
+            // Header row with column numbers
+            html += '<tr><th></th>';
+            for (var col = 1; col <= 12; col++) {
+                html += '<th>' + col + '</th>';
+            }
+            html += '</tr>';
+
+            // Data rows
+            var rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            for (var r = 0; r < rows.length; r++) {
+                html += '<tr>';
+                html += '<th>' + rows[r] + '</th>';
+
+                for (var col = 1; col <= 12; col++) {
+                    var wellPos = rows[r] + col;
+                    var sample = wellMap[wellPos];
+
+                    if (sample) {
+                        var bgColor = getStatusColor(sample.status);
+                        var title = sample.id + ' - ' + sample.status;
+                        html += '<td style="background: ' + bgColor + ';" title="' + title + '" onclick="viewSample(\'' + sample.id.replace(/'/g, "\\'") + '\')">';
+                        html += '<span class="well-id">' + sample.id + '</span>';
+                        html += '</td>';
+                    } else {
+                        html += '<td title="Empty well ' + wellPos + '">';
+                        html += '<span style="font-size: 8px; color: #999;">' + wellPos + '</span>';
+                        html += '</td>';
+                    }
+                }
+                html += '</tr>';
+            }
+
+            html += '</table></div>';
+            document.getElementById('plateMapContainer').innerHTML = html;
+        }
+
+        function getStatusColor(status) {
+            var colors = {
+                'Received': '#e9ecef',
+                'BAP Complete': '#d4edda',
+                'TSB Complete': '#fff3cd',
+                'Extraction Complete': '#f3e5f5',
+                'Clean Extraction Complete': '#e8f5e8',
+                'Clean Extraction Qubit Complete': '#e8f4fd',
+                'Indexing Complete': '#e3f2fd',
+                'Qubit Complete': '#fff3e0'
+            };
+            return colors[status] || '#f8f9fa';
+        }
+
+        function toggleDarkMode() {
+            var currentTheme = document.documentElement.getAttribute('data-theme');
+            var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            document.documentElement.setAttribute('data-theme', newTheme);
+
+            // Update button text
+            var button = document.getElementById('darkModeToggle');
+            if (newTheme === 'dark') {
+                button.innerHTML = '☀️ Light Mode';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                button.innerHTML = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function loadTheme() {
+            var savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            var button = document.getElementById('darkModeToggle');
+            if (button) {
+                if (savedTheme === 'dark') {
+                    button.innerHTML = '☀️ Light Mode';
+                } else {
+                    button.innerHTML = '🌙 Dark Mode';
+                }
+            }
+        }
+
+        function editNotes(sampleId) {
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+            if (!sample) return;
+
+            var currentNotes = sample.notes || '';
+            var newNotes = prompt('Edit notes for sample: ' + sampleId, currentNotes);
+
+            if (newNotes !== null) {
+                sample.notes = newNotes;
+                saveData();
+                renderSamples();
+            }
+        }
+
+        function deleteSample(sampleId) {
+            if (confirm('Are you sure you want to delete sample: ' + sampleId + '?\n\nThis action cannot be undone!')) {
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === sampleId) {
+                        samples.splice(i, 1);
+                        break;
+                    }
+                }
+                saveData();
+                renderSamples();
+                alert('Sample ' + sampleId + ' deleted successfully.');
+            }
+        }
+
         function viewSample(sampleId) {
             var sample = null;
             for (var i = 0; i < samples.length; i++) {
@@ -1707,29 +2511,197 @@ html += '</div>';
                 }
             }
             if (!sample) return;
-            
+
             var chain = 'SAMPLE: ' + sample.id + '\n';
             chain += 'Status: ' + sample.status + '\n';
             chain += 'Added: ' + sample.dateAdded + ' by ' + sample.initials + '\n\n';
-            
+
             if (sample.bapDetails) chain += 'BAP: ' + sample.bapNumber + '\n';
             if (sample.tsbDetails) chain += 'TSB: ' + sample.tsbNumber + '\n';
             if (sample.extractionDetails) chain += 'Extraction: ' + sample.extractionNumber + '\n';
             if (sample.cleanExtractionDetails) chain += 'Clean Extraction: ' + sample.cleanExtractionNumber + '\n';
             if (sample.indexingDetails) chain += 'Indexing: ' + sample.indexingNumber + '\n';
             if (sample.qubitDetails) chain += 'Qubit: ' + sample.qubitDetails.concentration + ' ng/uL\n';
-            
+
             alert(chain);
+        }
+
+        function updateQuickStats() {
+            var statsPanel = document.getElementById('quickStats');
+
+            // Calculate stats
+            var totalSamples = samples.length;
+            var completedSamples = 0;
+            var inProgressSamples = 0;
+            var qcFailures = 0;
+            var lastAdded = null;
+
+            for (var i = 0; i < samples.length; i++) {
+                var s = samples[i];
+                if (s.status === 'Qubit Complete') {
+                    completedSamples++;
+                } else if (s.status !== 'Received') {
+                    inProgressSamples++;
+                }
+
+                // Check for QC failures
+                if (s.cleanExtractionQubitDetails) {
+                    var ceQC = checkQCThreshold(s.cleanExtractionQubitDetails.concentration, 'cleanExtractionQubit');
+                    if (!ceQC.pass) qcFailures++;
+                }
+                if (s.qubitDetails) {
+                    var fqQC = checkQCThreshold(s.qubitDetails.concentration, 'finalQubit');
+                    if (!fqQC.pass) qcFailures++;
+                }
+
+                // Track last added
+                if (!lastAdded || new Date(s.dateAdded) > new Date(lastAdded.dateAdded)) {
+                    lastAdded = s;
+                }
+            }
+
+            var completionRate = totalSamples > 0 ? Math.round((completedSamples / totalSamples) * 100) : 0;
+
+            var html = '';
+
+            // Total samples
+            html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
+            html += '<div style="font-size: 32px; font-weight: bold;">' + totalSamples + '</div>';
+            html += '<div style="font-size: 14px; opacity: 0.9;">Total Samples</div>';
+            html += '</div>';
+
+            // Completion rate
+            html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
+            html += '<div style="font-size: 32px; font-weight: bold;">' + completionRate + '%</div>';
+            html += '<div style="font-size: 14px; opacity: 0.9;">Completion Rate</div>';
+            html += '<div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">' + completedSamples + ' of ' + totalSamples + ' complete</div>';
+            html += '</div>';
+
+            // In progress
+            html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
+            html += '<div style="font-size: 32px; font-weight: bold;">' + inProgressSamples + '</div>';
+            html += '<div style="font-size: 14px; opacity: 0.9;">In Progress</div>';
+            html += '</div>';
+
+            // QC Failures
+            var qcColor = qcFailures > 0 ? '#ff6b6b' : '#51cf66';
+            html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
+            html += '<div style="font-size: 32px; font-weight: bold; color: ' + qcColor + ';">' + qcFailures + '</div>';
+            html += '<div style="font-size: 14px; opacity: 0.9;">QC Warnings</div>';
+            html += '</div>';
+
+            // Last added
+            if (lastAdded) {
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
+                html += '<div style="font-size: 16px; font-weight: bold;">' + lastAdded.id + '</div>';
+                html += '<div style="font-size: 14px; opacity: 0.9;">Last Added</div>';
+                html += '<div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">' + lastAdded.dateAdded + '</div>';
+                html += '</div>';
+            }
+
+            statsPanel.innerHTML = html;
+        }
+
+        function updateDashboard() {
+            var statusCounts = {
+                'Received': 0,
+                'BAP Complete': 0,
+                'TSB Complete': 0,
+                'Extraction Complete': 0,
+                'Clean Extraction Complete': 0,
+                'Clean Extraction Qubit Complete': 0,
+                'Indexing Complete': 0,
+                'Qubit Complete': 0
+            };
+
+            for (var i = 0; i < samples.length; i++) {
+                var status = samples[i].status;
+                if (statusCounts.hasOwnProperty(status)) {
+                    statusCounts[status]++;
+                }
+            }
+
+            var dashboard = document.getElementById('statusDashboard');
+            var html = '';
+
+            var statuses = [
+                {name: 'Received', icon: '📥', color: '#495057', bg: '#e9ecef'},
+                {name: 'BAP Complete', icon: '🧫', color: '#155724', bg: '#d4edda'},
+                {name: 'TSB Complete', icon: '🧪', color: '#856404', bg: '#fff3cd'},
+                {name: 'Extraction Complete', icon: '🧬', color: '#7b1fa2', bg: '#f3e5f5'},
+                {name: 'Clean Extraction Complete', icon: '🧽', color: '#2e7d32', bg: '#e8f5e8'},
+                {name: 'Clean Extraction Qubit Complete', icon: '📊', color: '#1565c0', bg: '#e8f4fd'},
+                {name: 'Indexing Complete', icon: '🔬', color: '#1976d2', bg: '#e3f2fd'},
+                {name: 'Qubit Complete', icon: '✅', color: '#f57c00', bg: '#fff3e0'}
+            ];
+
+            for (var i = 0; i < statuses.length; i++) {
+                var s = statuses[i];
+                html += '<div style="background: ' + s.bg + '; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid ' + s.color + '20;">';
+                html += '<div style="font-size: 24px;">' + s.icon + '</div>';
+                html += '<div style="font-size: 28px; font-weight: bold; color: ' + s.color + '; margin: 5px 0;">' + statusCounts[s.name] + '</div>';
+                html += '<div style="font-size: 11px; color: ' + s.color + '; font-weight: 600;">' + s.name.toUpperCase() + '</div>';
+                html += '</div>';
+            }
+
+            html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid #dee2e6;">';
+            html += '<div style="font-size: 24px;">📦</div>';
+            html += '<div style="font-size: 28px; font-weight: bold; color: #212529; margin: 5px 0;">' + samples.length + '</div>';
+            html += '<div style="font-size: 11px; color: #495057; font-weight: 600;">TOTAL SAMPLES</div>';
+            html += '</div>';
+
+            dashboard.innerHTML = html;
+        }
+
+        function sortSamples() {
+            var sortType = document.getElementById('sortSelect').value;
+
+            if (sortType === 'dateDesc') {
+                // Newest first (reverse chronological)
+                samples.sort(function(a, b) {
+                    return samples.indexOf(b) - samples.indexOf(a);
+                });
+            } else if (sortType === 'dateAsc') {
+                // Oldest first (chronological)
+                samples.sort(function(a, b) {
+                    return samples.indexOf(a) - samples.indexOf(b);
+                });
+            } else if (sortType === 'idAsc') {
+                // ID A-Z
+                samples.sort(function(a, b) {
+                    return a.id.localeCompare(b.id);
+                });
+            } else if (sortType === 'idDesc') {
+                // ID Z-A
+                samples.sort(function(a, b) {
+                    return b.id.localeCompare(a.id);
+                });
+            } else if (sortType === 'status') {
+                // By workflow status
+                var statusOrder = ['Received', 'BAP Complete', 'TSB Complete', 'Extraction Complete',
+                                  'Clean Extraction Complete', 'Clean Extraction Qubit Complete',
+                                  'Indexing Complete', 'Qubit Complete'];
+                samples.sort(function(a, b) {
+                    var aIndex = statusOrder.indexOf(a.status);
+                    var bIndex = statusOrder.indexOf(b.status);
+                    return aIndex - bIndex;
+                });
+            }
+
+            saveData();
+            renderSamples();
         }
 
         function renderSamples() {
             var container = document.getElementById('sampleContainer');
-            
+
             if (samples.length === 0) {
                 container.innerHTML = '<p>No samples yet. Add one above!</p>';
+                updateQuickStats();
+                updateDashboard();
                 return;
             }
-            
+
             var receivedCount = 0;
 var bapCount = 0;
 var tsbCount = 0;
@@ -1793,22 +2765,40 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                     }
                 }
                 if (sample.cleanExtractionQubitDetails) {
-    html += '<br>Clean Extraction Qubit: ' + sample.cleanExtractionQubitDetails.concentration + ' ng/uL';
+    var ceQC = checkQCThreshold(sample.cleanExtractionQubitDetails.concentration, 'cleanExtractionQubit');
+    var ceStyle = ceQC.pass ? '' : ' style="color: #dc3545; font-weight: bold;"';
+    html += '<br>Clean Extraction Qubit: <span' + ceStyle + '>' + sample.cleanExtractionQubitDetails.concentration + ' ng/uL</span>';
+    if (!ceQC.pass) {
+        html += ' <span style="color: #dc3545; font-size: 12px;">' + ceQC.message + '</span>';
+    }
     if (sample.cleanExtractionQubitDetails.reagentLot) {
         html += '<br><small>CE Qubit Reagent: ' + sample.cleanExtractionQubitDetails.reagentLot + ' | Date: ' + (sample.cleanExtractionQubitDetails.dateQubited || sample.cleanExtractionQubitDetails.completedDate) + '</small>';
     }
 }
 if (sample.qubitDetails) {
-    html += '<br>Final Qubit: ' + sample.qubitDetails.concentration + ' ng/uL';
+    var fqQC = checkQCThreshold(sample.qubitDetails.concentration, 'finalQubit');
+    var fqStyle = fqQC.pass ? '' : ' style="color: #dc3545; font-weight: bold;"';
+    html += '<br>Final Qubit: <span' + fqStyle + '>' + sample.qubitDetails.concentration + ' ng/uL</span>';
+    if (!fqQC.pass) {
+        html += ' <span style="color: #dc3545; font-size: 12px;">' + fqQC.message + '</span>';
+    }
     if (sample.qubitDetails.reagentLot) {
         html += '<br><small>Final Qubit Reagent: ' + sample.qubitDetails.reagentLot + ' | Date: ' + (sample.qubitDetails.dateQubited || sample.qubitDetails.completedDate) + '</small>';
     }
 }
                 
+                // Show notes if they exist
+                if (sample.notes && sample.notes.trim()) {
+                    html += '<br><small style="color: #6c757d; font-style: italic;">📝 ' + sample.notes + '</small>';
+                }
+
                 html += '</div>';
                 html += '<div class="sample-actions">';
                 html += '<button onclick="viewSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">View</button><br>';
-                
+                html += '<button onclick="editSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #ffc107; color: #212529; border: none; border-radius: 4px; margin-bottom: 4px; font-weight: 600;">Edit</button><br>';
+                html += '<button onclick="editNotes(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #17a2b8; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Notes</button><br>';
+                html += '<button onclick="deleteSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Delete</button><br>';
+
                 if (sample.status === 'Received') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'BAP\')">Start BAP</button>';
                 } else if (sample.status === 'BAP Complete') {
@@ -1832,6 +2822,8 @@ if (sample.qubitDetails) {
             
             container.innerHTML = html;
             updateSelection();
+            updateQuickStats();
+            updateDashboard();
         }
 
         // Password protection
@@ -1857,12 +2849,76 @@ if (sample.qubitDetails) {
             document.getElementById('appContent').style.display = 'block';
         }
 
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Only if authenticated
+            if (sessionStorage.getItem('bwgsAuthenticated') !== 'true') return;
+
+            // Ctrl/Cmd + F - Focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+                document.getElementById('searchInput').select();
+            }
+
+            // Ctrl/Cmd + E - Export JSON
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportData();
+            }
+
+            // Ctrl/Cmd + Shift + E - Export CSV
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+                e.preventDefault();
+                exportCSV();
+            }
+
+            // Ctrl/Cmd + I - Import
+            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                importData();
+            }
+
+            // Ctrl/Cmd + N - Focus new sample input
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                document.getElementById('sampleId').focus();
+            }
+
+            // Number keys 1-5 for quick filters
+            if (e.key >= '1' && e.key <= '5' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                var activeElement = document.activeElement;
+                // Only if not typing in input/textarea
+                if (activeElement.tagName !== 'INPUT' && activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    var filters = document.getElementsByName('statusFilter');
+                    if (filters[parseInt(e.key) - 1]) {
+                        filters[parseInt(e.key) - 1].checked = true;
+                        filterSamples();
+                    }
+                }
+            }
+
+            // Escape - Close modals
+            if (e.key === 'Escape') {
+                closeModal();
+                closeBatchModal();
+                closeEditModal();
+                closeShortcutsModal();
+                closePlateMapModal();
+            }
+        });
+
+        // Load theme preference on page load (before authentication check)
+        loadTheme();
+
         // Load saved data and render on page load (only if authenticated)
         if (sessionStorage.getItem('bwgsAuthenticated') === 'true') {
             loadData();
             renderSamples();
         }
         console.log('Lab Workflow Tracker loaded successfully!');
+        console.log('Keyboard shortcuts: Ctrl+F (search), Ctrl+E (export), Ctrl+N (new sample), Esc (close), 1-5 (filters)');
     </script>
     </div> <!-- Close appContent div -->
 </body>

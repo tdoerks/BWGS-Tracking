@@ -4,13 +4,30 @@ A comprehensive web-based tracking system for Bacterial Whole Genome Sequencing 
 
 ## Features
 
-- **Complete Workflow Tracking**: BAP → TSB → Extraction → Clean Extraction → Qubit → Indexing → Final Qubit
-- **Batch Processing**: Process multiple samples simultaneously with auto-generated reference tables
-- **Detailed Reagent Tracking**: Track lot numbers, technician initials, temperatures, and incubators
-- **Data Persistence**: Automatic saving to browser localStorage
-- **Data Export/Import**: Backup and restore your data as JSON files
-- **Sample Numbering**: Auto-incrementing sample numbers (25B001, 25T001, 25E001, etc.)
-- **Well Position Tracking**: Automatic well position assignment for plate-based workflows
+### Core Functionality
+- **Complete Workflow Tracking**: 8-stage BWGS pipeline from sample receipt to final QC
+- **Batch Processing**: Process multiple samples simultaneously with reference tables
+- **Single & Bulk Input**: Add samples one at a time or paste multiple IDs
+- **Chain of Custody**: Track sample lineage through all workflow steps
+- **Detailed Reagent Tracking**: Lot numbers, technicians, dates, temperatures, incubators
+
+### Data Management
+- **Auto-Save**: Automatic persistence to browser localStorage
+- **JSON Export/Import**: Full backup and restore capability
+- **CSV Export**: Excel-compatible reports with all workflow data
+- **Password Protection**: Simple access control (password: bwgs2025)
+
+### Search & Organization
+- **Real-time Search**: Find samples instantly by ID
+- **Status Filters**: View samples by workflow stage
+- **Status Dashboard**: Visual overview of sample distribution
+- **Sample Notes**: Add observations and track issues
+
+### Quality of Life
+- **Delete Samples**: Remove test or incorrect entries
+- **View Sample Details**: Quick chain-of-custody overview
+- **Auto-numbering**: Samples, plates, runs, and wells
+- **Duplicate Detection**: Prevents adding existing samples
 
 ## Usage
 
@@ -62,9 +79,54 @@ Use the "🗑️ Clear All Data" button to reset the tracker (with double confir
 ## Data Backup Recommendations
 
 Since data is stored in browser localStorage:
-- Export your data regularly using the Export button
-- Keep JSON backups in a safe location
-- Consider exporting after each major batch of work
+- **Export regularly**: Use "📥 Export JSON" button daily or after major work
+- **Keep multiple backups**: Save JSON files with dates in filenames
+- **Use CSV for reports**: Export to CSV for sharing with non-technical staff
+- **Before clearing browser**: Always export first!
+- **Browser-specific**: Data doesn't sync between Chrome/Firefox/etc.
+
+## Password
+
+Default password: `bwgs2025`
+
+To change: Edit line 1840 in `index.html`:
+```javascript
+var correctPassword = 'YOUR_NEW_PASSWORD';
+```
+
+**Security Note**: This is JavaScript-based protection (visible in source code). Suitable for casual access control only. For HIPAA/secure environments, deploy with proper backend authentication.
+
+## Detailed Documentation
+
+- See [FEATURES.md](FEATURES.md) for complete feature list
+- See workflow section below for step-by-step guide
+
+## Common Tasks
+
+### Adding Samples
+1. Enter Sample ID and initials, click "Add Sample"
+2. OR click "Switch to Bulk Input" and paste multiple IDs
+
+### Processing Samples
+1. Click status filter or search for samples
+2. Click next action button (e.g., "Start BAP")
+3. Fill in reagent lots, technician info
+4. Click "Complete"
+
+### Batch Processing
+1. Select 2+ samples at same workflow stage (checkboxes appear automatically)
+2. Click "Start Batch Processing"
+3. Fill in shared reagent info
+4. Individual fields (like indexes) filled per sample
+
+### Finding Samples
+- Use search box to find by ID
+- Use radio buttons to filter by status
+- Check dashboard for counts
+
+### Exporting Data
+- **JSON**: Full backup for importing back into tracker
+- **CSV**: Open in Excel for analysis, reports, or sharing
 
 ## License
 
