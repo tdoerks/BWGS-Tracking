@@ -672,6 +672,20 @@
     <div class="sample-list">
         <h3>Samples</h3>
 
+        <!-- Bulk Operations Bar -->
+        <div id="bulkOpsBar" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 8px; margin-bottom: 20px; color: white;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <strong><span id="selectedCount">0</span> samples selected</strong>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="bulkDelete()" style="background: #dc3545; color: white;">🗑️ Delete Selected</button>
+                    <button onclick="showBulkStatusChange()" style="background: #ffc107; color: #333;">📝 Change Status</button>
+                    <button onclick="clearSelection()" style="background: #6c757d; color: white;">✖ Clear Selection</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Search and Filter Section -->
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -686,6 +700,11 @@
                     <option value="idDesc">Sort: ID (Z-A)</option>
                     <option value="status">Sort: By Status</option>
                 </select>
+
+                <label style="padding: 10px; background: white; border-radius: 4px; cursor: pointer;">
+                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                    <strong>Select All</strong>
+                </label>
             </div>
 
             <div style="margin-top: 10px;">
@@ -2666,6 +2685,125 @@ html += '</div>';
             }
         }
 
+        var bulkSelectedSamples = [];
+
+        function toggleSampleSelection(sampleId, checkbox) {
+            if (checkbox.checked) {
+                if (bulkSelectedSamples.indexOf(sampleId) === -1) {
+                    bulkSelectedSamples.push(sampleId);
+                }
+            } else {
+                var index = bulkSelectedSamples.indexOf(sampleId);
+                if (index > -1) {
+                    bulkSelectedSamples.splice(index, 1);
+                }
+            }
+            updateBulkOpsBar();
+        }
+
+        function toggleSelectAll() {
+            var selectAll = document.getElementById('selectAllCheckbox').checked;
+            var checkboxes = document.querySelectorAll('.sample-checkbox');
+            bulkSelectedSamples = [];
+
+            for (var i = 0; i < checkboxes.length; i++) {
+                var checkbox = checkboxes[i];
+                var sampleItem = checkbox.closest('.sample-item');
+
+                // Only select visible samples
+                if (sampleItem && sampleItem.style.display !== 'none') {
+                    checkbox.checked = selectAll;
+                    if (selectAll) {
+                        bulkSelectedSamples.push(checkbox.value);
+                    }
+                }
+            }
+            updateBulkOpsBar();
+        }
+
+        function clearSelection() {
+            bulkSelectedSamples = [];
+            var checkboxes = document.querySelectorAll('.sample-checkbox');
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = false;
+            }
+            document.getElementById('selectAllCheckbox').checked = false;
+            updateBulkOpsBar();
+        }
+
+        function updateBulkOpsBar() {
+            var bar = document.getElementById('bulkOpsBar');
+            var count = bulkSelectedSamples.length;
+            document.getElementById('selectedCount').textContent = count;
+
+            if (count > 0) {
+                bar.style.display = 'block';
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        function bulkDelete() {
+            if (bulkSelectedSamples.length === 0) return;
+
+            var deleteCount = bulkSelectedSamples.length;
+            var confirmed = confirm('Are you sure you want to delete ' + deleteCount + ' sample(s)?\n\nThis cannot be undone!');
+            if (!confirmed) return;
+
+            // Delete all selected samples (iterate backwards to avoid index issues)
+            samples = samples.filter(function(sample) {
+                return bulkSelectedSamples.indexOf(sample.id) === -1;
+            });
+
+            clearSelection();
+            saveData();
+            renderSamples();
+            alert(deleteCount + ' sample(s) deleted successfully!');
+        }
+
+        function showBulkStatusChange() {
+            if (bulkSelectedSamples.length === 0) return;
+
+            var newStatus = prompt('Enter new status for ' + bulkSelectedSamples.length + ' sample(s):\n\n' +
+                'Options:\n' +
+                '- Received\n' +
+                '- BAP Complete\n' +
+                '- TSB Complete\n' +
+                '- Extraction Complete\n' +
+                '- Clean Extraction Complete\n' +
+                '- Clean Extraction Qubit Complete\n' +
+                '- Indexing Complete\n' +
+                '- Qubit Complete');
+
+            if (!newStatus) return;
+
+            var validStatuses = ['Received', 'BAP Complete', 'TSB Complete', 'Extraction Complete',
+                'Clean Extraction Complete', 'Clean Extraction Qubit Complete', 'Indexing Complete', 'Qubit Complete'];
+
+            if (validStatuses.indexOf(newStatus) === -1) {
+                alert('Invalid status! Please use one of the listed options.');
+                return;
+            }
+
+            // Update status for all selected samples
+            var updated = 0;
+            for (var i = 0; i < bulkSelectedSamples.length; i++) {
+                var sampleId = bulkSelectedSamples[i];
+                for (var j = 0; j < samples.length; j++) {
+                    if (samples[j].id === sampleId) {
+                        samples[j].status = newStatus;
+                        updated++;
+                        break;
+                    }
+                }
+            }
+
+            clearSelection();
+            saveData();
+            renderSamples();
+            alert(updated + ' sample(s) status updated to: ' + newStatus);
+        }
+
         function showAnalytics() {
             document.getElementById('analyticsModal').style.display = 'block';
             renderAnalytics();
@@ -3253,9 +3391,14 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                 
                 html += '<div class="sample-item">';
                 html += '<div class="sample-info">';
-                
+
+                // Always show checkbox for bulk operations
+                var isChecked = bulkSelectedSamples.indexOf(sample.id) !== -1 ? ' checked' : '';
+                html += '<input type="checkbox" class="sample-checkbox" value="' + sample.id + '" onchange="toggleSampleSelection(\'' + sample.id.replace(/'/g, "\\'") + '\', this)"' + isChecked + '> ';
+
                 if (showCheckbox) {
-                    html += '<input type="checkbox" class="sample-checkbox" value="' + sample.id + '" onchange="updateSelection()">';
+                    // Batch processing checkbox (keep for compatibility)
+                    html += '<input type="checkbox" class="sample-checkbox-batch" value="' + sample.id + '" onchange="updateSelection()"> ';
                 }
                 
                 html += '<strong>' + sample.id + '</strong> ';
