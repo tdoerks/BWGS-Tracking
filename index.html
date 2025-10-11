@@ -1190,6 +1190,17 @@
             } else {
                 initializeDefaults();
             }
+
+            // Load reagent lot history
+            var savedLotHistory = localStorage.getItem('reagentLotHistory');
+            if (savedLotHistory) {
+                try {
+                    reagentLotHistory = JSON.parse(savedLotHistory);
+                } catch (e) {
+                    console.error('Error loading lot history:', e);
+                    reagentLotHistory = {};
+                }
+            }
         }
 
         function initializeDefaults() {
@@ -1233,6 +1244,7 @@
         var nextIndexingPlate = 1;
         var currentProcessType = '';
         var selectedSamples = [];
+        var reagentLotHistory = {}; // Store recently used lot numbers by field name
         var currentBatchSamples = [];
         var currentBatchType = '';
 
@@ -1242,6 +1254,60 @@
             var col = String(Math.floor(index / 8) + 1);
             if (col.length === 1) col = '0' + col;
             return row + col;
+        }
+
+        // Track recently used lot numbers
+        function trackLotNumber(fieldName, value) {
+            if (!value || value.trim() === '') return;
+
+            if (!reagentLotHistory[fieldName]) {
+                reagentLotHistory[fieldName] = [];
+            }
+
+            // Remove if already exists (move to front)
+            var index = reagentLotHistory[fieldName].indexOf(value);
+            if (index > -1) {
+                reagentLotHistory[fieldName].splice(index, 1);
+            }
+
+            // Add to front, keep only last 5
+            reagentLotHistory[fieldName].unshift(value);
+            if (reagentLotHistory[fieldName].length > 5) {
+                reagentLotHistory[fieldName].pop();
+            }
+
+            // Save to localStorage
+            localStorage.setItem('reagentLotHistory', JSON.stringify(reagentLotHistory));
+        }
+
+        // Get recent lot numbers for autocomplete
+        function getRecentLots(fieldName) {
+            return reagentLotHistory[fieldName] || [];
+        }
+
+        // Add datalist for autocomplete to an input field
+        function addAutocomplete(inputId, fieldName) {
+            var input = document.getElementById(inputId);
+            if (!input) return;
+
+            var datalistId = inputId + 'List';
+            var existingDatalist = document.getElementById(datalistId);
+            if (existingDatalist) {
+                existingDatalist.remove();
+            }
+
+            var datalist = document.createElement('datalist');
+            datalist.id = datalistId;
+
+            var recentLots = getRecentLots(fieldName);
+            for (var i = 0; i < recentLots.length; i++) {
+                var option = document.createElement('option');
+                option.value = recentLots[i];
+                datalist.appendChild(option);
+            }
+
+            document.body.appendChild(datalist);
+            input.setAttribute('list', datalistId);
         }
 
         function createReferenceTable(sampleIds, sourceType, targetType, targetStartNumber) {
@@ -1474,9 +1540,14 @@
             document.getElementById('modalTitle').textContent = 'Start ' + type;
             document.getElementById('modalSampleId').textContent = sampleId;
             document.getElementById('modalNumber').innerHTML = '<strong>' + number + '</strong>';
-            
+
             showSpecificFields(type);
             document.getElementById('processModal').style.display = 'block';
+
+            // Add autocomplete to lot number field
+            setTimeout(function() {
+                addAutocomplete('lotNumber', 'lotNumber');
+            }, 100);
         }
 
         function showSpecificFields(type) {
@@ -1876,8 +1947,39 @@ html += '<label>Date Qubited:</label>';
 html += '<input type="date" id="qubitDate" value="' + new Date().toISOString().split('T')[0] + '">';
 html += '</div>';
             }
-            
+
             container.innerHTML = html;
+
+            // Add autocomplete to all reagent lot fields after a short delay
+            setTimeout(function() {
+                // Extraction reagent lots
+                addAutocomplete('aw1Lot', 'aw1Lot');
+                addAutocomplete('aw2Lot', 'aw2Lot');
+                addAutocomplete('ethanolLot', 'ethanolLot');
+                addAutocomplete('bufferALLot', 'bufferALLot');
+                addAutocomplete('bufferATLLot', 'bufferATLLot');
+                addAutocomplete('bufferAELot', 'bufferAELot');
+                addAutocomplete('proteinaseKLot', 'proteinaseKLot');
+                addAutocomplete('dneasyLot', 'dneasyLot');
+
+                // Clean Extraction reagent lots
+                addAutocomplete('beadLot', 'beadLot');
+                addAutocomplete('nfH2oEtohLot', 'nfH2oEtohLot');
+                addAutocomplete('etohDilutionLot', 'etohDilutionLot');
+                addAutocomplete('nfH2oElutionLot', 'nfH2oElutionLot');
+                addAutocomplete('qubitReagentLot', 'qubitReagentLot');
+
+                // Indexing reagent lots
+                addAutocomplete('tdBufferLot', 'tdBufferLot');
+                addAutocomplete('atmBufferLot', 'atmBufferLot');
+                addAutocomplete('ntBufferLot', 'ntBufferLot');
+                addAutocomplete('npmLot', 'npmLot');
+                addAutocomplete('resuspensionBufferLot', 'resuspensionBufferLot');
+                addAutocomplete('indexesKitLot', 'indexesKitLot');
+                addAutocomplete('indexingBeadsLot', 'indexingBeadsLot');
+                addAutocomplete('indexingEtohLot', 'indexingEtohLot');
+                addAutocomplete('indexingNfH2oLot', 'indexingNfH2oLot');
+            }, 100);
         }
 
         function completeProcess() {
@@ -2029,6 +2131,38 @@ html += '</div>';
                         technician: tech,
                         completedDate: today
                     };
+                }
+
+                // Track all lot numbers used in this process
+                trackLotNumber('lotNumber', lot);
+
+                if (currentProcessType === 'Extraction') {
+                    trackLotNumber('aw1Lot', document.getElementById('aw1Lot').value);
+                    trackLotNumber('aw2Lot', document.getElementById('aw2Lot').value);
+                    trackLotNumber('ethanolLot', document.getElementById('ethanolLot').value);
+                    trackLotNumber('bufferALLot', document.getElementById('bufferALLot').value);
+                    trackLotNumber('bufferATLLot', document.getElementById('bufferATLLot').value);
+                    trackLotNumber('bufferAELot', document.getElementById('bufferAELot').value);
+                    trackLotNumber('proteinaseKLot', document.getElementById('proteinaseKLot').value);
+                    trackLotNumber('dneasyLot', document.getElementById('dneasyLot').value);
+                } else if (currentProcessType === 'Clean Extraction') {
+                    trackLotNumber('beadLot', document.getElementById('beadLot').value);
+                    trackLotNumber('nfH2oEtohLot', document.getElementById('nfH2oEtohLot').value);
+                    trackLotNumber('etohDilutionLot', document.getElementById('etohDilutionLot').value);
+                    trackLotNumber('nfH2oElutionLot', document.getElementById('nfH2oElutionLot').value);
+                    trackLotNumber('qubitReagentLot', document.getElementById('qubitReagentLot').value);
+                } else if (currentProcessType === 'Indexing') {
+                    trackLotNumber('tdBufferLot', document.getElementById('tdBufferLot').value);
+                    trackLotNumber('atmBufferLot', document.getElementById('atmBufferLot').value);
+                    trackLotNumber('ntBufferLot', document.getElementById('ntBufferLot').value);
+                    trackLotNumber('npmLot', document.getElementById('npmLot').value);
+                    trackLotNumber('resuspensionBufferLot', document.getElementById('resuspensionBufferLot').value);
+                    trackLotNumber('indexesKitLot', document.getElementById('indexesKitLot').value);
+                    trackLotNumber('indexingBeadsLot', document.getElementById('indexingBeadsLot').value);
+                    trackLotNumber('indexingEtohLot', document.getElementById('indexingEtohLot').value);
+                    trackLotNumber('indexingNfH2oLot', document.getElementById('indexingNfH2oLot').value);
+                } else if (currentProcessType === 'Clean Extraction Qubit' || currentProcessType === 'Final Qubit') {
+                    trackLotNumber('qubitReagentLot', document.getElementById('qubitReagentLot').value);
                 }
 
                 saveData();
