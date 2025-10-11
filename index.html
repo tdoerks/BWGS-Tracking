@@ -773,7 +773,17 @@
                     <option value="INC-2">Incubator 2</option>
                 </select>
             </div>
-            
+
+            <div class="form-group">
+                <label>Time In:</label>
+                <input type="time" id="batchTimeIn" placeholder="HH:MM">
+            </div>
+
+            <div class="form-group">
+                <label>Time Out:</label>
+                <input type="time" id="batchTimeOut" placeholder="HH:MM">
+            </div>
+
             <button onclick="completeBatchProcess()">Complete Batch</button>
             <button class="btn-cancel" onclick="closeBatchModal()">Cancel</button>
         </div>
@@ -812,7 +822,17 @@
                     <option value="INC-2">Incubator 2</option>
                 </select>
             </div>
-            
+
+            <div class="form-group">
+                <label>Time In:</label>
+                <input type="time" id="timeIn" placeholder="HH:MM">
+            </div>
+
+            <div class="form-group">
+                <label>Time Out:</label>
+                <input type="time" id="timeOut" placeholder="HH:MM">
+            </div>
+
             <div id="specificFields"></div>
             
             <button onclick="completeProcess()">Complete</button>
@@ -1865,7 +1885,9 @@ html += '</div>';
             var lot = document.getElementById('lotNumber').value.trim();
             var temp = document.getElementById('temperature').value;
             var inc = document.getElementById('incubator').value;
-            
+            var timeIn = document.getElementById('timeIn').value;
+            var timeOut = document.getElementById('timeOut').value;
+
             if (!tech || !lot) {
                 alert('Please fill in required fields');
                 return;
@@ -1886,12 +1908,28 @@ html += '</div>';
                 if (currentProcessType === 'BAP') {
                     sample.bapNumber = '25B' + String(nextBapNumber).padStart(3, '0');
                     sample.status = 'BAP Complete';
-                    sample.bapDetails = { technician: tech, lot: lot, completedDate: today };
+                    sample.bapDetails = {
+                        technician: tech,
+                        lot: lot,
+                        completedDate: today,
+                        temperature: temp,
+                        incubator: inc,
+                        timeIn: timeIn,
+                        timeOut: timeOut
+                    };
                     nextBapNumber++;
                 } else if (currentProcessType === 'TSB') {
                     sample.tsbNumber = '25T' + String(nextTsbNumber).padStart(3, '0');
                     sample.status = 'TSB Complete';
-                    sample.tsbDetails = { technician: tech, lot: lot, completedDate: today };
+                    sample.tsbDetails = {
+                        technician: tech,
+                        lot: lot,
+                        completedDate: today,
+                        temperature: temp,
+                        incubator: inc,
+                        timeIn: timeIn,
+                        timeOut: timeOut
+                    };
                     nextTsbNumber++;
                 } else if (currentProcessType === 'Extraction') {
                     sample.extractionNumber = '25E' + String(nextExtractionNumber).padStart(3, '0');
@@ -2227,12 +2265,16 @@ html += '</div>';
         function completeBatchProcess() {
             var tech = document.getElementById('batchTechInitials').value.trim();
             var lot = document.getElementById('batchLotNumber').value.trim();
-            
+            var temp = document.getElementById('batchTemperature').value;
+            var inc = document.getElementById('batchIncubator').value;
+            var timeIn = document.getElementById('batchTimeIn').value;
+            var timeOut = document.getElementById('batchTimeOut').value;
+
             if (!tech || !lot) {
                 alert('Please fill in required fields');
                 return;
             }
-            
+
             var today = new Date().toLocaleDateString();
             
             for (var i = 0; i < currentBatchSamples.length; i++) {
@@ -2249,11 +2291,27 @@ html += '</div>';
                     if (currentBatchType === 'BAP') {
                         sample.bapNumber = '25B' + String(nextBapNumber + i).padStart(3, '0');
                         sample.status = 'BAP Complete';
-                        sample.bapDetails = { technician: tech, lot: lot, completedDate: today };
+                        sample.bapDetails = {
+                            technician: tech,
+                            lot: lot,
+                            completedDate: today,
+                            temperature: temp,
+                            incubator: inc,
+                            timeIn: timeIn,
+                            timeOut: timeOut
+                        };
                     } else if (currentBatchType === 'TSB') {
                         sample.tsbNumber = '25T' + String(nextTsbNumber + i).padStart(3, '0');
                         sample.status = 'TSB Complete';
-                        sample.tsbDetails = { technician: tech, lot: lot, completedDate: today };
+                        sample.tsbDetails = {
+                            technician: tech,
+                            lot: lot,
+                            completedDate: today,
+                            temperature: temp,
+                            incubator: inc,
+                            timeIn: timeIn,
+                            timeOut: timeOut
+                        };
                     } else if (currentBatchType === 'Extraction') {
                         sample.extractionNumber = '25E' + String(nextExtractionNumber + i).padStart(3, '0');
                         sample.status = 'Extraction Complete';
@@ -3086,23 +3144,35 @@ html += '</div>';
 
                 // Add BAP event
                 if (s.bapDetails) {
+                    var bapDetails = 'Lot: ' + s.bapDetails.lotNumber + ', ' + s.bapDetails.temperature + '°C, ' + s.bapDetails.incubator;
+                    if (s.bapDetails.timeIn) bapDetails += ', In: ' + s.bapDetails.timeIn;
+                    if (s.bapDetails.timeOut) bapDetails += ', Out: ' + s.bapDetails.timeOut;
                     events.push({
                         date: s.bapDetails.completionDate,
                         sampleId: s.id,
                         stage: 'BAP Complete',
                         tech: s.bapDetails.tech,
-                        details: 'Lot: ' + s.bapDetails.lotNumber + ', ' + s.bapDetails.temperature + '°C, ' + s.bapDetails.incubator
+                        details: bapDetails
                     });
                 }
 
                 // Add TSB event
                 if (s.tsbDetails) {
+                    var tsbDetails = 'Lot: ' + s.tsbDetails.lotNumber;
+                    if (s.tsbDetails.temperature && s.tsbDetails.incubator) {
+                        tsbDetails += ', ' + s.tsbDetails.temperature + '°C, ' + s.tsbDetails.incubator;
+                    }
+                    if (s.tsbDetails.timeIn) tsbDetails += ', In: ' + s.tsbDetails.timeIn;
+                    if (s.tsbDetails.timeOut) tsbDetails += ', Out: ' + s.tsbDetails.timeOut;
+                    if (s.tsbDetails.storagePlate) {
+                        tsbDetails += ', Plate: ' + s.tsbDetails.storagePlate + ', Well: ' + s.tsbDetails.wellPosition;
+                    }
                     events.push({
                         date: s.tsbDetails.completionDate,
                         sampleId: s.id,
                         stage: 'TSB Complete',
                         tech: s.tsbDetails.tech,
-                        details: 'Lot: ' + s.tsbDetails.lotNumber + ', Plate: ' + s.tsbDetails.storagePlate + ', Well: ' + s.tsbDetails.wellPosition
+                        details: tsbDetails
                     });
                 }
 
@@ -3512,8 +3582,24 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                 html += '<span class="status status-' + sample.status.toLowerCase().replace(/ /g, '-') + '">' + sample.status + '</span>';
                 html += '<br><small>Added: ' + sample.dateAdded + ' | ' + sample.initials + '</small>';
                 
-                if (sample.bapDetails) html += '<br>BAP: ' + sample.bapNumber;
-                if (sample.tsbDetails) html += '<br>TSB: ' + sample.tsbNumber;
+                if (sample.bapDetails) {
+                    html += '<br>BAP: ' + sample.bapNumber;
+                    if (sample.bapDetails.timeIn || sample.bapDetails.timeOut) {
+                        html += '<br><small>' + sample.bapDetails.temperature + '°C, ' + sample.bapDetails.incubator;
+                        if (sample.bapDetails.timeIn) html += ' | In: ' + sample.bapDetails.timeIn;
+                        if (sample.bapDetails.timeOut) html += ' | Out: ' + sample.bapDetails.timeOut;
+                        html += '</small>';
+                    }
+                }
+                if (sample.tsbDetails) {
+                    html += '<br>TSB: ' + sample.tsbNumber;
+                    if (sample.tsbDetails.timeIn || sample.tsbDetails.timeOut) {
+                        html += '<br><small>' + sample.tsbDetails.temperature + '°C, ' + sample.tsbDetails.incubator;
+                        if (sample.tsbDetails.timeIn) html += ' | In: ' + sample.tsbDetails.timeIn;
+                        if (sample.tsbDetails.timeOut) html += ' | Out: ' + sample.tsbDetails.timeOut;
+                        html += '</small>';
+                    }
+                }
                 if (sample.extractionDetails) {
                     html += '<br>Extraction: ' + sample.extractionNumber + ' | Run: ' + sample.extractionDetails.extractionRun;
                     if (sample.extractionDetails.reagentLots && sample.extractionDetails.reagentLots.aw1) {
