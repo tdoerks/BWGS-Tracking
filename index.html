@@ -891,6 +891,25 @@
         </div>
     </div>
 
+    <!-- QR Code Modal -->
+    <div id="qrCodeModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <span class="close-btn" onclick="closeQRCodeModal()">&times;</span>
+            <h3>📱 Sample QR Code</h3>
+
+            <div id="qrCodeContainer" style="margin: 20px 0;">
+                <!-- QR Code will be generated here -->
+            </div>
+
+            <div id="qrSampleInfo" style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
+                <!-- Sample info will be shown here -->
+            </div>
+
+            <button onclick="printQRCode()" style="background: #28a745; color: white; margin-right: 10px;">🖨️ Print Label</button>
+            <button class="btn-cancel" onclick="closeQRCodeModal()">Close</button>
+        </div>
+    </div>
+
     <!-- Analytics Modal -->
     <div id="analyticsModal" class="modal">
         <div class="modal-content" style="max-width: 1200px; width: 95%;">
@@ -2686,6 +2705,94 @@ html += '</div>';
         }
 
         var bulkSelectedSamples = [];
+        var currentQRSampleId = null;
+
+        function showQRCode(sampleId) {
+            currentQRSampleId = sampleId;
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+
+            if (!sample) return;
+
+            // Generate QR code data (JSON format for comprehensive info)
+            var qrData = {
+                id: sample.id,
+                status: sample.status,
+                added: sample.dateAdded,
+                initials: sample.initials
+            };
+
+            // Add BAP number if exists
+            if (sample.bapNumber) {
+                qrData.bap = sample.bapNumber;
+            }
+
+            var qrDataString = JSON.stringify(qrData);
+
+            // Generate QR code using Google Charts API
+            var qrSize = 300;
+            var qrCodeURL = 'https://chart.googleapis.com/chart?cht=qr&chs=' + qrSize + 'x' + qrSize + '&chl=' + encodeURIComponent(qrDataString);
+
+            // Display QR code
+            var qrContainer = document.getElementById('qrCodeContainer');
+            qrContainer.innerHTML = '<img src="' + qrCodeURL + '" alt="QR Code for ' + sample.id + '" style="max-width: 100%; border: 2px solid var(--border-color); border-radius: 8px;">';
+
+            // Display sample info
+            var infoContainer = document.getElementById('qrSampleInfo');
+            var html = '<h4 style="margin-top: 0;">' + sample.id + '</h4>';
+            html += '<p><strong>Status:</strong> ' + sample.status + '</p>';
+            html += '<p><strong>Added:</strong> ' + sample.dateAdded + '</p>';
+            html += '<p><strong>Technician:</strong> ' + sample.initials + '</p>';
+            if (sample.bapNumber) {
+                html += '<p><strong>BAP #:</strong> ' + sample.bapNumber + '</p>';
+            }
+            if (sample.notes) {
+                html += '<p><strong>Notes:</strong> ' + sample.notes + '</p>';
+            }
+            infoContainer.innerHTML = html;
+
+            // Show modal
+            document.getElementById('qrCodeModal').style.display = 'block';
+        }
+
+        function closeQRCodeModal() {
+            document.getElementById('qrCodeModal').style.display = 'none';
+            currentQRSampleId = null;
+        }
+
+        function printQRCode() {
+            var modal = document.getElementById('qrCodeModal');
+            var qrContainer = document.getElementById('qrCodeContainer').innerHTML;
+            var sampleInfo = document.getElementById('qrSampleInfo').innerHTML;
+
+            // Open print window with QR code
+            var printWindow = window.open('', '', 'width=600,height=600');
+            printWindow.document.write('<html><head><title>QR Code Label - ' + currentQRSampleId + '</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }');
+            printWindow.document.write('h2 { margin: 10px 0; }');
+            printWindow.document.write('.label { border: 2px solid #000; padding: 20px; display: inline-block; }');
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write('<div class="label">');
+            printWindow.document.write('<h2>BWGS Sample</h2>');
+            printWindow.document.write(qrContainer);
+            printWindow.document.write(sampleInfo);
+            printWindow.document.write('<p style="margin-top: 20px; font-size: 12px; color: #666;">Scan QR code to view sample details</p>');
+            printWindow.document.write('</div>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+
+            // Wait a bit for images to load then print
+            setTimeout(function() {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
 
         function toggleSampleSelection(sampleId, checkbox) {
             if (checkbox.checked) {
@@ -3458,6 +3565,7 @@ if (sample.qubitDetails) {
                 html += '<button onclick="viewSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">View</button><br>';
                 html += '<button onclick="editSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #ffc107; color: #212529; border: none; border-radius: 4px; margin-bottom: 4px; font-weight: 600;">Edit</button><br>';
                 html += '<button onclick="editNotes(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #17a2b8; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Notes</button><br>';
+                html += '<button onclick="showQRCode(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="font-size: 11px; padding: 4px 8px; background: #9c27b0; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">QR Code</button><br>';
                 html += '<button onclick="deleteSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Delete</button><br>';
 
                 if (sample.status === 'Received') {
@@ -3569,6 +3677,7 @@ if (sample.qubitDetails) {
                 closePlateMapModal();
                 closeTimelineModal();
                 closeAnalyticsModal();
+                closeQRCodeModal();
             }
         });
 
