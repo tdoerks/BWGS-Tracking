@@ -1385,6 +1385,21 @@
             durationDiv.style.display = 'block';
         }
 
+        // Calculate turnaround time in days
+        function calculateTurnaroundDays(sample) {
+            if (sample.status !== 'Qubit Complete') return null;
+
+            var startDate = new Date(sample.dateAdded);
+            var endDate = sample.qubitDetails && sample.qubitDetails.completedDate
+                ? new Date(sample.qubitDetails.completedDate)
+                : new Date();
+
+            var diffTime = Math.abs(endDate - startDate);
+            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            return diffDays;
+        }
+
         // Toggle compact view
         function toggleCompactView() {
             isCompactView = !isCompactView;
@@ -3950,6 +3965,27 @@ html += '</div>';
             html += '<div style="font-size: 14px; opacity: 0.9;">QC Warnings</div>';
             html += '</div>';
 
+            // Average turnaround time
+            var turnaroundDays = [];
+            for (var i = 0; i < samples.length; i++) {
+                var days = calculateTurnaroundDays(samples[i]);
+                if (days !== null) {
+                    turnaroundDays.push(days);
+                }
+            }
+            var avgTurnaround = turnaroundDays.length > 0
+                ? Math.round(turnaroundDays.reduce(function(a, b) { return a + b; }, 0) / turnaroundDays.length)
+                : 0;
+
+            if (turnaroundDays.length > 0) {
+                var turnaroundColor = avgTurnaround <= 7 ? '#51cf66' : avgTurnaround <= 14 ? '#ffc107' : '#ff6b6b';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
+                html += '<div style="font-size: 32px; font-weight: bold; color: ' + turnaroundColor + ';">' + avgTurnaround + '</div>';
+                html += '<div style="font-size: 14px; opacity: 0.9;">Avg Days to Complete</div>';
+                html += '<div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">Based on ' + turnaroundDays.length + ' samples</div>';
+                html += '</div>';
+            }
+
             // Last added
             if (lastAdded) {
                 html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
@@ -4107,6 +4143,14 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                 
                 html += '<strong>' + sample.id + '</strong> ';
                 html += '<span class="status status-' + sample.status.toLowerCase().replace(/ /g, '-') + '">' + sample.status + '</span>';
+
+                // Show turnaround time for completed samples
+                var turnaroundDays = calculateTurnaroundDays(sample);
+                if (turnaroundDays !== null) {
+                    var turnaroundColor = turnaroundDays <= 7 ? '#28a745' : turnaroundDays <= 14 ? '#ffc107' : '#dc3545';
+                    html += ' <span style="background: ' + turnaroundColor + '; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px;">⏱️ ' + turnaroundDays + ' days</span>';
+                }
+
                 html += '<br><small>Added: ' + sample.dateAdded + ' | ' + sample.initials + '</small>';
 
                 // Add progress bar
