@@ -657,7 +657,9 @@
             <input type="text" id="sampleId" placeholder="Sample ID" onkeyup="checkDuplicateRealtime(this)">
             <span id="duplicateWarning" style="color: #dc3545; font-weight: 600; margin-left: 10px; display: none;">⚠️ Already exists!</span>
             <input type="text" id="initials" placeholder="Initials" maxlength="3">
-            <button onclick="addSample()">Add Sample</button>
+            <button onclick="addSample(false)">Add Sample</button>
+            <button onclick="addSample(true)" style="background: #28a745; margin-left: 10px;">✚ Add & Next</button>
+            <div id="quickAddFeedback" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
         </div>
         
         <!-- Toggle Button -->
@@ -2242,27 +2244,44 @@
             }
         }
 
-        function addSample() {
+        function addSample(keepOpen) {
             var sampleId = document.getElementById('sampleId').value.trim();
             var initials = document.getElementById('initials').value.trim().toUpperCase();
-            
+            var feedbackDiv = document.getElementById('quickAddFeedback');
+
             if (!sampleId || !initials) {
-                alert('Please fill in both fields');
+                if (keepOpen && feedbackDiv) {
+                    feedbackDiv.style.display = 'block';
+                    feedbackDiv.style.background = '#ffe6e6';
+                    feedbackDiv.style.color = '#dc3545';
+                    feedbackDiv.innerHTML = '❌ Please fill in both fields';
+                    setTimeout(function() { feedbackDiv.style.display = 'none'; }, 2000);
+                } else {
+                    alert('Please fill in both fields');
+                }
                 return;
             }
-            
+
             // Check for duplicates with detailed info
             for (var i = 0; i < samples.length; i++) {
                 if (samples[i].id === sampleId) {
                     var existingSample = samples[i];
-                    var msg = '⚠️ DUPLICATE SAMPLE ID\n\n';
-                    msg += 'Sample ID: ' + sampleId + '\n';
-                    msg += 'Already exists with:\n';
-                    msg += '• Status: ' + existingSample.status + '\n';
-                    msg += '• Added: ' + existingSample.dateAdded + '\n';
-                    msg += '• By: ' + existingSample.initials + '\n\n';
-                    msg += 'Cannot add duplicate sample ID!';
-                    alert(msg);
+
+                    if (keepOpen && feedbackDiv) {
+                        feedbackDiv.style.display = 'block';
+                        feedbackDiv.style.background = '#ffe6e6';
+                        feedbackDiv.style.color = '#dc3545';
+                        feedbackDiv.innerHTML = '❌ Duplicate: ' + sampleId + ' already exists (added ' + existingSample.dateAdded + ')';
+                    } else {
+                        var msg = '⚠️ DUPLICATE SAMPLE ID\n\n';
+                        msg += 'Sample ID: ' + sampleId + '\n';
+                        msg += 'Already exists with:\n';
+                        msg += '• Status: ' + existingSample.status + '\n';
+                        msg += '• Added: ' + existingSample.dateAdded + '\n';
+                        msg += '• By: ' + existingSample.initials + '\n\n';
+                        msg += 'Cannot add duplicate sample ID!';
+                        alert(msg);
+                    }
 
                     // Highlight the input field
                     var inputField = document.getElementById('sampleId');
@@ -2276,7 +2295,7 @@
                     return;
                 }
             }
-            
+
             var newSample = {
                 id: sampleId,
                 initials: initials,
@@ -2296,14 +2315,28 @@
                 indexingDetails: null,
                 qubitDetails: null
             };
-            
+
             samples.push(newSample);
             trackAction('Add Sample', {sampleIds: [sampleId]});
             saveData();
             renderSamples();
 
-            document.getElementById('sampleId').value = '';
-            document.getElementById('initials').value = '';
+            if (keepOpen) {
+                // Quick Add Mode: Keep initials, clear sample ID, show feedback, focus on ID field
+                document.getElementById('sampleId').value = '';
+                if (feedbackDiv) {
+                    feedbackDiv.style.display = 'block';
+                    feedbackDiv.style.background = '#e6ffe6';
+                    feedbackDiv.style.color = '#28a745';
+                    feedbackDiv.innerHTML = '✅ Added: ' + sampleId + ' (' + samples.length + ' samples total)';
+                    setTimeout(function() { feedbackDiv.style.display = 'none'; }, 2000);
+                }
+                document.getElementById('sampleId').focus();
+            } else {
+                // Normal mode: Clear both fields
+                document.getElementById('sampleId').value = '';
+                document.getElementById('initials').value = '';
+            }
         }
 
         function toggleBulkInput() {
@@ -2840,7 +2873,8 @@
     
     html += '<div class="form-group">';
     html += '<label>Concentration (ng/uL):</label>';
-    html += '<input type="number" id="qubitConcentration" step="0.1">';
+    html += '<input type="number" id="qubitConcentration" step="0.1" onchange="validateQubitValue(this, \'cleanExtractionQubit\')">';
+    html += '<div id="qubitValidation" style="margin-top: 5px; font-size: 12px;"></div>';
     html += '</div>';
     
     html += '<div class="form-group">';
@@ -2883,7 +2917,8 @@
 
 html += '<div class="form-group">';
 html += '<label>Concentration (ng/uL):</label>';
-html += '<input type="number" id="qubitConcentration" step="0.1">';
+html += '<input type="number" id="qubitConcentration" step="0.1" onchange="validateQubitValue(this, \'finalQubit\')">';
+html += '<div id="qubitValidation" style="margin-top: 5px; font-size: 12px;"></div>';
 html += '</div>';
 
 html += '<div class="form-group">';
@@ -3675,6 +3710,53 @@ html += '</div>';
                 };
             }
             return {pass: true, message: '✅ Within range'};
+        }
+
+        function validateQubitValue(inputElement, type) {
+            var value = parseFloat(inputElement.value);
+            var validationDiv = document.getElementById('qubitValidation');
+
+            if (!validationDiv) return;
+
+            // Check for obviously wrong values
+            if (isNaN(value) || value === '') {
+                validationDiv.innerHTML = '';
+                inputElement.style.borderColor = '';
+                return;
+            }
+
+            if (value < 0) {
+                validationDiv.innerHTML = '<span style="color: #dc3545; font-weight: bold;">❌ Negative value not possible!</span>';
+                inputElement.style.borderColor = '#dc3545';
+                inputElement.style.background = '#ffe6e6';
+                return;
+            }
+
+            if (value === 0) {
+                validationDiv.innerHTML = '<span style="color: #ffc107; font-weight: bold;">⚠️ Zero concentration - no DNA detected</span>';
+                inputElement.style.borderColor = '#ffc107';
+                inputElement.style.background = '#fff9e6';
+                return;
+            }
+
+            if (value > 1000) {
+                validationDiv.innerHTML = '<span style="color: #dc3545; font-weight: bold;">❌ Unusually high (>1000 ng/uL) - check dilution!</span>';
+                inputElement.style.borderColor = '#dc3545';
+                inputElement.style.background = '#ffe6e6';
+                return;
+            }
+
+            // Use existing QC threshold check
+            var qc = checkQCThreshold(value, type);
+            if (qc.pass) {
+                validationDiv.innerHTML = '<span style="color: #28a745; font-weight: bold;">' + qc.message + '</span>';
+                inputElement.style.borderColor = '#28a745';
+                inputElement.style.background = '#e6ffe6';
+            } else {
+                validationDiv.innerHTML = '<span style="color: #ffc107; font-weight: bold;">' + qc.message + '</span>';
+                inputElement.style.borderColor = '#ffc107';
+                inputElement.style.background = '#fff9e6';
+            }
         }
 
         function editSample(sampleId) {
