@@ -626,6 +626,8 @@
             <button onclick="showReagentSearch()" style="background: #fd7e14; font-size: 12px; padding: 6px 12px;">🔬 Reagent Search</button>
             <button onclick="showReagentTemplates()" style="background: #17a2b8; font-size: 12px; padding: 6px 12px;">📋 Reagent Templates</button>
             <button onclick="showInventory()" style="background: #28a745; font-size: 12px; padding: 6px 12px;">📦 Inventory</button>
+            <button onclick="showEquipmentLog()" style="background: #9c27b0; font-size: 12px; padding: 6px 12px;">🔧 Equipment</button>
+            <button onclick="showWeeklyReport()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📊 Weekly Report</button>
             <button onclick="undo()" id="undoBtn" style="background: #6c757d; font-size: 12px; padding: 6px 12px;" disabled title="No actions to undo">↶ Undo</button>
             <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
             <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
@@ -4770,6 +4772,46 @@ html += '</div>';
                 localStorage.setItem('reagentInventory', JSON.stringify(inventory));
                 renderInventory();
             }
+        }
+
+        // Equipment Log (Placeholder for future implementation)
+        function showEquipmentLog() {
+            alert('🔧 Equipment Log Module\n\nComing soon! This will track:\n• Incubator temperature logs\n• Qubit calibrations\n• Equipment maintenance\n• Service records\n\nReady to implement in next session!');
+        }
+
+        // Weekly Report Generator
+        function showWeeklyReport() {
+            var today = new Date();
+            var weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            var thisWeekSamples = samples.filter(function(s) {
+                var sampleDate = new Date(s.dateAdded);
+                return sampleDate >= weekAgo;
+            });
+
+            var completed = thisWeekSamples.filter(function(s) {
+                return s.status === 'Qubit Complete';
+            }).length;
+
+            var techCounts = {};
+            for (var i = 0; i < thisWeekSamples.length; i++) {
+                var tech = thisWeekSamples[i].initials;
+                techCounts[tech] = (techCounts[tech] || 0) + 1;
+            }
+
+            var report = '📊 WEEKLY SUMMARY REPORT\n';
+            report += '==================\n\n';
+            report += 'Week: ' + weekAgo.toLocaleDateString() + ' - ' + today.toLocaleDateString() + '\n\n';
+            report += '📈 SAMPLES:\n';
+            report += '• Added this week: ' + thisWeekSamples.length + '\n';
+            report += '• Completed: ' + completed + '\n';
+            report += '• In progress: ' + (thisWeekSamples.length - completed) + '\n\n';
+            report += '👥 BY TECHNICIAN:\n';
+            for (var tech in techCounts) {
+                report += '• ' + tech + ': ' + techCounts[tech] + ' samples\n';
+            }
+
+            alert(report);
         }
 
         function renderAnalytics() {
