@@ -919,6 +919,16 @@
         </div>
     </div>
 
+    <!-- Audit Trail Modal -->
+    <div id="auditTrailModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <span class="close-btn" onclick="closeAuditTrailModal()">&times;</span>
+            <h3>📋 Sample History & Audit Trail</h3>
+            <div id="auditTrailContent"></div>
+            <button onclick="closeAuditTrailModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
     <!-- Plate Map Modal -->
     <div id="plateMapModal" class="modal">
         <div class="modal-content" style="max-width: 900px; width: 90%;">
@@ -4267,18 +4277,167 @@ html += '</div>';
             }
             if (!sample) return;
 
-            var chain = 'SAMPLE: ' + sample.id + '\n';
-            chain += 'Status: ' + sample.status + '\n';
-            chain += 'Added: ' + sample.dateAdded + ' by ' + sample.initials + '\n\n';
+            var html = '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+            html += '<h4 style="margin-top: 0;">Sample Information</h4>';
+            html += '<p><strong>Sample ID:</strong> ' + sample.id + '</p>';
+            html += '<p><strong>Current Status:</strong> <span class="status status-' + sample.status.toLowerCase().replace(/ /g, '-') + '">' + sample.status + '</span></p>';
+            html += '<p><strong>Date Added:</strong> ' + sample.dateAdded + '</p>';
+            html += '<p><strong>Added By:</strong> ' + sample.initials + '</p>';
+            if (sample.flag && sample.flag !== 'None') {
+                var flagIcon = sample.flag === 'Rush' ? '🔴' : sample.flag === 'Hold' ? '⏸️' : '⚠️';
+                html += '<p><strong>Flag:</strong> ' + flagIcon + ' ' + sample.flag + '</p>';
+            }
+            if (sample.notes) {
+                html += '<p><strong>Notes:</strong> ' + sample.notes + '</p>';
+            }
+            html += '</div>';
 
-            if (sample.bapDetails) chain += 'BAP: ' + sample.bapNumber + '\n';
-            if (sample.tsbDetails) chain += 'TSB: ' + sample.tsbNumber + '\n';
-            if (sample.extractionDetails) chain += 'Extraction: ' + sample.extractionNumber + '\n';
-            if (sample.cleanExtractionDetails) chain += 'Clean Extraction: ' + sample.cleanExtractionNumber + '\n';
-            if (sample.indexingDetails) chain += 'Indexing: ' + sample.indexingNumber + '\n';
-            if (sample.qubitDetails) chain += 'Qubit: ' + sample.qubitDetails.concentration + ' ng/uL\n';
+            // Timeline of events
+            html += '<h4>📅 Processing Timeline</h4>';
+            html += '<div style="border-left: 4px solid #007bff; padding-left: 20px;">';
 
-            alert(chain);
+            // Received
+            html += '<div style="margin-bottom: 20px;">';
+            html += '<div style="background: #e9ecef; display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">RECEIVED</div>';
+            html += '<p style="margin: 5px 0;"><strong>Date:</strong> ' + sample.dateAdded + '</p>';
+            html += '<p style="margin: 5px 0;"><strong>Technician:</strong> ' + sample.initials + '</p>';
+            html += '</div>';
+
+            // BAP
+            if (sample.bapDetails) {
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="background: #d4edda; display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">BAP</div>';
+                html += '<p style="margin: 5px 0;"><strong>BAP Number:</strong> ' + sample.bapNumber + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Lot:</strong> ' + sample.bapDetails.lotNumber + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Temperature:</strong> ' + sample.bapDetails.temperature + '°C</p>';
+                html += '<p style="margin: 5px 0;"><strong>Incubator:</strong> ' + sample.bapDetails.incubator + '</p>';
+                if (sample.bapDetails.timeIn) html += '<p style="margin: 5px 0;"><strong>Time In:</strong> ' + sample.bapDetails.timeIn + '</p>';
+                if (sample.bapDetails.timeOut) html += '<p style="margin: 5px 0;"><strong>Time Out:</strong> ' + sample.bapDetails.timeOut + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Completed:</strong> ' + sample.bapDetails.completionDate + ' by ' + sample.bapDetails.technician + '</p>';
+                html += '</div>';
+            }
+
+            // TSB
+            if (sample.tsbDetails) {
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="background: #fff3cd; display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">TSB</div>';
+                html += '<p style="margin: 5px 0;"><strong>TSB Number:</strong> ' + sample.tsbNumber + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Lot:</strong> ' + sample.tsbDetails.lotNumber + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Temperature:</strong> ' + sample.tsbDetails.temperature + '°C</p>';
+                html += '<p style="margin: 5px 0;"><strong>Incubator:</strong> ' + sample.tsbDetails.incubator + '</p>';
+                if (sample.tsbDetails.timeIn) html += '<p style="margin: 5px 0;"><strong>Time In:</strong> ' + sample.tsbDetails.timeIn + '</p>';
+                if (sample.tsbDetails.timeOut) html += '<p style="margin: 5px 0;"><strong>Time Out:</strong> ' + sample.tsbDetails.timeOut + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Completed:</strong> ' + sample.tsbDetails.completionDate + ' by ' + sample.tsbDetails.technician + '</p>';
+                html += '</div>';
+            }
+
+            // Extraction
+            if (sample.extractionDetails) {
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="background: #f3e5f5; display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">EXTRACTION</div>';
+                html += '<p style="margin: 5px 0;"><strong>Extraction Number:</strong> ' + sample.extractionNumber + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Run:</strong> ' + sample.extractionDetails.extractionRun + '</p>';
+                if (sample.extractionDetails.reagentLots) {
+                    html += '<p style="margin: 5px 0;"><strong>Reagent Lots:</strong></p>';
+                    html += '<ul style="margin: 5px 0; padding-left: 20px;">';
+                    if (sample.extractionDetails.reagentLots.aw1) html += '<li>AW1: ' + sample.extractionDetails.reagentLots.aw1 + '</li>';
+                    if (sample.extractionDetails.reagentLots.aw2) html += '<li>AW2: ' + sample.extractionDetails.reagentLots.aw2 + '</li>';
+                    if (sample.extractionDetails.reagentLots.ethanol) html += '<li>Ethanol: ' + sample.extractionDetails.reagentLots.ethanol + '</li>';
+                    if (sample.extractionDetails.reagentLots.bufferAL) html += '<li>Buffer AL: ' + sample.extractionDetails.reagentLots.bufferAL + '</li>';
+                    if (sample.extractionDetails.reagentLots.bufferATL) html += '<li>Buffer ATL: ' + sample.extractionDetails.reagentLots.bufferATL + '</li>';
+                    if (sample.extractionDetails.reagentLots.bufferAE) html += '<li>Buffer AE: ' + sample.extractionDetails.reagentLots.bufferAE + '</li>';
+                    if (sample.extractionDetails.reagentLots.proteinaseK) html += '<li>Proteinase K: ' + sample.extractionDetails.reagentLots.proteinaseK + '</li>';
+                    if (sample.extractionDetails.reagentLots.dneasy) html += '<li>DNeasy Column: ' + sample.extractionDetails.reagentLots.dneasy + '</li>';
+                    html += '</ul>';
+                }
+                html += '<p style="margin: 5px 0;"><strong>Completed:</strong> ' + sample.extractionDetails.completedDate + ' by ' + sample.extractionDetails.technician + '</p>';
+                html += '</div>';
+            }
+
+            // Clean Extraction
+            if (sample.cleanExtractionDetails) {
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="background: #e8f5e8; display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">CLEAN EXTRACTION</div>';
+                html += '<p style="margin: 5px 0;"><strong>Clean Extraction Number:</strong> ' + sample.cleanExtractionNumber + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Plate:</strong> ' + sample.cleanExtractionDetails.storagePlate + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Well:</strong> ' + sample.cleanExtractionDetails.wellPosition + '</p>';
+                if (sample.cleanExtractionDetails.volumes) {
+                    html += '<p style="margin: 5px 0;"><strong>Cleanup Volume:</strong> ' + sample.cleanExtractionDetails.volumes.cleanup + '</p>';
+                    html += '<p style="margin: 5px 0;"><strong>Elution In:</strong> ' + sample.cleanExtractionDetails.volumes.elutionIn + '</p>';
+                    html += '<p style="margin: 5px 0;"><strong>Elution Out:</strong> ' + sample.cleanExtractionDetails.volumes.elutionOut + '</p>';
+                }
+                html += '<p style="margin: 5px 0;"><strong>Completed:</strong> ' + sample.cleanExtractionDetails.completedDate + ' by ' + sample.cleanExtractionDetails.technician + '</p>';
+                html += '</div>';
+            }
+
+            // CE Qubit
+            if (sample.cleanExtractionQubitDetails) {
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="background: #e8f4fd; display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">CE QUBIT</div>';
+                html += '<p style="margin: 5px 0;"><strong>Concentration:</strong> ' + sample.cleanExtractionQubitDetails.concentration + ' ng/uL</p>';
+                if (sample.cleanExtractionQubitDetails.reagentLot) {
+                    html += '<p style="margin: 5px 0;"><strong>Reagent Lot:</strong> ' + sample.cleanExtractionQubitDetails.reagentLot + '</p>';
+                }
+                html += '<p style="margin: 5px 0;"><strong>Completed:</strong> ' + sample.cleanExtractionQubitDetails.completedDate + ' by ' + sample.cleanExtractionQubitDetails.technician + '</p>';
+                html += '</div>';
+            }
+
+            // Indexing
+            if (sample.indexingDetails) {
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="background: #e3f2fd; display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">INDEXING</div>';
+                html += '<p style="margin: 5px 0;"><strong>Indexing Number:</strong> ' + sample.indexingNumber + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Plate:</strong> ' + sample.indexingDetails.storagePlate + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Well:</strong> ' + sample.indexingDetails.wellPosition + '</p>';
+                if (sample.indexingDetails.indexes) {
+                    html += '<p style="margin: 5px 0;"><strong>i5 Index:</strong> ' + sample.indexingDetails.indexes.i5 + ' (Thaws: ' + sample.indexingDetails.indexes.i5Thaws + ')</p>';
+                    html += '<p style="margin: 5px 0;"><strong>i7 Index:</strong> ' + sample.indexingDetails.indexes.i7 + ' (Thaws: ' + sample.indexingDetails.indexes.i7Thaws + ')</p>';
+                }
+                html += '<p style="margin: 5px 0;"><strong>Completed:</strong> ' + sample.indexingDetails.completedDate + ' by ' + sample.indexingDetails.technician + '</p>';
+                html += '</div>';
+            }
+
+            // Final Qubit
+            if (sample.qubitDetails) {
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="background: #fff3e0; display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">FINAL QUBIT</div>';
+                html += '<p style="margin: 5px 0;"><strong>Concentration:</strong> ' + sample.qubitDetails.concentration + ' ng/uL</p>';
+                if (sample.qubitDetails.reagentLot) {
+                    html += '<p style="margin: 5px 0;"><strong>Reagent Lot:</strong> ' + sample.qubitDetails.reagentLot + '</p>';
+                }
+                html += '<p style="margin: 5px 0;"><strong>Completed:</strong> ' + sample.qubitDetails.completedDate + ' by ' + sample.qubitDetails.technician + '</p>';
+                html += '</div>';
+            }
+
+            html += '</div>';
+
+            // QC Failures
+            if (sample.qcFailures && sample.qcFailures.length > 0) {
+                html += '<h4 style="color: #dc3545;">⚠️ QC Failure History</h4>';
+                html += '<div style="background: #ffe6e6; border-left: 4px solid #dc3545; padding: 15px;">';
+                for (var f = 0; f < sample.qcFailures.length; f++) {
+                    var failure = sample.qcFailures[f];
+                    html += '<div style="margin-bottom: 10px;">';
+                    html += '<p style="margin: 5px 0;"><strong>Failure #' + (f + 1) + ':</strong></p>';
+                    html += '<p style="margin: 5px 0;"><strong>Stage:</strong> ' + failure.stage + '</p>';
+                    html += '<p style="margin: 5px 0;"><strong>Reason:</strong> ' + failure.reason + '</p>';
+                    if (failure.notes) html += '<p style="margin: 5px 0;"><strong>Notes:</strong> ' + failure.notes + '</p>';
+                    html += '<p style="margin: 5px 0;"><strong>Date:</strong> ' + failure.date + ' at ' + failure.time + '</p>';
+                    if (f < sample.qcFailures.length - 1) html += '<hr style="border-top: 1px solid #dc3545;">';
+                    html += '</div>';
+                }
+                if (sample.reprocessCount) {
+                    html += '<p style="margin: 10px 0; font-weight: bold;">Total re-process count: ' + sample.reprocessCount + '</p>';
+                }
+                html += '</div>';
+            }
+
+            document.getElementById('auditTrailContent').innerHTML = html;
+            document.getElementById('auditTrailModal').style.display = 'block';
+        }
+
+        function closeAuditTrailModal() {
+            document.getElementById('auditTrailModal').style.display = 'none';
         }
 
         function updateQuickStats() {
@@ -4803,6 +4962,7 @@ if (sample.qubitDetails) {
                 closeAnalyticsModal();
                 closeQRCodeModal();
                 closeReagentSearchModal();
+                closeAuditTrailModal();
             }
         });
 
