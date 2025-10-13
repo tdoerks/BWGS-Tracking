@@ -164,7 +164,9 @@
         }
         
         .status-received { background: #e9ecef; color: #495057; }
+        .status-bap-in-progress { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .status-bap-complete { background: #d4edda; color: #155724; }
+        .status-tsb-in-progress { background: #ffe0b2; color: #e65100; font-weight: bold; }
         .status-tsb-complete { background: #fff3cd; color: #856404; }
         .status-extraction-complete { background: #f3e5f5; color: #7b1fa2; }
         .status-clean-extraction-complete { background: #e8f5e8; color: #2e7d32; }
@@ -723,10 +725,16 @@
                     <input type="radio" name="statusFilter" value="Received" onchange="filterSamples()"> Received
                 </label>
                 <label style="margin-right: 15px;">
-                    <input type="radio" name="statusFilter" value="BAP Complete" onchange="filterSamples()"> BAP
+                    <input type="radio" name="statusFilter" value="BAP In Progress" onchange="filterSamples()"> BAP Incubating
                 </label>
                 <label style="margin-right: 15px;">
-                    <input type="radio" name="statusFilter" value="TSB Complete" onchange="filterSamples()"> TSB
+                    <input type="radio" name="statusFilter" value="BAP Complete" onchange="filterSamples()"> BAP Complete
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="statusFilter" value="TSB In Progress" onchange="filterSamples()"> TSB Incubating
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="statusFilter" value="TSB Complete" onchange="filterSamples()"> TSB Complete
                 </label>
                 <label style="margin-right: 15px;">
                     <input type="radio" name="statusFilter" value="Extraction Complete" onchange="filterSamples()"> Extraction
@@ -957,7 +965,9 @@
                 <strong>Legend:</strong>
                 <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
                     <div><span style="display: inline-block; width: 12px; height: 12px; background: #e9ecef; border: 1px solid #999;"></span> Empty</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #fff9c4; border: 1px solid #f57f17;"></span> BAP Incubating</div>
                     <div><span style="display: inline-block; width: 12px; height: 12px; background: #d4edda; border: 1px solid #155724;"></span> BAP Complete</div>
+                    <div><span style="display: inline-block; width: 12px; height: 12px; background: #ffe0b2; border: 1px solid #e65100;"></span> TSB Incubating</div>
                     <div><span style="display: inline-block; width: 12px; height: 12px; background: #fff3cd; border: 1px solid #856404;"></span> TSB Complete</div>
                     <div><span style="display: inline-block; width: 12px; height: 12px; background: #f3e5f5; border: 1px solid #7b1fa2;"></span> Extraction</div>
                     <div><span style="display: inline-block; width: 12px; height: 12px; background: #e8f5e8; border: 1px solid #2e7d32;"></span> Clean Extraction</div>
@@ -2403,10 +2413,10 @@
                 }
             }
             if (!sample) return;
-            
+
             currentProcessType = type;
             var number = '';
-            
+
             if (type === 'BAP') {
                 number = '25B' + String(nextBapNumber).padStart(3, '0');
             } else if (type === 'TSB') {
@@ -2420,7 +2430,7 @@
             } else if (type === 'Qubit') {
                 number = 'Qubit Analysis';
             }
-            
+
             document.getElementById('modalTitle').textContent = 'Start ' + type;
             document.getElementById('modalSampleId').textContent = sampleId;
             document.getElementById('modalNumber').innerHTML = '<strong>' + number + '</strong>';
@@ -2431,6 +2441,59 @@
             // Add autocomplete to lot number field
             setTimeout(function() {
                 addAutocomplete('lotNumber', 'lotNumber');
+            }, 100);
+        }
+
+        function finishProcess(sampleId, type) {
+            // This function handles FINISHING incubation for BAP and TSB
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+            if (!sample) return;
+
+            currentProcessType = type + '_FINISH';
+            var number = '';
+
+            if (type === 'BAP') {
+                number = sample.bapNumber || '';
+            } else if (type === 'TSB') {
+                number = sample.tsbNumber || '';
+            }
+
+            document.getElementById('modalTitle').textContent = 'Finish ' + type + ' Incubation';
+            document.getElementById('modalSampleId').textContent = sampleId;
+            document.getElementById('modalNumber').innerHTML = '<strong>' + number + '</strong>';
+
+            // Pre-fill existing data from the start phase
+            if (type === 'BAP' && sample.bapDetails) {
+                document.getElementById('techInitials').value = sample.bapDetails.technician || '';
+                document.getElementById('lotNumber').value = sample.bapDetails.lot || '';
+                document.getElementById('temperature').value = sample.bapDetails.temperature || '37';
+                document.getElementById('incubator').value = sample.bapDetails.incubator || 'INC-1';
+                document.getElementById('timeIn').value = sample.bapDetails.timeIn || '';
+                document.getElementById('stageNotes').value = sample.bapDetails.stageNotes || '';
+            } else if (type === 'TSB' && sample.tsbDetails) {
+                document.getElementById('techInitials').value = sample.tsbDetails.technician || '';
+                document.getElementById('lotNumber').value = sample.tsbDetails.lot || '';
+                document.getElementById('temperature').value = sample.tsbDetails.temperature || '37';
+                document.getElementById('incubator').value = sample.tsbDetails.incubator || 'INC-1';
+                document.getElementById('timeIn').value = sample.tsbDetails.timeIn || '';
+                document.getElementById('stageNotes').value = sample.tsbDetails.stageNotes || '';
+            }
+
+            // Clear time out field and focus it
+            document.getElementById('timeOut').value = '';
+
+            showSpecificFields('');  // No specific fields needed for finish
+            document.getElementById('processModal').style.display = 'block';
+
+            // Focus on Time Out field after a brief delay
+            setTimeout(function() {
+                document.getElementById('timeOut').focus();
             }, 100);
         }
 
@@ -2895,33 +2958,73 @@ html += '</div>';
                 var today = new Date().toLocaleDateString();
                 
                 if (currentProcessType === 'BAP') {
+                    // START BAP - Starting incubation
+                    if (!timeIn) {
+                        alert('Please enter Time In to start incubation');
+                        return;
+                    }
                     sample.bapNumber = '25B' + String(nextBapNumber).padStart(3, '0');
-                    sample.status = 'BAP Complete';
+                    sample.status = 'BAP In Progress';
                     sample.bapDetails = {
                         technician: tech,
                         lot: lot,
-                        completedDate: today,
+                        startedDate: today,
                         temperature: temp,
                         incubator: inc,
                         timeIn: timeIn,
-                        timeOut: timeOut,
+                        timeOut: '',
                         stageNotes: stageNotes
                     };
                     nextBapNumber++;
+                    trackAction('process', sample.id, 'Started BAP incubation');
+                } else if (currentProcessType === 'BAP_FINISH') {
+                    // FINISH BAP - Finishing incubation
+                    if (!timeOut) {
+                        alert('Please enter Time Out to finish incubation');
+                        return;
+                    }
+                    sample.status = 'BAP Complete';
+                    sample.bapDetails.timeOut = timeOut;
+                    sample.bapDetails.completedDate = today;
+                    // Update stage notes if changed
+                    if (stageNotes) {
+                        sample.bapDetails.stageNotes = stageNotes;
+                    }
+                    trackAction('process', sample.id, 'Finished BAP incubation');
                 } else if (currentProcessType === 'TSB') {
+                    // START TSB - Starting incubation
+                    if (!timeIn) {
+                        alert('Please enter Time In to start incubation');
+                        return;
+                    }
                     sample.tsbNumber = '25T' + String(nextTsbNumber).padStart(3, '0');
-                    sample.status = 'TSB Complete';
+                    sample.status = 'TSB In Progress';
                     sample.tsbDetails = {
                         technician: tech,
                         lot: lot,
-                        completedDate: today,
+                        startedDate: today,
                         temperature: temp,
                         incubator: inc,
                         timeIn: timeIn,
-                        timeOut: timeOut,
+                        timeOut: '',
                         stageNotes: stageNotes
                     };
                     nextTsbNumber++;
+                    trackAction('process', sample.id, 'Started TSB incubation');
+                } else if (currentProcessType === 'TSB_FINISH') {
+                    // FINISH TSB - Finishing incubation
+                    if (!timeOut) {
+                        alert('Please enter Time Out to finish incubation');
+                        return;
+                    }
+                    sample.status = 'TSB Complete';
+                    sample.tsbDetails.timeOut = timeOut;
+                    sample.tsbDetails.completedDate = today;
+                    // Update stage notes if changed
+                    if (stageNotes) {
+                        sample.tsbDetails.stageNotes = stageNotes;
+                    }
+                    trackAction('process', sample.id, 'Finished TSB incubation');
                 } else if (currentProcessType === 'Extraction') {
                     sample.extractionNumber = '25E' + String(nextExtractionNumber).padStart(3, '0');
                     sample.status = 'Extraction Complete';
@@ -5042,8 +5145,12 @@ if (sample.qubitDetails) {
 
                 if (sample.status === 'Received') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'BAP\')">Start BAP</button>';
+                } else if (sample.status === 'BAP In Progress') {
+                    html += '<button onclick="finishProcess(\'' + sample.id + '\', \'BAP\')" style="background: #28a745;">Finish BAP</button>';
                 } else if (sample.status === 'BAP Complete') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'TSB\')">Start TSB</button>';
+                } else if (sample.status === 'TSB In Progress') {
+                    html += '<button onclick="finishProcess(\'' + sample.id + '\', \'TSB\')" style="background: #28a745;">Finish TSB</button>';
                 } else if (sample.status === 'TSB Complete') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Extraction\')">Start Extraction</button>';
                 } else if (sample.status === 'Extraction Complete') {
