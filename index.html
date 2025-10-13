@@ -622,6 +622,7 @@
             <button onclick="showTimeline()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📅 Timeline</button>
             <button onclick="showAnalytics()" style="background: #4ecdc4; font-size: 12px; padding: 6px 12px;">📈 Analytics</button>
             <button onclick="showReagentSearch()" style="background: #fd7e14; font-size: 12px; padding: 6px 12px;">🔬 Reagent Search</button>
+            <button onclick="undo()" id="undoBtn" style="background: #6c757d; font-size: 12px; padding: 6px 12px;" disabled title="No actions to undo">↶ Undo</button>
             <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
             <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
             <button onclick="toggleDarkMode()" id="darkModeToggle" style="background: #495057; font-size: 12px; padding: 6px 12px;">🌙 Dark Mode</button>
@@ -1360,6 +1361,7 @@
         var nextIndexingPlate = 1;
         var currentProcessType = '';
         var selectedSamples = [];
+        var undoStack = []; // Track last 10 actions for undo
         var reagentLotHistory = {}; // Store recently used lot numbers by field name
         var currentBatchSamples = [];
         var currentBatchType = '';
@@ -1859,6 +1861,105 @@
             alert('Sample reset to: ' + newStatus + '\nRe-process count: ' + sample.reprocessCount);
         }
 
+        // Undo functionality
+        function trackAction(actionType, data) {
+            undoStack.push({
+                type: actionType,
+                data: JSON.parse(JSON.stringify(data)), // Deep copy
+                timestamp: new Date().toISOString()
+            });
+
+            // Keep only last 10 actions
+            if (undoStack.length > 10) {
+                undoStack.shift();
+            }
+
+            updateUndoButton();
+        }
+
+        function updateUndoButton() {
+            var btn = document.getElementById('undoBtn');
+            if (undoStack.length > 0) {
+                btn.disabled = false;
+                btn.style.background = '#ffc107';
+                btn.style.color = '#212529';
+                var lastAction = undoStack[undoStack.length - 1];
+                btn.title = 'Undo: ' + lastAction.type;
+            } else {
+                btn.disabled = true;
+                btn.style.background = '#6c757d';
+                btn.style.color = 'white';
+                btn.title = 'No actions to undo';
+            }
+        }
+
+        function undo() {
+            if (undoStack.length === 0) {
+                alert('Nothing to undo');
+                return;
+            }
+
+            var action = undoStack.pop();
+
+            if (action.type === 'Add Sample' || action.type === 'Add Bulk Samples') {
+                // Remove the samples that were added
+                var addedIds = action.data.sampleIds;
+                samples = samples.filter(function(s) {
+                    return addedIds.indexOf(s.id) === -1;
+                });
+                alert('Undone: ' + action.type + '\nRemoved ' + addedIds.length + ' sample(s)');
+            } else if (action.type === 'Delete Sample') {
+                // Restore the deleted sample
+                samples.push(action.data.sample);
+                alert('Undone: Delete Sample\nRestored sample: ' + action.data.sample.id);
+            } else if (action.type === 'Complete Process') {
+                // Restore sample to previous state
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === action.data.sampleId) {
+                        samples[i] = JSON.parse(JSON.stringify(action.data.previousState));
+                        break;
+                    }
+                }
+                alert('Undone: Process completion for ' + action.data.sampleId);
+            } else if (action.type === 'Batch Complete Process') {
+                // Restore multiple samples
+                for (var j = 0; j < action.data.samples.length; j++) {
+                    var oldSample = action.data.samples[j];
+                    for (var i = 0; i < samples.length; i++) {
+                        if (samples[i].id === oldSample.id) {
+                            samples[i] = JSON.parse(JSON.stringify(oldSample));
+                            break;
+                        }
+                    }
+                }
+                alert('Undone: Batch process\nRestored ' + action.data.samples.length + ' samples');
+            } else if (action.type === 'Edit Sample') {
+                // Restore original values
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === action.data.newId || samples[i].id === action.data.originalId) {
+                        samples[i].id = action.data.originalId;
+                        samples[i].initials = action.data.originalInitials;
+                        samples[i].status = action.data.originalStatus;
+                        break;
+                    }
+                }
+                alert('Undone: Edit\nRestored sample: ' + action.data.originalId);
+            } else if (action.type === 'Change Flag') {
+                // Restore original flag
+                for (var i = 0; i < samples.length; i++) {
+                    if (samples[i].id === action.data.sampleId) {
+                        samples[i].flag = action.data.oldFlag;
+                        break;
+                    }
+                }
+                alert('Undone: Flag change for ' + action.data.sampleId);
+            }
+
+            saveData();
+            renderSamples();
+            updateUndoButton();
+        }
+
         // Track recently used lot numbers
         function trackLotNumber(fieldName, value) {
             if (!value || value.trim() === '') return;
@@ -2059,6 +2160,7 @@
             };
             
             samples.push(newSample);
+            trackAction('Add Sample', {sampleIds: [sampleId]});
             saveData();
             renderSamples();
 
