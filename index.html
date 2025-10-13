@@ -238,6 +238,158 @@
             white-space: nowrap;
         }
 
+        /* Sidebar Navigation Styles */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-260px);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .sidebar-toggle {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .sidebar-nav {
+            padding: 10px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 20px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #3498db;
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: #3498db;
+        }
+
+        .nav-icon {
+            font-size: 18px;
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            transition: margin-left 0.3s ease;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .hamburger-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .hamburger-btn:hover {
+            background: #2980b9;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-260px);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
         /* Analytics Styles */
         .analytics-grid {
             display: grid;
@@ -630,87 +782,153 @@
     </div>
 
     <!-- Main Application Content (hidden until password verified) -->
-    <div id="appContent">
-    <div class="header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 style="margin: 0 0 5px 0;">🧪 Lab Workflow Tracker</h1>
-                <p style="margin: 0; font-size: 13px; opacity: 0.8;">Complete LIMS • Sample Tracking • Quality Control</p>
+    <div id="appContent" class="app-container">
+
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>🧪 BWGS LIMS</h2>
+                <button class="sidebar-toggle" onclick="toggleSidebar()">✕</button>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <button onclick="toggleDarkMode()" id="darkModeToggle" style="background: #495057; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white;">🌙 Dark</button>
-                <button onclick="logout()" style="background: #dc3545; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white;">🚪 Logout</button>
+
+            <div class="sidebar-nav">
+                <!-- Main Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <div class="nav-item active" onclick="scrollToSection('samples')">
+                        <span class="nav-icon">🧬</span>
+                        <span>Samples</span>
+                    </div>
+                    <div class="nav-item" onclick="scrollToSection('addSamples')">
+                        <span class="nav-icon">➕</span>
+                        <span>Add Samples</span>
+                    </div>
+                </div>
+
+                <!-- Lab Management -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Lab Management</div>
+                    <div class="nav-item" onclick="showInventory()">
+                        <span class="nav-icon">📦</span>
+                        <span>Inventory</span>
+                    </div>
+                    <div class="nav-item" onclick="showEquipmentLog()">
+                        <span class="nav-icon">🔧</span>
+                        <span>Equipment Log</span>
+                    </div>
+                    <div class="nav-item" onclick="showProtocolLibrary()">
+                        <span class="nav-icon">📚</span>
+                        <span>Protocols</span>
+                    </div>
+                    <div class="nav-item" onclick="showReagentTemplates()">
+                        <span class="nav-icon">📋</span>
+                        <span>Reagent Templates</span>
+                    </div>
+                </div>
+
+                <!-- Analytics & Reports -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Reports</div>
+                    <div class="nav-item" onclick="showAnalytics()">
+                        <span class="nav-icon">📈</span>
+                        <span>Analytics</span>
+                    </div>
+                    <div class="nav-item" onclick="showWeeklyReport()">
+                        <span class="nav-icon">📊</span>
+                        <span>Weekly Summary</span>
+                    </div>
+                    <div class="nav-item" onclick="showTechDashboard()">
+                        <span class="nav-icon">👥</span>
+                        <span>Tech Performance</span>
+                    </div>
+                </div>
+
+                <!-- Search & Tools -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Search & Tools</div>
+                    <div class="nav-item" onclick="showReagentSearch()">
+                        <span class="nav-icon">🔬</span>
+                        <span>Reagent Search</span>
+                    </div>
+                    <div class="nav-item" onclick="showAdvancedSearch()">
+                        <span class="nav-icon">🔎</span>
+                        <span>Advanced Search</span>
+                    </div>
+                    <div class="nav-item" onclick="showTimeline()">
+                        <span class="nav-icon">📅</span>
+                        <span>Timeline</span>
+                    </div>
+                    <div class="nav-item" onclick="showPlateMap()">
+                        <span class="nav-icon">🧫</span>
+                        <span>Plate Map</span>
+                    </div>
+                </div>
+
+                <!-- Data -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Data</div>
+                    <div class="nav-item" onclick="exportData()">
+                        <span class="nav-icon">📥</span>
+                        <span>Export JSON</span>
+                    </div>
+                    <div class="nav-item" onclick="exportCSV()">
+                        <span class="nav-icon">📊</span>
+                        <span>Export CSV</span>
+                    </div>
+                    <div class="nav-item" onclick="importData()">
+                        <span class="nav-icon">📤</span>
+                        <span>Import Data</span>
+                    </div>
+                    <div class="nav-item" onclick="window.print()">
+                        <span class="nav-icon">🖨️</span>
+                        <span>Print</span>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Settings</div>
+                    <div class="nav-item" onclick="showKeyboardShortcuts()">
+                        <span class="nav-icon">⌨️</span>
+                        <span>Shortcuts</span>
+                    </div>
+                    <div class="nav-item" onclick="undo()">
+                        <span class="nav-icon">↶</span>
+                        <span>Undo</span>
+                    </div>
+                    <div class="nav-item" onclick="toggleDarkMode()">
+                        <span class="nav-icon" id="themeIcon">🌙</span>
+                        <span id="themeText">Dark Mode</span>
+                    </div>
+                    <div class="nav-item" onclick="logout()" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
+                        <span class="nav-icon">🚪</span>
+                        <span>Logout</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Clean Navigation Menu -->
-        <div style="margin-top: 20px; display: flex; gap: 5px; flex-wrap: wrap;">
-            <!-- Data Actions -->
-            <div class="dropdown-container" style="position: relative; display: inline-block;">
-                <button class="menu-btn" onclick="toggleDropdown('dataMenu')" style="background: #28a745; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                    📂 Data ▼
-                </button>
-                <div id="dataMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 200px; z-index: 100; margin-top: 5px;">
-                    <button onclick="exportData(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📥 Export JSON</button>
-                    <button onclick="exportCSV(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📊 Export CSV</button>
-                    <button onclick="importData(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📤 Import Data</button>
-                    <button onclick="window.print(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px;">🖨️ Print</button>
-                </div>
-            </div>
+        <!-- Main Content Area -->
+        <div class="main-content" id="mainContent">
 
-            <!-- Lab Management -->
-            <div class="dropdown-container" style="position: relative; display: inline-block;">
-                <button class="menu-btn" onclick="toggleDropdown('labMenu')" style="background: #17a2b8; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                    🔬 Lab Management ▼
-                </button>
-                <div id="labMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 220px; z-index: 100; margin-top: 5px;">
-                    <button onclick="showInventory(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📦 Reagent Inventory</button>
-                    <button onclick="showEquipmentLog(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">🔧 Equipment Log</button>
-                    <button onclick="showProtocolLibrary(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📚 Protocol Library</button>
-                    <button onclick="showReagentTemplates(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px;">📋 Reagent Templates</button>
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="hamburger-btn" onclick="toggleSidebar()">
+                        <span>☰</span>
+                        <span>Menu</span>
+                    </button>
+                    <div>
+                        <h1 style="margin: 0; font-size: 20px;">Lab Workflow Tracker</h1>
+                        <p style="margin: 0; font-size: 12px; color: #666;">Complete LIMS • Sample Tracking • Quality Control</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button onclick="undo()" id="undoBtn" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" disabled title="No actions to undo">↶ Undo</button>
                 </div>
             </div>
-
-            <!-- Analytics & Reports -->
-            <div class="dropdown-container" style="position: relative; display: inline-block;">
-                <button class="menu-btn" onclick="toggleDropdown('reportsMenu')" style="background: #6f42c1; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                    📊 Reports ▼
-                </button>
-                <div id="reportsMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 220px; z-index: 100; margin-top: 5px;">
-                    <button onclick="showAnalytics(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📈 Analytics Dashboard</button>
-                    <button onclick="showWeeklyReport(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📊 Weekly Summary</button>
-                    <button onclick="showTechDashboard(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px;">👥 Tech Performance</button>
-                </div>
-            </div>
-
-            <!-- Search & Tools -->
-            <div class="dropdown-container" style="position: relative; display: inline-block;">
-                <button class="menu-btn" onclick="toggleDropdown('toolsMenu')" style="background: #fd7e14; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                    🔍 Search & Tools ▼
-                </button>
-                <div id="toolsMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 220px; z-index: 100; margin-top: 5px;">
-                    <button onclick="showReagentSearch(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">🔬 Reagent Lot Search</button>
-                    <button onclick="showAdvancedSearch(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">🔎 Advanced Search</button>
-                    <button onclick="showTimeline(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📅 Sample Timeline</button>
-                    <button onclick="showPlateMap(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px;">🧫 Plate Map</button>
-                </div>
-            </div>
-
-            <!-- Settings -->
-            <div class="dropdown-container" style="position: relative; display: inline-block;">
-                <button class="menu-btn" onclick="toggleDropdown('settingsMenu')" style="background: #6c757d; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                    ⚙️ Settings ▼
-                </button>
-                <div id="settingsMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 200px; z-index: 100; margin-top: 5px;">
-                    <button onclick="showKeyboardShortcuts(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">⌨️ Keyboard Shortcuts</button>
-                    <button onclick="undo(); closeAllDropdowns();" id="undoDropdownBtn" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">↶ Undo Last Action</button>
-                    <button onclick="if(confirm('Clear ALL data? This cannot be undone!')) clearAllData(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; color: #dc3545;">🗑️ Clear All Data</button>
-                </div>
-            </div>
-        </div>
 
         <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
-    </div>
 
     <!-- Quick Stats Panel -->
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white;">
@@ -4192,6 +4410,24 @@ html += '</div>';
             }
         });
 
+        // Sidebar Toggle
+        function toggleSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var mainContent = document.getElementById('mainContent');
+
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        }
+
+        // Scroll to Section
+        function scrollToSection(sectionId) {
+            if (sectionId === 'samples') {
+                document.querySelector('.sample-list').scrollIntoView({ behavior: 'smooth' });
+            } else if (sectionId === 'addSamples') {
+                document.querySelector('.add-section').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
         // Toggle Filters
         function toggleFilters() {
             var filtersDiv = document.getElementById('advancedFilters');
@@ -4222,13 +4458,17 @@ html += '</div>';
 
             document.documentElement.setAttribute('data-theme', newTheme);
 
-            // Update button text
-            var button = document.getElementById('darkModeToggle');
+            // Update sidebar theme icon and text
+            var themeIcon = document.getElementById('themeIcon');
+            var themeText = document.getElementById('themeText');
+
             if (newTheme === 'dark') {
-                button.innerHTML = '☀️ Light';
+                if (themeIcon) themeIcon.innerHTML = '☀️';
+                if (themeText) themeText.innerHTML = 'Light Mode';
                 localStorage.setItem('theme', 'dark');
             } else {
-                button.innerHTML = '🌙 Dark';
+                if (themeIcon) themeIcon.innerHTML = '🌙';
+                if (themeText) themeText.innerHTML = 'Dark Mode';
                 localStorage.setItem('theme', 'light');
             }
         }
@@ -6790,7 +7030,13 @@ if (sample.qubitDetails) {
         console.log('Lab Workflow Tracker loaded successfully!');
         console.log('Keyboard shortcuts: Ctrl+F (search), Ctrl+E (export), Ctrl+N (new sample), Esc (close), 1-5 (filters)');
         console.log('✅ Barcode scanner support enabled - scan barcodes directly into Sample ID field');
+        console.log('Lab Workflow Tracker loaded successfully!');
+        console.log('Keyboard shortcuts: Ctrl+F (search), Ctrl+E (export), Ctrl+N (new sample), Esc (close), 1-5 (filters)');
+        console.log('✅ Barcode scanner support enabled - scan barcodes directly into Sample ID field');
+        console.log('🎨 Sidebar navigation enabled - toggle with hamburger menu');
     </script>
+
+        </div> <!-- Close main-content div -->
     </div> <!-- Close appContent div -->
 </body>
-</html>>
+</html>
