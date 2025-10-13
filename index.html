@@ -477,6 +477,25 @@
             cursor: not-allowed;
         }
 
+        /* Dropdown Menu Styles */
+        .dropdown-menu button:hover {
+            background: #f8f9fa !important;
+        }
+
+        .dropdown-menu button:last-child {
+            border-bottom: none !important;
+        }
+
+        .menu-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .menu-btn:active {
+            transform: translateY(0);
+        }
+
         /* Print Stylesheet */
         @media print {
             /* Hide interactive elements */
@@ -613,29 +632,84 @@
     <!-- Main Application Content (hidden until password verified) -->
     <div id="appContent">
     <div class="header">
-        <h1>🧪 Complete Lab Workflow Tracker</h1>
-        <p>BAP → TSB → Extraction → Clean Extraction → Qubit → Indexing → Final Qubit</p>
-        <div style="margin-top: 15px;">
-            <button onclick="exportData()" style="background: #28a745; font-size: 12px; padding: 6px 12px;">📥 Export JSON</button>
-            <button onclick="exportCSV()" style="background: #20c997; font-size: 12px; padding: 6px 12px;">📊 Export CSV</button>
-            <button onclick="window.print()" class="print-btn" style="background: #17a2b8; font-size: 12px; padding: 6px 12px;">🖨️ Print</button>
-            <button onclick="importData()" style="background: #17a2b8; font-size: 12px; padding: 6px 12px;">📤 Import Data</button>
-            <button onclick="showPlateMap()" style="background: #9c27b0; font-size: 12px; padding: 6px 12px;">🧫 Plate Map</button>
-            <button onclick="showTimeline()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📅 Timeline</button>
-            <button onclick="showAnalytics()" style="background: #4ecdc4; font-size: 12px; padding: 6px 12px;">📈 Analytics</button>
-            <button onclick="showReagentSearch()" style="background: #fd7e14; font-size: 12px; padding: 6px 12px;">🔬 Reagent Search</button>
-            <button onclick="showReagentTemplates()" style="background: #17a2b8; font-size: 12px; padding: 6px 12px;">📋 Reagent Templates</button>
-            <button onclick="showInventory()" style="background: #28a745; font-size: 12px; padding: 6px 12px;">📦 Inventory</button>
-            <button onclick="showEquipmentLog()" style="background: #9c27b0; font-size: 12px; padding: 6px 12px;">🔧 Equipment</button>
-            <button onclick="showWeeklyReport()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📊 Weekly Report</button>
-            <button onclick="showTechDashboard()" style="background: #6f42c1; font-size: 12px; padding: 6px 12px;">👥 Tech Dashboard</button>
-            <button onclick="showProtocolLibrary()" style="background: #667eea; font-size: 12px; padding: 6px 12px;">📚 Protocols</button>
-            <button onclick="undo()" id="undoBtn" style="background: #6c757d; font-size: 12px; padding: 6px 12px;" disabled title="No actions to undo">↶ Undo</button>
-            <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
-            <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
-            <button onclick="toggleDarkMode()" id="darkModeToggle" style="background: #495057; font-size: 12px; padding: 6px 12px;">🌙 Dark Mode</button>
-            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="margin: 0 0 5px 0;">🧪 Lab Workflow Tracker</h1>
+                <p style="margin: 0; font-size: 13px; opacity: 0.8;">Complete LIMS • Sample Tracking • Quality Control</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button onclick="toggleDarkMode()" id="darkModeToggle" style="background: #495057; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white;">🌙 Dark</button>
+                <button onclick="logout()" style="background: #dc3545; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white;">🚪 Logout</button>
+            </div>
         </div>
+
+        <!-- Clean Navigation Menu -->
+        <div style="margin-top: 20px; display: flex; gap: 5px; flex-wrap: wrap;">
+            <!-- Data Actions -->
+            <div class="dropdown-container" style="position: relative; display: inline-block;">
+                <button class="menu-btn" onclick="toggleDropdown('dataMenu')" style="background: #28a745; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    📂 Data ▼
+                </button>
+                <div id="dataMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 200px; z-index: 100; margin-top: 5px;">
+                    <button onclick="exportData(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📥 Export JSON</button>
+                    <button onclick="exportCSV(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📊 Export CSV</button>
+                    <button onclick="importData(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📤 Import Data</button>
+                    <button onclick="window.print(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px;">🖨️ Print</button>
+                </div>
+            </div>
+
+            <!-- Lab Management -->
+            <div class="dropdown-container" style="position: relative; display: inline-block;">
+                <button class="menu-btn" onclick="toggleDropdown('labMenu')" style="background: #17a2b8; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    🔬 Lab Management ▼
+                </button>
+                <div id="labMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 220px; z-index: 100; margin-top: 5px;">
+                    <button onclick="showInventory(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📦 Reagent Inventory</button>
+                    <button onclick="showEquipmentLog(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">🔧 Equipment Log</button>
+                    <button onclick="showProtocolLibrary(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📚 Protocol Library</button>
+                    <button onclick="showReagentTemplates(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px;">📋 Reagent Templates</button>
+                </div>
+            </div>
+
+            <!-- Analytics & Reports -->
+            <div class="dropdown-container" style="position: relative; display: inline-block;">
+                <button class="menu-btn" onclick="toggleDropdown('reportsMenu')" style="background: #6f42c1; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    📊 Reports ▼
+                </button>
+                <div id="reportsMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 220px; z-index: 100; margin-top: 5px;">
+                    <button onclick="showAnalytics(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📈 Analytics Dashboard</button>
+                    <button onclick="showWeeklyReport(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📊 Weekly Summary</button>
+                    <button onclick="showTechDashboard(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px;">👥 Tech Performance</button>
+                </div>
+            </div>
+
+            <!-- Search & Tools -->
+            <div class="dropdown-container" style="position: relative; display: inline-block;">
+                <button class="menu-btn" onclick="toggleDropdown('toolsMenu')" style="background: #fd7e14; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    🔍 Search & Tools ▼
+                </button>
+                <div id="toolsMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 220px; z-index: 100; margin-top: 5px;">
+                    <button onclick="showReagentSearch(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">🔬 Reagent Lot Search</button>
+                    <button onclick="showAdvancedSearch(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">🔎 Advanced Search</button>
+                    <button onclick="showTimeline(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">📅 Sample Timeline</button>
+                    <button onclick="showPlateMap(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px;">🧫 Plate Map</button>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="dropdown-container" style="position: relative; display: inline-block;">
+                <button class="menu-btn" onclick="toggleDropdown('settingsMenu')" style="background: #6c757d; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    ⚙️ Settings ▼
+                </button>
+                <div id="settingsMenu" class="dropdown-menu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; min-width: 200px; z-index: 100; margin-top: 5px;">
+                    <button onclick="showKeyboardShortcuts(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">⌨️ Keyboard Shortcuts</button>
+                    <button onclick="undo(); closeAllDropdowns();" id="undoDropdownBtn" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0;">↶ Undo Last Action</button>
+                    <button onclick="if(confirm('Clear ALL data? This cannot be undone!')) clearAllData(); closeAllDropdowns();" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: white; cursor: pointer; font-size: 14px; color: #dc3545;">🗑️ Clear All Data</button>
+                </div>
+            </div>
+        </div>
+
+        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
     </div>
 
     <!-- Quick Stats Panel -->
@@ -702,7 +776,7 @@
 
         <!-- Search and Filter Section -->
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;">
                 <input type="text" id="searchInput" placeholder="🔍 Search by Sample ID..."
                        onkeyup="filterSamples()"
                        style="flex: 1; min-width: 250px; max-width: 400px; padding: 10px; font-size: 14px;">
@@ -710,6 +784,14 @@
                 <button onclick="showAdvancedSearch()" style="padding: 10px 15px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
                     🔎 Advanced Search
                 </button>
+
+                <button onclick="toggleFilters()" id="toggleFiltersBtn" style="padding: 10px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    ⚙️ Show Filters
+                </button>
+            </div>
+
+            <!-- Collapsible Filters -->
+            <div id="advancedFilters" style="display: none; border-top: 2px solid #dee2e6; padding-top: 15px;">
 
                 <select id="sortSelect" onchange="sortSamples()" style="padding: 10px; font-size: 14px;">
                     <option value="dateDesc">Sort: Newest First</option>
@@ -797,6 +879,9 @@
                 <button onclick="filterReadyFor('Indexing')" id="readyFilterIndexing" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Indexing</button>
                 <button onclick="filterReadyFor('FinalQubit')" id="readyFilterFinalQubit" class="ready-filter-btn" style="padding: 6px 12px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Final Qubit</button>
             </div>
+
+            </div>
+            <!-- End Collapsible Filters -->
         </div>
 
         <div class="batch-controls" id="batchControls" style="display: none;">
@@ -4071,6 +4156,66 @@ html += '</div>';
             return colors[status] || '#f8f9fa';
         }
 
+        // Dropdown Menu Functions
+        function toggleDropdown(menuId) {
+            // Close all other dropdowns first
+            var allDropdowns = document.querySelectorAll('.dropdown-menu');
+            for (var i = 0; i < allDropdowns.length; i++) {
+                if (allDropdowns[i].id !== menuId) {
+                    allDropdowns[i].style.display = 'none';
+                }
+            }
+
+            // Toggle the clicked dropdown
+            var menu = document.getElementById(menuId);
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
+        }
+
+        function closeAllDropdowns() {
+            var allDropdowns = document.querySelectorAll('.dropdown-menu');
+            for (var i = 0; i < allDropdowns.length; i++) {
+                allDropdowns[i].style.display = 'none';
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            var isDropdownButton = event.target.closest('.menu-btn');
+            var isDropdownMenu = event.target.closest('.dropdown-menu');
+
+            if (!isDropdownButton && !isDropdownMenu) {
+                closeAllDropdowns();
+            }
+        });
+
+        // Toggle Filters
+        function toggleFilters() {
+            var filtersDiv = document.getElementById('advancedFilters');
+            var btn = document.getElementById('toggleFiltersBtn');
+
+            if (filtersDiv.style.display === 'none' || filtersDiv.style.display === '') {
+                filtersDiv.style.display = 'block';
+                btn.innerHTML = '⚙️ Hide Filters';
+                btn.style.background = '#28a745';
+            } else {
+                filtersDiv.style.display = 'none';
+                btn.innerHTML = '⚙️ Show Filters';
+                btn.style.background = '#6c757d';
+            }
+        }
+
+        // Logout Function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('bwgsAuthenticated');
+                location.reload();
+            }
+        }
+
         function toggleDarkMode() {
             var currentTheme = document.documentElement.getAttribute('data-theme');
             var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -4080,10 +4225,10 @@ html += '</div>';
             // Update button text
             var button = document.getElementById('darkModeToggle');
             if (newTheme === 'dark') {
-                button.innerHTML = '☀️ Light Mode';
+                button.innerHTML = '☀️ Light';
                 localStorage.setItem('theme', 'dark');
             } else {
-                button.innerHTML = '🌙 Dark Mode';
+                button.innerHTML = '🌙 Dark';
                 localStorage.setItem('theme', 'light');
             }
         }
