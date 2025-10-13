@@ -628,6 +628,7 @@
             <button onclick="showInventory()" style="background: #28a745; font-size: 12px; padding: 6px 12px;">📦 Inventory</button>
             <button onclick="showEquipmentLog()" style="background: #9c27b0; font-size: 12px; padding: 6px 12px;">🔧 Equipment</button>
             <button onclick="showWeeklyReport()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📊 Weekly Report</button>
+            <button onclick="showTechDashboard()" style="background: #6f42c1; font-size: 12px; padding: 6px 12px;">👥 Tech Dashboard</button>
             <button onclick="undo()" id="undoBtn" style="background: #6c757d; font-size: 12px; padding: 6px 12px;" disabled title="No actions to undo">↶ Undo</button>
             <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
             <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
@@ -4814,6 +4815,113 @@ html += '</div>';
             alert(report);
         }
 
+        // Tech Performance Dashboard
+        function showTechDashboard() {
+            var techStats = {};
+
+            // Collect per-tech statistics
+            for (var i = 0; i < samples.length; i++) {
+                var s = samples[i];
+
+                // Track who added the sample
+                if (s.initials) {
+                    if (!techStats[s.initials]) {
+                        techStats[s.initials] = {
+                            samplesAdded: 0,
+                            bapProcessed: 0,
+                            tsbProcessed: 0,
+                            extractionProcessed: 0,
+                            cleanExtractionProcessed: 0,
+                            indexingProcessed: 0,
+                            qcPasses: 0,
+                            qcFails: 0,
+                            completed: 0
+                        };
+                    }
+                    techStats[s.initials].samplesAdded++;
+                    if (s.status === 'Qubit Complete') techStats[s.initials].completed++;
+                }
+
+                // Track who processed BAP
+                if (s.bapDetails && s.bapDetails.technician) {
+                    var tech = s.bapDetails.technician;
+                    if (!techStats[tech]) techStats[tech] = { samplesAdded: 0, bapProcessed: 0, tsbProcessed: 0, extractionProcessed: 0, cleanExtractionProcessed: 0, indexingProcessed: 0, qcPasses: 0, qcFails: 0, completed: 0 };
+                    techStats[tech].bapProcessed++;
+                }
+
+                // Track who processed TSB
+                if (s.tsbDetails && s.tsbDetails.technician) {
+                    var tech = s.tsbDetails.technician;
+                    if (!techStats[tech]) techStats[tech] = { samplesAdded: 0, bapProcessed: 0, tsbProcessed: 0, extractionProcessed: 0, cleanExtractionProcessed: 0, indexingProcessed: 0, qcPasses: 0, qcFails: 0, completed: 0 };
+                    techStats[tech].tsbProcessed++;
+                }
+
+                // Track who processed Extraction
+                if (s.extractionDetails && s.extractionDetails.technician) {
+                    var tech = s.extractionDetails.technician;
+                    if (!techStats[tech]) techStats[tech] = { samplesAdded: 0, bapProcessed: 0, tsbProcessed: 0, extractionProcessed: 0, cleanExtractionProcessed: 0, indexingProcessed: 0, qcPasses: 0, qcFails: 0, completed: 0 };
+                    techStats[tech].extractionProcessed++;
+                }
+
+                // Track who processed Clean Extraction
+                if (s.cleanExtractionDetails && s.cleanExtractionDetails.technician) {
+                    var tech = s.cleanExtractionDetails.technician;
+                    if (!techStats[tech]) techStats[tech] = { samplesAdded: 0, bapProcessed: 0, tsbProcessed: 0, extractionProcessed: 0, cleanExtractionProcessed: 0, indexingProcessed: 0, qcPasses: 0, qcFails: 0, completed: 0 };
+                    techStats[tech].cleanExtractionProcessed++;
+
+                    // Track QC pass/fail
+                    if (s.cleanExtractionDetails.qubitConcentration) {
+                        var qc = checkQCThreshold(parseFloat(s.cleanExtractionDetails.qubitConcentration), 'CE');
+                        if (qc.pass) techStats[tech].qcPasses++;
+                        else techStats[tech].qcFails++;
+                    }
+                }
+
+                // Track who processed Indexing
+                if (s.indexingDetails && s.indexingDetails.technician) {
+                    var tech = s.indexingDetails.technician;
+                    if (!techStats[tech]) techStats[tech] = { samplesAdded: 0, bapProcessed: 0, tsbProcessed: 0, extractionProcessed: 0, cleanExtractionProcessed: 0, indexingProcessed: 0, qcPasses: 0, qcFails: 0, completed: 0 };
+                    techStats[tech].indexingProcessed++;
+
+                    // Track QC pass/fail
+                    if (s.indexingDetails.qubitConcentration) {
+                        var qc = checkQCThreshold(parseFloat(s.indexingDetails.qubitConcentration), 'Final');
+                        if (qc.pass) techStats[tech].qcPasses++;
+                        else techStats[tech].qcFails++;
+                    }
+                }
+            }
+
+            // Build report
+            var report = '📊 TECH PERFORMANCE DASHBOARD\n';
+            report += '================================\n\n';
+
+            for (var tech in techStats) {
+                var stats = techStats[tech];
+                var totalProcessed = stats.bapProcessed + stats.tsbProcessed + stats.extractionProcessed + stats.cleanExtractionProcessed + stats.indexingProcessed;
+                var qcPassRate = (stats.qcPasses + stats.qcFails) > 0 ? Math.round((stats.qcPasses / (stats.qcPasses + stats.qcFails)) * 100) : 0;
+                var completionRate = stats.samplesAdded > 0 ? Math.round((stats.completed / stats.samplesAdded) * 100) : 0;
+
+                report += '👤 ' + tech + '\n';
+                report += '─────────────────\n';
+                report += '• Samples Added: ' + stats.samplesAdded + '\n';
+                report += '• Completed: ' + stats.completed + ' (' + completionRate + '%)\n';
+                report += '• Total Processes: ' + totalProcessed + '\n';
+                report += '  - BAP: ' + stats.bapProcessed + '\n';
+                report += '  - TSB: ' + stats.tsbProcessed + '\n';
+                report += '  - Extraction: ' + stats.extractionProcessed + '\n';
+                report += '  - Clean Extraction: ' + stats.cleanExtractionProcessed + '\n';
+                report += '  - Indexing: ' + stats.indexingProcessed + '\n';
+                report += '• QC Performance:\n';
+                report += '  - Passes: ' + stats.qcPasses + '\n';
+                report += '  - Fails: ' + stats.qcFails + '\n';
+                report += '  - Pass Rate: ' + qcPassRate + '%\n';
+                report += '\n';
+            }
+
+            alert(report);
+        }
+
         function renderAnalytics() {
             var html = '';
 
@@ -5435,6 +5543,44 @@ html += '</div>';
                 html += '<div style="font-size: 16px; font-weight: bold;">' + lastAdded.id + '</div>';
                 html += '<div style="font-size: 14px; opacity: 0.9;">Last Added</div>';
                 html += '<div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">' + lastAdded.dateAdded + '</div>';
+                html += '</div>';
+            }
+
+            // Inventory Alerts (Low Stock + Expiring)
+            var lowStockCount = 0;
+            var expiredCount = 0;
+            var expiringSoonCount = 0;
+            var today = new Date();
+            var in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+            for (var i = 0; i < inventory.length; i++) {
+                var r = inventory[i];
+                var percentRemaining = (r.quantity / r.initialQuantity) * 100;
+
+                if (percentRemaining < 20) lowStockCount++;
+
+                if (r.expiry) {
+                    var expiryDate = new Date(r.expiry);
+                    if (expiryDate < today) expiredCount++;
+                    else if (expiryDate < in30Days) expiringSoonCount++;
+                }
+            }
+
+            // Show inventory alerts if there are any issues
+            var totalInventoryAlerts = lowStockCount + expiredCount + expiringSoonCount;
+            if (totalInventoryAlerts > 0) {
+                var alertColor = expiredCount > 0 ? '#ff6b6b' : lowStockCount > 0 ? '#ffc107' : '#ffa500';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px); cursor: pointer; border: 2px solid ' + alertColor + ';" onclick="showInventory()">';
+                html += '<div style="font-size: 32px; font-weight: bold; color: ' + alertColor + ';">⚠️</div>';
+                html += '<div style="font-size: 14px; opacity: 0.9;">Inventory Alerts</div>';
+
+                var alerts = [];
+                if (expiredCount > 0) alerts.push(expiredCount + ' expired');
+                if (expiringSoonCount > 0) alerts.push(expiringSoonCount + ' expiring soon');
+                if (lowStockCount > 0) alerts.push(lowStockCount + ' low stock');
+
+                html += '<div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">' + alerts.join(', ') + '</div>';
+                html += '<div style="font-size: 11px; opacity: 0.6; margin-top: 5px;">Click to view inventory</div>';
                 html += '</div>';
             }
 
