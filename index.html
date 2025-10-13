@@ -629,6 +629,7 @@
             <button onclick="showEquipmentLog()" style="background: #9c27b0; font-size: 12px; padding: 6px 12px;">🔧 Equipment</button>
             <button onclick="showWeeklyReport()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📊 Weekly Report</button>
             <button onclick="showTechDashboard()" style="background: #6f42c1; font-size: 12px; padding: 6px 12px;">👥 Tech Dashboard</button>
+            <button onclick="showProtocolLibrary()" style="background: #667eea; font-size: 12px; padding: 6px 12px;">📚 Protocols</button>
             <button onclick="undo()" id="undoBtn" style="background: #6c757d; font-size: 12px; padding: 6px 12px;" disabled title="No actions to undo">↶ Undo</button>
             <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
             <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
@@ -655,10 +656,10 @@
 
     <div class="add-section">
         <h3>Add New Samples</h3>
-        
+
         <!-- Single Sample Input -->
         <div id="singleInput">
-            <h4>Single Sample:</h4>
+            <h4>Single Sample: <span style="font-size: 12px; font-weight: normal; color: #6c757d;">📷 Barcode scanner supported</span></h4>
             <input type="text" id="sampleId" placeholder="Sample ID" onkeyup="checkDuplicateRealtime(this)">
             <span id="duplicateWarning" style="color: #dc3545; font-weight: 600; margin-left: 10px; display: none;">⚠️ Already exists!</span>
             <input type="text" id="initials" placeholder="Initials" maxlength="3">
@@ -4776,8 +4777,147 @@ html += '</div>';
         }
 
         // Equipment Log (Placeholder for future implementation)
+        // Equipment Log Module
+        var equipmentLogs = JSON.parse(localStorage.getItem('equipmentLogs') || '[]');
+
         function showEquipmentLog() {
-            alert('🔧 Equipment Log Module\n\nComing soon! This will track:\n• Incubator temperature logs\n• Qubit calibrations\n• Equipment maintenance\n• Service records\n\nReady to implement in next session!');
+            var modal = document.getElementById('equipmentModal');
+            if (!modal) {
+                // Create modal
+                var modalHTML = '<div id="equipmentModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow: auto;">';
+                modalHTML += '<div style="background: white; margin: 50px auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 1000px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">';
+                modalHTML += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">';
+                modalHTML += '<h2 style="margin: 0; color: #9c27b0;">🔧 Equipment Log</h2>';
+                modalHTML += '<button onclick="closeEquipmentModal()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕ Close</button>';
+                modalHTML += '</div>';
+
+                // Add new log entry form
+                modalHTML += '<div style="border: 2px solid #9c27b0; border-radius: 8px; padding: 20px; background: #f9f3ff; margin-bottom: 20px;">';
+                modalHTML += '<h3 style="margin-top: 0; color: #9c27b0;">➕ Add Log Entry</h3>';
+                modalHTML += '<select id="newEquipmentType" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '<option value="">Select Equipment...</option>';
+                modalHTML += '<option value="Incubator">Incubator</option>';
+                modalHTML += '<option value="Qubit">Qubit</option>';
+                modalHTML += '<option value="Centrifuge">Centrifuge</option>';
+                modalHTML += '<option value="PCR Machine">PCR Machine</option>';
+                modalHTML += '<option value="Other">Other</option>';
+                modalHTML += '</select>';
+                modalHTML += '<input type="text" id="newEquipmentID" placeholder="Equipment ID (e.g., INC-1, Qubit-Main)" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '<select id="newLogType" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '<option value="">Log Type...</option>';
+                modalHTML += '<option value="Temperature Check">Temperature Check</option>';
+                modalHTML += '<option value="Calibration">Calibration</option>';
+                modalHTML += '<option value="Maintenance">Maintenance</option>';
+                modalHTML += '<option value="Repair">Repair</option>';
+                modalHTML += '<option value="Cleaning">Cleaning</option>';
+                modalHTML += '<option value="Issue">Issue/Problem</option>';
+                modalHTML += '</select>';
+                modalHTML += '<input type="text" id="newLogValue" placeholder="Value (e.g., 37.2°C, Pass, N/A)" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '<textarea id="newLogNotes" placeholder="Notes (optional)" style="width: 100%; height: 80px; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>';
+                modalHTML += '<input type="text" id="newLogTech" placeholder="Your Initials" maxlength="3" style="width: 150px; padding: 10px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '<button onclick="addEquipmentLog()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">➕ Add Log</button>';
+                modalHTML += '</div>';
+
+                // Equipment log list
+                modalHTML += '<div id="equipmentLogList"></div>';
+
+                modalHTML += '</div></div>';
+
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                modal = document.getElementById('equipmentModal');
+            }
+
+            renderEquipmentLogs();
+            modal.style.display = 'block';
+        }
+
+        function closeEquipmentModal() {
+            document.getElementById('equipmentModal').style.display = 'none';
+        }
+
+        function addEquipmentLog() {
+            var type = document.getElementById('newEquipmentType').value;
+            var equipmentID = document.getElementById('newEquipmentID').value.trim();
+            var logType = document.getElementById('newLogType').value;
+            var value = document.getElementById('newLogValue').value.trim();
+            var notes = document.getElementById('newLogNotes').value.trim();
+            var tech = document.getElementById('newLogTech').value.trim().toUpperCase();
+
+            if (!type || !equipmentID || !logType || !tech) {
+                alert('Please fill in equipment type, ID, log type, and initials');
+                return;
+            }
+
+            var log = {
+                id: Date.now(),
+                type: type,
+                equipmentID: equipmentID,
+                logType: logType,
+                value: value,
+                notes: notes,
+                technician: tech,
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString()
+            };
+
+            equipmentLogs.push(log);
+            localStorage.setItem('equipmentLogs', JSON.stringify(equipmentLogs));
+
+            // Clear form
+            document.getElementById('newEquipmentType').value = '';
+            document.getElementById('newEquipmentID').value = '';
+            document.getElementById('newLogType').value = '';
+            document.getElementById('newLogValue').value = '';
+            document.getElementById('newLogNotes').value = '';
+            document.getElementById('newLogTech').value = '';
+
+            renderEquipmentLogs();
+            alert('✅ Log entry added!');
+        }
+
+        function renderEquipmentLogs() {
+            var listDiv = document.getElementById('equipmentLogList');
+            var html = '';
+
+            if (equipmentLogs.length === 0) {
+                html = '<p style="text-align: center; color: #6c757d; padding: 40px;">No equipment logs yet. Add your first log above!</p>';
+            } else {
+                // Show most recent first
+                var sortedLogs = equipmentLogs.slice().reverse();
+
+                html += '<div style="max-height: 500px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 15px;">';
+                html += '<h3 style="margin-top: 0;">Recent Logs</h3>';
+
+                for (var i = 0; i < sortedLogs.length; i++) {
+                    var log = sortedLogs[i];
+                    var typeColor = log.logType === 'Issue' ? '#dc3545' : log.logType === 'Repair' ? '#ffc107' : log.logType === 'Calibration' ? '#17a2b8' : '#28a745';
+
+                    html += '<div style="border-left: 4px solid ' + typeColor + '; background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-radius: 4px;">';
+                    html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
+                    html += '<div>';
+                    html += '<strong style="color: #9c27b0;">' + log.type + ' - ' + log.equipmentID + '</strong>';
+                    html += ' <span style="background: ' + typeColor + '; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 5px;">' + log.logType + '</span>';
+                    html += '</div>';
+                    html += '<button onclick="deleteEquipmentLog(' + log.id + ')" style="background: #dc3545; color: white; padding: 3px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Delete</button>';
+                    html += '</div>';
+                    if (log.value) html += '<div style="margin: 5px 0;"><strong>Value:</strong> ' + log.value + '</div>';
+                    if (log.notes) html += '<div style="margin: 5px 0;"><strong>Notes:</strong> ' + log.notes + '</div>';
+                    html += '<div style="font-size: 11px; color: #6c757d; margin-top: 5px;">' + log.date + ' ' + log.time + ' by ' + log.technician + '</div>';
+                    html += '</div>';
+                }
+
+                html += '</div>';
+            }
+
+            listDiv.innerHTML = html;
+        }
+
+        function deleteEquipmentLog(id) {
+            if (!confirm('Delete this log entry?')) return;
+
+            equipmentLogs = equipmentLogs.filter(function(l) { return l.id !== id; });
+            localStorage.setItem('equipmentLogs', JSON.stringify(equipmentLogs));
+            renderEquipmentLogs();
         }
 
         // Weekly Report Generator
@@ -4813,6 +4953,134 @@ html += '</div>';
             }
 
             alert(report);
+        }
+
+        // Protocol Library Module
+        var protocols = JSON.parse(localStorage.getItem('protocolLibrary') || '[]');
+
+        function showProtocolLibrary() {
+            var modal = document.getElementById('protocolModal');
+            if (!modal) {
+                // Create modal
+                var modalHTML = '<div id="protocolModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow: auto;">';
+                modalHTML += '<div style="background: white; margin: 50px auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 900px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">';
+                modalHTML += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">';
+                modalHTML += '<h2 style="margin: 0; color: #667eea;">📚 Protocol Library</h2>';
+                modalHTML += '<button onclick="closeProtocolModal()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕ Close</button>';
+                modalHTML += '</div>';
+
+                // Add new protocol form
+                modalHTML += '<div style="border: 2px solid #667eea; border-radius: 8px; padding: 20px; background: #f8f9ff; margin-bottom: 20px;">';
+                modalHTML += '<h3 style="margin-top: 0; color: #667eea;">➕ Add New Protocol</h3>';
+                modalHTML += '<input type="text" id="newProtocolName" placeholder="Protocol Name (e.g., BAP Incubation SOP)" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '<select id="newProtocolStage" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '<option value="">Select Stage...</option>';
+                modalHTML += '<option value="BAP">BAP</option>';
+                modalHTML += '<option value="TSB">TSB</option>';
+                modalHTML += '<option value="Extraction">Extraction</option>';
+                modalHTML += '<option value="Clean Extraction">Clean Extraction</option>';
+                modalHTML += '<option value="Indexing">Indexing</option>';
+                modalHTML += '<option value="Qubit">Qubit</option>';
+                modalHTML += '<option value="General">General</option>';
+                modalHTML += '</select>';
+                modalHTML += '<textarea id="newProtocolContent" placeholder="Protocol steps, notes, reagents, etc." style="width: 100%; height: 120px; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; resize: vertical;"></textarea>';
+                modalHTML += '<button onclick="addProtocol()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">➕ Add Protocol</button>';
+                modalHTML += '</div>';
+
+                // Protocol list
+                modalHTML += '<div id="protocolList"></div>';
+
+                modalHTML += '</div></div>';
+
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                modal = document.getElementById('protocolModal');
+            }
+
+            renderProtocolList();
+            modal.style.display = 'block';
+        }
+
+        function closeProtocolModal() {
+            document.getElementById('protocolModal').style.display = 'none';
+        }
+
+        function addProtocol() {
+            var name = document.getElementById('newProtocolName').value.trim();
+            var stage = document.getElementById('newProtocolStage').value;
+            var content = document.getElementById('newProtocolContent').value.trim();
+
+            if (!name || !stage || !content) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            var protocol = {
+                id: Date.now(),
+                name: name,
+                stage: stage,
+                content: content,
+                dateAdded: new Date().toLocaleDateString(),
+                lastModified: new Date().toLocaleDateString()
+            };
+
+            protocols.push(protocol);
+            localStorage.setItem('protocolLibrary', JSON.stringify(protocols));
+
+            // Clear form
+            document.getElementById('newProtocolName').value = '';
+            document.getElementById('newProtocolStage').value = '';
+            document.getElementById('newProtocolContent').value = '';
+
+            renderProtocolList();
+            alert('✅ Protocol "' + name + '" added!');
+        }
+
+        function renderProtocolList() {
+            var listDiv = document.getElementById('protocolList');
+            var html = '';
+
+            if (protocols.length === 0) {
+                html = '<p style="text-align: center; color: #6c757d; padding: 40px;">No protocols yet. Add your first protocol above!</p>';
+            } else {
+                // Group by stage
+                var byStage = {};
+                for (var i = 0; i < protocols.length; i++) {
+                    var p = protocols[i];
+                    if (!byStage[p.stage]) byStage[p.stage] = [];
+                    byStage[p.stage].push(p);
+                }
+
+                for (var stage in byStage) {
+                    html += '<div style="margin-bottom: 20px;">';
+                    html += '<h3 style="background: #667eea; color: white; padding: 10px; border-radius: 6px; margin: 0 0 10px 0;">' + stage + '</h3>';
+
+                    for (var i = 0; i < byStage[stage].length; i++) {
+                        var p = byStage[stage][i];
+                        html += '<div style="border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 10px; background: white;">';
+                        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">';
+                        html += '<h4 style="margin: 0; color: #667eea;">' + p.name + '</h4>';
+                        html += '<div>';
+                        html += '<button onclick="deleteProtocol(' + p.id + ')" style="background: #dc3545; color: white; padding: 4px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '<pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; white-space: pre-wrap; font-size: 12px; margin: 0; border: 1px solid #dee2e6;">' + p.content + '</pre>';
+                        html += '<div style="font-size: 11px; color: #6c757d; margin-top: 8px;">Added: ' + p.dateAdded + ' | Last modified: ' + p.lastModified + '</div>';
+                        html += '</div>';
+                    }
+
+                    html += '</div>';
+                }
+            }
+
+            listDiv.innerHTML = html;
+        }
+
+        function deleteProtocol(id) {
+            if (!confirm('Delete this protocol?')) return;
+
+            protocols = protocols.filter(function(p) { return p.id !== id; });
+            localStorage.setItem('protocolLibrary', JSON.stringify(protocols));
+            renderProtocolList();
         }
 
         // Tech Performance Dashboard
@@ -6020,6 +6288,55 @@ if (sample.qubitDetails) {
             }
         });
 
+        // Barcode Scanner Support
+        // USB barcode scanners act as keyboards and send Enter at the end
+        var barcodeBuffer = '';
+        var barcodeTimeout = null;
+
+        document.getElementById('sampleId').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+
+                var sampleIdInput = document.getElementById('sampleId');
+                var scannedValue = sampleIdInput.value.trim();
+
+                if (scannedValue) {
+                    // Show barcode scan feedback
+                    sampleIdInput.style.borderColor = '#28a745';
+                    sampleIdInput.style.background = '#e6ffe6';
+                    sampleIdInput.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.5)';
+
+                    // Flash animation
+                    setTimeout(function() {
+                        sampleIdInput.style.borderColor = '';
+                        sampleIdInput.style.background = '';
+                        sampleIdInput.style.boxShadow = '';
+                    }, 800);
+
+                    // If initials are filled, auto-add the sample
+                    var initialsInput = document.getElementById('initials');
+                    if (initialsInput.value.trim()) {
+                        // Auto-add after short delay to show the flash
+                        setTimeout(function() {
+                            addSample(true); // Use Quick Add mode to keep adding
+                        }, 200);
+                    } else {
+                        // Focus initials field
+                        initialsInput.focus();
+                    }
+                }
+            }
+        });
+
+        // Add visual indicator for barcode scanner mode
+        document.getElementById('sampleId').addEventListener('focus', function() {
+            this.setAttribute('placeholder', 'Sample ID (or scan barcode)');
+        });
+
+        document.getElementById('sampleId').addEventListener('blur', function() {
+            this.setAttribute('placeholder', 'Sample ID');
+        });
+
         // Load theme preference on page load (before authentication check)
         loadTheme();
 
@@ -6030,6 +6347,7 @@ if (sample.qubitDetails) {
         }
         console.log('Lab Workflow Tracker loaded successfully!');
         console.log('Keyboard shortcuts: Ctrl+F (search), Ctrl+E (export), Ctrl+N (new sample), Esc (close), 1-5 (filters)');
+        console.log('✅ Barcode scanner support enabled - scan barcodes directly into Sample ID field');
     </script>
     </div> <!-- Close appContent div -->
 </body>
