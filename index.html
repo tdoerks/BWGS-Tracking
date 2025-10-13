@@ -707,6 +707,10 @@
                        onkeyup="filterSamples()"
                        style="flex: 1; min-width: 250px; max-width: 400px; padding: 10px; font-size: 14px;">
 
+                <button onclick="showAdvancedSearch()" style="padding: 10px 15px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    🔎 Advanced Search
+                </button>
+
                 <select id="sortSelect" onchange="sortSamples()" style="padding: 10px; font-size: 14px;">
                     <option value="dateDesc">Sort: Newest First</option>
                     <option value="dateAsc">Sort: Oldest First</option>
@@ -4967,6 +4971,228 @@ html += '</div>';
             }
 
             alert(report);
+        }
+
+        // Advanced Search Module
+        function showAdvancedSearch() {
+            var modal = document.getElementById('advancedSearchModal');
+            if (!modal) {
+                // Create modal
+                var modalHTML = '<div id="advancedSearchModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow: auto;">';
+                modalHTML += '<div style="background: white; margin: 50px auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 800px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">';
+                modalHTML += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">';
+                modalHTML += '<h2 style="margin: 0; color: #17a2b8;">🔎 Advanced Search</h2>';
+                modalHTML += '<button onclick="closeAdvancedSearchModal()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕ Close</button>';
+                modalHTML += '</div>';
+
+                modalHTML += '<div style="background: #e7f3f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">';
+                modalHTML += '<p style="margin: 0 0 15px 0; color: #17a2b8; font-weight: 600;">Search across multiple fields simultaneously:</p>';
+
+                // Sample ID
+                modalHTML += '<div style="margin-bottom: 15px;">';
+                modalHTML += '<label style="display: block; font-weight: 600; margin-bottom: 5px;">Sample ID:</label>';
+                modalHTML += '<input type="text" id="advSearchID" placeholder="e.g., 25KS01-042" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '</div>';
+
+                // Technician
+                modalHTML += '<div style="margin-bottom: 15px;">';
+                modalHTML += '<label style="display: block; font-weight: 600; margin-bottom: 5px;">Technician (Initials):</label>';
+                modalHTML += '<input type="text" id="advSearchTech" placeholder="e.g., ABC" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '</div>';
+
+                // Date Range
+                modalHTML += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHTML += '<div>';
+                modalHTML += '<label style="display: block; font-weight: 600; margin-bottom: 5px;">Date From:</label>';
+                modalHTML += '<input type="date" id="advSearchDateFrom" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '</div>';
+                modalHTML += '<div>';
+                modalHTML += '<label style="display: block; font-weight: 600; margin-bottom: 5px;">Date To:</label>';
+                modalHTML += '<input type="date" id="advSearchDateTo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '</div>';
+                modalHTML += '</div>';
+
+                // Status
+                modalHTML += '<div style="margin-bottom: 15px;">';
+                modalHTML += '<label style="display: block; font-weight: 600; margin-bottom: 5px;">Status:</label>';
+                modalHTML += '<select id="advSearchStatus" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '<option value="">Any Status</option>';
+                modalHTML += '<option value="Received">Received</option>';
+                modalHTML += '<option value="BAP In Progress">BAP In Progress</option>';
+                modalHTML += '<option value="BAP Complete">BAP Complete</option>';
+                modalHTML += '<option value="TSB In Progress">TSB In Progress</option>';
+                modalHTML += '<option value="TSB Complete">TSB Complete</option>';
+                modalHTML += '<option value="Extraction Complete">Extraction Complete</option>';
+                modalHTML += '<option value="Clean Extraction Complete">Clean Extraction Complete</option>';
+                modalHTML += '<option value="Clean Extraction Qubit Complete">Clean Extraction Qubit Complete</option>';
+                modalHTML += '<option value="Indexing Complete">Indexing Complete</option>';
+                modalHTML += '<option value="Qubit Complete">Qubit Complete</option>';
+                modalHTML += '</select>';
+                modalHTML += '</div>';
+
+                // Reagent Lot
+                modalHTML += '<div style="margin-bottom: 15px;">';
+                modalHTML += '<label style="display: block; font-weight: 600; margin-bottom: 5px;">Reagent Lot Number:</label>';
+                modalHTML += '<input type="text" id="advSearchReagentLot" placeholder="Search across ALL reagent lots" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '</div>';
+
+                // Plate/Well
+                modalHTML += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHTML += '<div>';
+                modalHTML += '<label style="display: block; font-weight: 600; margin-bottom: 5px;">Plate:</label>';
+                modalHTML += '<input type="text" id="advSearchPlate" placeholder="e.g., Plate-001" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '</div>';
+                modalHTML += '<div>';
+                modalHTML += '<label style="display: block; font-weight: 600; margin-bottom: 5px;">Well:</label>';
+                modalHTML += '<input type="text" id="advSearchWell" placeholder="e.g., A01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHTML += '</div>';
+                modalHTML += '</div>';
+
+                // Buttons
+                modalHTML += '</div>';
+                modalHTML += '<div style="display: flex; gap: 10px; justify-content: flex-end;">';
+                modalHTML += '<button onclick="clearAdvancedSearch()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Clear All</button>';
+                modalHTML += '<button onclick="executeAdvancedSearch()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">🔍 Search</button>';
+                modalHTML += '</div>';
+
+                // Results
+                modalHTML += '<div id="advancedSearchResults" style="margin-top: 20px;"></div>';
+
+                modalHTML += '</div></div>';
+
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                modal = document.getElementById('advancedSearchModal');
+            }
+
+            modal.style.display = 'block';
+        }
+
+        function closeAdvancedSearchModal() {
+            document.getElementById('advancedSearchModal').style.display = 'none';
+        }
+
+        function clearAdvancedSearch() {
+            document.getElementById('advSearchID').value = '';
+            document.getElementById('advSearchTech').value = '';
+            document.getElementById('advSearchDateFrom').value = '';
+            document.getElementById('advSearchDateTo').value = '';
+            document.getElementById('advSearchStatus').value = '';
+            document.getElementById('advSearchReagentLot').value = '';
+            document.getElementById('advSearchPlate').value = '';
+            document.getElementById('advSearchWell').value = '';
+            document.getElementById('advancedSearchResults').innerHTML = '';
+        }
+
+        function executeAdvancedSearch() {
+            var searchID = document.getElementById('advSearchID').value.trim().toLowerCase();
+            var searchTech = document.getElementById('advSearchTech').value.trim().toUpperCase();
+            var searchDateFrom = document.getElementById('advSearchDateFrom').value;
+            var searchDateTo = document.getElementById('advSearchDateTo').value;
+            var searchStatus = document.getElementById('advSearchStatus').value;
+            var searchReagentLot = document.getElementById('advSearchReagentLot').value.trim().toLowerCase();
+            var searchPlate = document.getElementById('advSearchPlate').value.trim().toLowerCase();
+            var searchWell = document.getElementById('advSearchWell').value.trim().toUpperCase();
+
+            var results = samples.filter(function(s) {
+                // Sample ID match
+                if (searchID && s.id.toLowerCase().indexOf(searchID) === -1) return false;
+
+                // Technician match
+                if (searchTech && s.initials.indexOf(searchTech) === -1) return false;
+
+                // Date range match
+                if (searchDateFrom) {
+                    var sampleDate = new Date(s.dateAdded);
+                    var fromDate = new Date(searchDateFrom);
+                    if (sampleDate < fromDate) return false;
+                }
+                if (searchDateTo) {
+                    var sampleDate = new Date(s.dateAdded);
+                    var toDate = new Date(searchDateTo);
+                    if (sampleDate > toDate) return false;
+                }
+
+                // Status match
+                if (searchStatus && s.status !== searchStatus) return false;
+
+                // Reagent lot match (search ALL reagent fields)
+                if (searchReagentLot) {
+                    var found = false;
+                    // Check all possible reagent lot fields
+                    if (s.bapDetails && s.bapDetails.lot && s.bapDetails.lot.toLowerCase().indexOf(searchReagentLot) !== -1) found = true;
+                    if (s.tsbDetails && s.tsbDetails.lotNumber && s.tsbDetails.lotNumber.toLowerCase().indexOf(searchReagentLot) !== -1) found = true;
+                    if (s.extractionDetails && s.extractionDetails.reagentLots) {
+                        var lots = s.extractionDetails.reagentLots;
+                        for (var key in lots) {
+                            if (lots[key] && lots[key].toLowerCase().indexOf(searchReagentLot) !== -1) found = true;
+                        }
+                    }
+                    if (s.cleanExtractionDetails && s.cleanExtractionDetails.reagentLots) {
+                        var lots = s.cleanExtractionDetails.reagentLots;
+                        for (var key in lots) {
+                            if (lots[key] && lots[key].toLowerCase().indexOf(searchReagentLot) !== -1) found = true;
+                        }
+                    }
+                    if (s.indexingDetails && s.indexingDetails.reagentLots) {
+                        var lots = s.indexingDetails.reagentLots;
+                        for (var key in lots) {
+                            if (lots[key] && lots[key].toLowerCase().indexOf(searchReagentLot) !== -1) found = true;
+                        }
+                    }
+                    if (!found) return false;
+                }
+
+                // Plate match
+                if (searchPlate) {
+                    var plateFound = false;
+                    if (s.cleanExtractionDetails && s.cleanExtractionDetails.storagePlate && s.cleanExtractionDetails.storagePlate.toLowerCase().indexOf(searchPlate) !== -1) plateFound = true;
+                    if (s.indexingDetails && s.indexingDetails.storagePlate && s.indexingDetails.storagePlate.toLowerCase().indexOf(searchPlate) !== -1) plateFound = true;
+                    if (!plateFound) return false;
+                }
+
+                // Well match
+                if (searchWell) {
+                    var wellFound = false;
+                    if (s.cleanExtractionDetails && s.cleanExtractionDetails.wellPosition && s.cleanExtractionDetails.wellPosition.indexOf(searchWell) !== -1) wellFound = true;
+                    if (s.indexingDetails && s.indexingDetails.wellPosition && s.indexingDetails.wellPosition.indexOf(searchWell) !== -1) wellFound = true;
+                    if (!wellFound) return false;
+                }
+
+                return true;
+            });
+
+            // Display results
+            var resultsDiv = document.getElementById('advancedSearchResults');
+            var html = '';
+
+            if (results.length === 0) {
+                html = '<div style="text-align: center; padding: 40px; color: #6c757d; border: 2px dashed #dee2e6; border-radius: 8px;">';
+                html += '<p style="font-size: 18px; margin: 0;">No samples found matching your criteria</p>';
+                html += '</div>';
+            } else {
+                html = '<div style="border: 2px solid #28a745; border-radius: 8px; padding: 15px; background: #e6ffe6;">';
+                html += '<h3 style="margin-top: 0; color: #28a745;">✅ Found ' + results.length + ' sample' + (results.length === 1 ? '' : 's') + '</h3>';
+                html += '<div style="max-height: 400px; overflow-y: auto;">';
+
+                for (var i = 0; i < results.length; i++) {
+                    var s = results[i];
+                    html += '<div style="background: white; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #17a2b8;">';
+                    html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+                    html += '<div>';
+                    html += '<strong style="font-size: 16px; color: #17a2b8;">' + s.id + '</strong> ';
+                    html += '<span style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 5px;">' + s.status + '</span>';
+                    html += '</div>';
+                    html += '<div style="font-size: 12px; color: #6c757d;">' + s.dateAdded + ' by ' + s.initials + '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+
+                html += '</div>';
+                html += '<button onclick="closeAdvancedSearchModal()" style="background: #17a2b8; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; margin-top: 10px;">Close & View Results</button>';
+                html += '</div>';
+            }
+
+            resultsDiv.innerHTML = html;
         }
 
         // Protocol Library Module
