@@ -1456,6 +1456,7 @@
         var currentBatchSamples = [];
         var currentBatchType = '';
         var currentDateFilter = 'all'; // Track current date filter
+        var lastWellPositions = {}; // Track last well position used per plate type
         var isCompactView = false; // Track compact view state
 
         function generateWellPosition(index) {
@@ -1464,6 +1465,43 @@
             var col = String(Math.floor(index / 8) + 1);
             if (col.length === 1) col = '0' + col;
             return row + col;
+        }
+
+        // Get next well position based on last used
+        function getNextWellPosition(plateType) {
+            if (!lastWellPositions[plateType]) {
+                return 'A01'; // Start at A01 if no history
+            }
+
+            var last = lastWellPositions[plateType];
+            var row = last.charAt(0);
+            var col = parseInt(last.substring(1));
+            var rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+            // Increment column first (A01 → A02 → A03...)
+            col++;
+
+            // If we exceed 12 columns, go to next row
+            if (col > 12) {
+                col = 1;
+                var rowIndex = rows.indexOf(row);
+                rowIndex++;
+
+                // If we exceed H row, wrap back to A01
+                if (rowIndex >= rows.length) {
+                    rowIndex = 0;
+                }
+                row = rows[rowIndex];
+            }
+
+            var colStr = String(col);
+            if (colStr.length === 1) colStr = '0' + colStr;
+            return row + colStr;
+        }
+
+        // Track well position usage
+        function trackWellPosition(plateType, wellPosition) {
+            lastWellPositions[plateType] = wellPosition;
         }
 
         // Calculate incubation duration
@@ -2530,8 +2568,9 @@
                 
                 html += '<div class="form-group">';
                 html += '<label>Well Position:</label>';
-                html += '<input type="text" id="wellPosition" value="A01" style="width: 80px;">';
-                html += '<small style="color: #666; margin-left: 10px;">Auto-assigned, editable</small>';
+                var nextWell = getNextWellPosition('cleanExtraction');
+                html += '<input type="text" id="wellPosition" value="' + nextWell + '" style="width: 80px;">';
+                html += '<small style="color: #666; margin-left: 10px;">Auto-incremented from last: ' + (lastWellPositions['cleanExtraction'] || 'none') + '</small>';
                 html += '</div>';
                 
                 html += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Reagent Lots:</h5>';
@@ -2616,8 +2655,9 @@
                 
                 html += '<div class="form-group">';
                 html += '<label>Well Position:</label>';
-                html += '<input type="text" id="indexingWellPosition" value="A01" style="width: 80px;">';
-                html += '<small style="color: #666; margin-left: 10px;">Auto-assigned, editable</small>';
+                var nextIndexWell = getNextWellPosition('indexing');
+                html += '<input type="text" id="indexingWellPosition" value="' + nextIndexWell + '" style="width: 80px;">';
+                html += '<small style="color: #666; margin-left: 10px;">Auto-incremented from last: ' + (lastWellPositions['indexing'] || 'none') + '</small>';
                 html += '</div>';
                 
                 html += '<h5 style="margin: 15px 0 5px 0; font-size: 14px;">Index Assignment:</h5>';
@@ -2909,12 +2949,13 @@ html += '</div>';
                 } else if (currentProcessType === 'Clean Extraction') {
                     sample.cleanExtractionNumber = '25CE' + String(nextCleanExtractionNumber).padStart(3, '0');
                     sample.status = 'Clean Extraction Complete';
+                    var ceWellPos = document.getElementById('wellPosition').value;
                     sample.cleanExtractionDetails = {
                         technician: tech,
                         lot: lot,
                         completedDate: today,
                         storagePlate: document.getElementById('storagePlate').value,
-                        wellPosition: document.getElementById('wellPosition').value,
+                        wellPosition: ceWellPos,
                         reagentLots: {
                             bead: document.getElementById('beadLot').value,
                             nfH2oEtoh: document.getElementById('nfH2oEtohLot').value,
@@ -2929,17 +2970,19 @@ html += '</div>';
                         },
                         stageNotes: stageNotes
                     };
+                    trackWellPosition('cleanExtraction', ceWellPos);
                     nextCleanExtractionNumber++;
                     nextCleanExtractionPlate++;
                 } else if (currentProcessType === 'Indexing') {
                     sample.indexingNumber = '25XT' + String(nextIndexingNumber).padStart(3, '0');
                     sample.status = 'Indexing Complete';
+                    var indexWellPos = document.getElementById('indexingWellPosition').value;
                     sample.indexingDetails = {
                         technician: tech,
                         lot: lot,
                         completedDate: today,
                         storagePlate: document.getElementById('indexingStoragePlate').value,
-                        wellPosition: document.getElementById('indexingWellPosition').value,
+                        wellPosition: indexWellPos,
                         indexes: {
                             i5: document.getElementById('i5Index').value,
                             i7: document.getElementById('i7Index').value,
@@ -2963,6 +3006,7 @@ html += '</div>';
                         },
                         stageNotes: stageNotes
                     };
+                    trackWellPosition('indexing', indexWellPos);
                     nextIndexingNumber++;
                     nextIndexingPlate++;
                 } else if (currentProcessType === 'Clean Extraction Qubit') {
