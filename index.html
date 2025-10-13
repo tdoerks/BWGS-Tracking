@@ -171,6 +171,7 @@
         .status-indexing-complete { background: #e3f2fd; color: #1976d2; }
         .status-qubit-complete { background: #fff3e0; color: #f57c00; }
         .status-clean-extraction-qubit-complete { background: #e8f4fd; color: #1565c0; }
+        .status-qc-failed { background: #f8d7da; color: #721c24; font-weight: bold; }
         
         .modal {
             display: none;
@@ -1728,6 +1729,124 @@
             renderSamples();
 
             alert('Sample cloned successfully!\nOriginal: ' + sampleId + '\nNew: ' + newId);
+        }
+
+        // QC Fail tracking
+        function markQCFailed(sampleId, stage) {
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+
+            if (!sample) return;
+
+            var reasons = [
+                'Concentration too low',
+                'Concentration too high',
+                'No amplification',
+                'Contamination suspected',
+                'Reagent issue',
+                'Equipment malfunction',
+                'User error',
+                'Other'
+            ];
+
+            var message = '⚠️ MARK AS QC FAILED\n\n';
+            message += 'Sample: ' + sampleId + '\n';
+            message += 'Stage: ' + stage + '\n\n';
+            message += 'Select failure reason:\n\n';
+            for (var i = 0; i < reasons.length; i++) {
+                message += (i + 1) + ' = ' + reasons[i] + '\n';
+            }
+
+            var choice = prompt(message + '\nOr type a custom reason:');
+            if (choice === null) return; // Cancelled
+
+            var failReason = '';
+            var choiceNum = parseInt(choice);
+            if (!isNaN(choiceNum) && choiceNum >= 1 && choiceNum <= reasons.length) {
+                failReason = reasons[choiceNum - 1];
+            } else {
+                failReason = choice.trim();
+            }
+
+            if (!failReason) {
+                alert('QC failure reason is required!');
+                return;
+            }
+
+            // Add additional notes
+            var notes = prompt('Additional notes (optional):');
+
+            sample.status = 'QC Failed';
+            if (!sample.qcFailures) sample.qcFailures = [];
+
+            sample.qcFailures.push({
+                stage: stage,
+                reason: failReason,
+                notes: notes || '',
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString()
+            });
+
+            saveData();
+            renderSamples();
+
+            alert('Sample marked as QC Failed\nReason: ' + failReason);
+        }
+
+        function reprocessSample(sampleId) {
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+
+            if (!sample) return;
+
+            if (!sample.qcFailures || sample.qcFailures.length === 0) {
+                alert('No QC failure history found');
+                return;
+            }
+
+            var lastFailure = sample.qcFailures[sample.qcFailures.length - 1];
+
+            var message = '🔄 RE-PROCESS SAMPLE\n\n';
+            message += 'Sample: ' + sampleId + '\n';
+            message += 'Last failure: ' + lastFailure.stage + '\n';
+            message += 'Reason: ' + lastFailure.reason + '\n\n';
+            message += 'Reset to which stage?\n\n';
+            message += '1 = Received (start over)\n';
+            message += '2 = Extraction Complete (redo clean extraction)\n';
+            message += '3 = Clean Extraction Complete (redo Qubit)\n';
+            message += '4 = Clean Extraction Qubit Complete (redo indexing)\n';
+            message += '5 = Indexing Complete (redo final Qubit)\n';
+
+            var choice = prompt(message, '3');
+            if (choice === null) return; // Cancelled
+
+            var newStatus = 'Received';
+            if (choice === '1') newStatus = 'Received';
+            else if (choice === '2') newStatus = 'Extraction Complete';
+            else if (choice === '3') newStatus = 'Clean Extraction Complete';
+            else if (choice === '4') newStatus = 'Clean Extraction Qubit Complete';
+            else if (choice === '5') newStatus = 'Indexing Complete';
+
+            sample.status = newStatus;
+
+            // Track re-processing
+            if (!sample.reprocessCount) sample.reprocessCount = 0;
+            sample.reprocessCount++;
+
+            saveData();
+            renderSamples();
+
+            alert('Sample reset to: ' + newStatus + '\nRe-process count: ' + sample.reprocessCount);
         }
 
         // Track recently used lot numbers
@@ -4489,6 +4608,23 @@ if (sample.qubitDetails) {
                 if (sample.notes && sample.notes.trim()) {
                     html += '<br><small style="color: #6c757d; font-style: italic;">📝 ' + sample.notes + '</small>';
                 }
+
+                // Show QC failure history if exists
+                if (sample.qcFailures && sample.qcFailures.length > 0) {
+                    html += '<br><div style="background: #ffe6e6; border-left: 4px solid #dc3545; padding: 8px; margin-top: 8px; border-radius: 4px;">';
+                    html += '<strong style="color: #dc3545;">⚠️ QC Failures (' + sample.qcFailures.length + '):</strong>';
+                    for (var f = 0; f < sample.qcFailures.length; f++) {
+                        var failure = sample.qcFailures[f];
+                        html += '<br><small>' + (f + 1) + '. ' + failure.stage + ': ' + failure.reason;
+                        if (failure.notes) html += ' - ' + failure.notes;
+                        html += ' (' + failure.date + ')';
+                        html += '</small>';
+                    }
+                    if (sample.reprocessCount) {
+                        html += '<br><small><strong>Re-processed: ' + sample.reprocessCount + ' time(s)</strong></small>';
+                    }
+                    html += '</div>';
+                }
                 } // End of !isCompactView
 
                 html += '</div>';
@@ -4512,9 +4648,16 @@ if (sample.qubitDetails) {
                 } else if (sample.status === 'Clean Extraction Complete') {
     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Clean Extraction Qubit\')">Start Qubit</button>';
 } else if (sample.status === 'Clean Extraction Qubit Complete') {
-    html += '<button onclick="startProcess(\'' + sample.id + '\', \'Indexing\')">Start Indexing</button>';
+    html += '<button onclick="startProcess(\'' + sample.id + '\', \'Indexing\')">Start Indexing</button><br>';
+    html += '<button onclick="markQCFailed(\'' + sample.id.replace(/'/g, "\\'") + '\', \'CE Qubit\')" style="background: #dc3545; margin-top: 4px;">QC Failed</button>';
 } else if (sample.status === 'Indexing Complete') {
     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Final Qubit\')">Start Final Qubit</button>';
+                } else if (sample.status === 'Qubit Complete') {
+                    html += '<button onclick="markQCFailed(\'' + sample.id.replace(/'/g, "\\'") + '\', \'Final Qubit\')" style="background: #dc3545;">QC Failed</button><br>';
+                    html += '<div style="color: green; font-weight: bold; text-align: center; margin-top: 4px;">✓ Complete</div>';
+                } else if (sample.status === 'QC Failed') {
+                    html += '<div style="color: red; font-weight: bold; text-align: center;">✗ QC Failed</div>';
+                    html += '<button onclick="reprocessSample(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: #28a745; margin-top: 4px;">Re-process</button>';
                 } else {
                     html += '<div style="color: green; font-weight: bold; text-align: center;">✓ Complete</div>';
                 }
