@@ -770,6 +770,20 @@
             </div>
 
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                <strong style="margin-right: 10px;">⬇️ Sort By:</strong>
+                <select id="sortSelect" onchange="sortSamples()" style="padding: 6px 12px; border: 2px solid #6c757d; background: white; color: #6c757d; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">
+                    <option value="dateAdded-desc">Date Added (Newest First)</option>
+                    <option value="dateAdded-asc">Date Added (Oldest First)</option>
+                    <option value="id-asc">Sample ID (A→Z)</option>
+                    <option value="id-desc">Sample ID (Z→A)</option>
+                    <option value="status-asc">Status (A→Z)</option>
+                    <option value="progress-desc">Progress (High→Low)</option>
+                    <option value="progress-asc">Progress (Low→High)</option>
+                    <option value="technician-asc">Technician (A→Z)</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
                 <strong style="margin-right: 10px;">⚡ Ready for:</strong>
                 <button onclick="filterReadyFor('BAP')" id="readyFilterBAP" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">BAP</button>
                 <button onclick="filterReadyFor('TSB')" id="readyFilterTSB" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">TSB</button>
@@ -5943,6 +5957,63 @@ html += '</div>';
 
             saveData();
             renderSamples();
+        }
+
+        // Sample Sorting Function
+        function sortSamples() {
+            var sortValue = document.getElementById('sortSelect').value;
+            var parts = sortValue.split('-');
+            var sortBy = parts[0];
+            var order = parts[1]; // 'asc' or 'desc'
+
+            samples.sort(function(a, b) {
+                var valA, valB;
+
+                if (sortBy === 'dateAdded') {
+                    valA = new Date(a.dateAdded);
+                    valB = new Date(b.dateAdded);
+                } else if (sortBy === 'id') {
+                    valA = a.id.toLowerCase();
+                    valB = b.id.toLowerCase();
+                } else if (sortBy === 'status') {
+                    valA = a.status.toLowerCase();
+                    valB = b.status.toLowerCase();
+                } else if (sortBy === 'progress') {
+                    // Calculate progress percentage
+                    valA = calculateProgress(a);
+                    valB = calculateProgress(b);
+                } else if (sortBy === 'technician') {
+                    valA = (a.initials || '').toLowerCase();
+                    valB = (b.initials || '').toLowerCase();
+                }
+
+                // Compare values
+                if (valA < valB) return order === 'asc' ? -1 : 1;
+                if (valA > valB) return order === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            saveData();
+            renderSamples();
+        }
+
+        function calculateProgress(sample) {
+            var stages = ['status'];
+            var completed = 0;
+            var total = 7;
+
+            if (sample.status === 'Received') completed = 0;
+            else if (sample.status === 'BAP In Progress') completed = 1;
+            else if (sample.status === 'BAP Complete') completed = 1;
+            else if (sample.status === 'TSB In Progress') completed = 2;
+            else if (sample.status === 'TSB Complete') completed = 2;
+            else if (sample.status === 'Extraction Complete') completed = 3;
+            else if (sample.status === 'Clean Extraction Complete') completed = 4;
+            else if (sample.status === 'Clean Extraction Qubit Complete') completed = 5;
+            else if (sample.status === 'Indexing Complete') completed = 6;
+            else if (sample.status === 'Qubit Complete') completed = 7;
+
+            return (completed / total) * 100;
         }
 
         function renderSamples() {
