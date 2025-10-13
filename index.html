@@ -1180,44 +1180,128 @@
 
         // Export data as CSV file
         function exportCSV() {
-            var csv = 'Sample ID,Status,Date Added,Initials,BAP Number,BAP Tech,BAP Date,TSB Number,TSB Tech,TSB Date,';
+            // Header row with ALL fields including 22+ reagent lots
+            var csv = 'Sample ID,Status,Date Added,Initials,Flag,Notes,';
+            // BAP
+            csv += 'BAP Number,BAP Lot,BAP Tech,BAP Date,BAP Temp,BAP Incubator,BAP Time In,BAP Time Out,BAP Notes,';
+            // TSB
+            csv += 'TSB Number,TSB Lot,TSB Tech,TSB Date,TSB Temp,TSB Incubator,TSB Time In,TSB Time Out,TSB Notes,';
+            // Extraction (8 reagent lots)
             csv += 'Extraction Number,Extraction Run,Extraction Tech,Extraction Date,';
-            csv += 'Clean Extraction Number,CE Storage Plate,CE Well,CE Tech,CE Date,CE Qubit (ng/uL),';
-            csv += 'Indexing Number,Index Storage Plate,Index Well,i5 Index,i7 Index,Index Tech,Index Date,';
-            csv += 'Final Qubit (ng/uL),Final Qubit Date\n';
+            csv += 'Ext AW1 Lot,Ext AW2 Lot,Ext Ethanol Lot,Ext Buffer AL Lot,Ext Buffer ATL Lot,Ext Buffer AE Lot,Ext Proteinase K Lot,Ext DNeasy Lot,Extraction Notes,';
+            // Clean Extraction (5 reagent lots + 3 volumes)
+            csv += 'Clean Extraction Number,CE Storage Plate,CE Well,CE Tech,CE Date,';
+            csv += 'CE Bead Lot,CE NF H2O ETOH Lot,CE ETOH Dilution Lot,CE NF H2O Elution Lot,CE Qubit Reagent Lot,';
+            csv += 'CE Cleanup Volume,CE Elution In Volume,CE Elution Out Volume,CE Notes,';
+            // CE Qubit
+            csv += 'CE Qubit Concentration (ng/uL),CE Qubit Reagent Lot,CE Qubit Date,CE Qubit Tech,CE Qubit Notes,';
+            // Indexing (9 reagent lots + 2 cleanup concentrations)
+            csv += 'Indexing Number,Index Storage Plate,Index Well,Index Tech,Index Date,';
+            csv += 'i5 Index,i7 Index,i5 Thaws,i7 Thaws,';
+            csv += 'Index TD Buffer Lot,Index ATM Buffer Lot,Index NT Buffer Lot,Index NPM Lot,Index Resuspension Buffer Lot,Index Kit Lot,Index Beads Lot,Index ETOH Lot,Index NF H2O Lot,';
+            csv += 'Index Cleanup Step1,Index Cleanup Step2,Index Notes,';
+            // Final Qubit
+            csv += 'Final Qubit Concentration (ng/uL),Final Qubit Reagent Lot,Final Qubit Date,Final Qubit Tech,Final Qubit Notes,';
+            // QC and turnaround
+            csv += 'QC Failures,Reprocess Count,Turnaround Days\n';
 
             for (var i = 0; i < samples.length; i++) {
                 var s = samples[i];
                 var row = [
+                    // Basic info
                     s.id,
                     s.status,
                     s.dateAdded,
                     s.initials,
+                    s.flag || 'None',
+                    s.notes || '',
+                    // BAP
                     s.bapNumber || '',
+                    s.bapDetails ? s.bapDetails.lot : '',
                     s.bapDetails ? s.bapDetails.technician : '',
                     s.bapDetails ? s.bapDetails.completedDate : '',
+                    s.bapDetails ? s.bapDetails.temperature : '',
+                    s.bapDetails ? s.bapDetails.incubator : '',
+                    s.bapDetails ? s.bapDetails.timeIn : '',
+                    s.bapDetails ? s.bapDetails.timeOut : '',
+                    s.bapDetails ? (s.bapDetails.stageNotes || '') : '',
+                    // TSB
                     s.tsbNumber || '',
+                    s.tsbDetails ? s.tsbDetails.lot : '',
                     s.tsbDetails ? s.tsbDetails.technician : '',
                     s.tsbDetails ? s.tsbDetails.completedDate : '',
+                    s.tsbDetails ? s.tsbDetails.temperature : '',
+                    s.tsbDetails ? s.tsbDetails.incubator : '',
+                    s.tsbDetails ? s.tsbDetails.timeIn : '',
+                    s.tsbDetails ? s.tsbDetails.timeOut : '',
+                    s.tsbDetails ? (s.tsbDetails.stageNotes || '') : '',
+                    // Extraction
                     s.extractionNumber || '',
                     s.extractionDetails ? s.extractionDetails.extractionRun : '',
                     s.extractionDetails ? s.extractionDetails.technician : '',
                     s.extractionDetails ? s.extractionDetails.completedDate : '',
+                    s.extractionDetails && s.extractionDetails.reagentLots ? s.extractionDetails.reagentLots.aw1 : '',
+                    s.extractionDetails && s.extractionDetails.reagentLots ? s.extractionDetails.reagentLots.aw2 : '',
+                    s.extractionDetails && s.extractionDetails.reagentLots ? s.extractionDetails.reagentLots.ethanol : '',
+                    s.extractionDetails && s.extractionDetails.reagentLots ? s.extractionDetails.reagentLots.bufferAL : '',
+                    s.extractionDetails && s.extractionDetails.reagentLots ? s.extractionDetails.reagentLots.bufferATL : '',
+                    s.extractionDetails && s.extractionDetails.reagentLots ? s.extractionDetails.reagentLots.bufferAE : '',
+                    s.extractionDetails && s.extractionDetails.reagentLots ? s.extractionDetails.reagentLots.proteinaseK : '',
+                    s.extractionDetails && s.extractionDetails.reagentLots ? s.extractionDetails.reagentLots.dneasy : '',
+                    s.extractionDetails ? (s.extractionDetails.stageNotes || '') : '',
+                    // Clean Extraction
                     s.cleanExtractionNumber || '',
                     s.cleanExtractionDetails ? s.cleanExtractionDetails.storagePlate : '',
                     s.cleanExtractionDetails ? s.cleanExtractionDetails.wellPosition : '',
                     s.cleanExtractionDetails ? s.cleanExtractionDetails.technician : '',
                     s.cleanExtractionDetails ? s.cleanExtractionDetails.completedDate : '',
+                    s.cleanExtractionDetails && s.cleanExtractionDetails.reagentLots ? s.cleanExtractionDetails.reagentLots.bead : '',
+                    s.cleanExtractionDetails && s.cleanExtractionDetails.reagentLots ? s.cleanExtractionDetails.reagentLots.nfH2oEtoh : '',
+                    s.cleanExtractionDetails && s.cleanExtractionDetails.reagentLots ? s.cleanExtractionDetails.reagentLots.etohDilution : '',
+                    s.cleanExtractionDetails && s.cleanExtractionDetails.reagentLots ? s.cleanExtractionDetails.reagentLots.nfH2oElution : '',
+                    s.cleanExtractionDetails && s.cleanExtractionDetails.reagentLots ? s.cleanExtractionDetails.reagentLots.qubitReagent : '',
+                    s.cleanExtractionDetails && s.cleanExtractionDetails.volumes ? s.cleanExtractionDetails.volumes.cleanup : '',
+                    s.cleanExtractionDetails && s.cleanExtractionDetails.volumes ? s.cleanExtractionDetails.volumes.elutionIn : '',
+                    s.cleanExtractionDetails && s.cleanExtractionDetails.volumes ? s.cleanExtractionDetails.volumes.elutionOut : '',
+                    s.cleanExtractionDetails ? (s.cleanExtractionDetails.stageNotes || '') : '',
+                    // CE Qubit
                     s.cleanExtractionQubitDetails ? s.cleanExtractionQubitDetails.concentration : '',
+                    s.cleanExtractionQubitDetails ? s.cleanExtractionQubitDetails.reagentLot : '',
+                    s.cleanExtractionQubitDetails ? (s.cleanExtractionQubitDetails.dateQubited || s.cleanExtractionQubitDetails.completedDate) : '',
+                    s.cleanExtractionQubitDetails ? s.cleanExtractionQubitDetails.technician : '',
+                    s.cleanExtractionQubitDetails ? (s.cleanExtractionQubitDetails.stageNotes || '') : '',
+                    // Indexing
                     s.indexingNumber || '',
                     s.indexingDetails ? s.indexingDetails.storagePlate : '',
                     s.indexingDetails ? s.indexingDetails.wellPosition : '',
-                    s.indexingDetails && s.indexingDetails.indexes ? s.indexingDetails.indexes.i5 : '',
-                    s.indexingDetails && s.indexingDetails.indexes ? s.indexingDetails.indexes.i7 : '',
                     s.indexingDetails ? s.indexingDetails.technician : '',
                     s.indexingDetails ? s.indexingDetails.completedDate : '',
+                    s.indexingDetails && s.indexingDetails.indexes ? s.indexingDetails.indexes.i5 : '',
+                    s.indexingDetails && s.indexingDetails.indexes ? s.indexingDetails.indexes.i7 : '',
+                    s.indexingDetails && s.indexingDetails.indexes ? s.indexingDetails.indexes.i5Thaws : '',
+                    s.indexingDetails && s.indexingDetails.indexes ? s.indexingDetails.indexes.i7Thaws : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.tdBuffer : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.atmBuffer : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.ntBuffer : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.npm : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.resuspensionBuffer : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.indexesKit : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.beads : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.etoh : '',
+                    s.indexingDetails && s.indexingDetails.reagentLots ? s.indexingDetails.reagentLots.nfH2o : '',
+                    s.indexingDetails && s.indexingDetails.cleanupConcentrations ? s.indexingDetails.cleanupConcentrations.step1 : '',
+                    s.indexingDetails && s.indexingDetails.cleanupConcentrations ? s.indexingDetails.cleanupConcentrations.step2 : '',
+                    s.indexingDetails ? (s.indexingDetails.stageNotes || '') : '',
+                    // Final Qubit
                     s.qubitDetails ? s.qubitDetails.concentration : '',
-                    s.qubitDetails ? s.qubitDetails.dateQubited || s.qubitDetails.completedDate : ''
+                    s.qubitDetails ? s.qubitDetails.reagentLot : '',
+                    s.qubitDetails ? (s.qubitDetails.dateQubited || s.qubitDetails.completedDate) : '',
+                    s.qubitDetails ? s.qubitDetails.technician : '',
+                    s.qubitDetails ? (s.qubitDetails.stageNotes || '') : '',
+                    // QC and turnaround
+                    s.qcFailures ? s.qcFailures.length : '0',
+                    s.reprocessCount || '0',
+                    calculateTurnaroundDays(s) || ''
                 ];
 
                 // Escape commas and quotes in CSV
