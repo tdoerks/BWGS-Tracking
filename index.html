@@ -1355,6 +1355,57 @@
             durationDiv.style.display = 'block';
         }
 
+        // Calculate sample progress (how many stages completed)
+        function getSampleProgress(sample) {
+            var stages = [
+                {key: 'bapDetails', name: 'BAP'},
+                {key: 'tsbDetails', name: 'TSB'},
+                {key: 'extractionDetails', name: 'Extraction'},
+                {key: 'cleanExtractionDetails', name: 'Clean Extraction'},
+                {key: 'cleanExtractionQubitDetails', name: 'CE Qubit'},
+                {key: 'indexingDetails', name: 'Indexing'},
+                {key: 'qubitDetails', name: 'Final Qubit'}
+            ];
+
+            var completed = 0;
+            for (var i = 0; i < stages.length; i++) {
+                if (sample[stages[i].key]) {
+                    completed++;
+                }
+            }
+
+            var total = stages.length;
+            var percentage = Math.round((completed / total) * 100);
+
+            return {
+                completed: completed,
+                total: total,
+                percentage: percentage
+            };
+        }
+
+        // Generate progress bar HTML
+        function getProgressBarHTML(sample) {
+            var progress = getSampleProgress(sample);
+            var color = progress.percentage === 100 ? '#28a745' :
+                       progress.percentage >= 75 ? '#17a2b8' :
+                       progress.percentage >= 50 ? '#ffc107' :
+                       progress.percentage >= 25 ? '#fd7e14' : '#6c757d';
+
+            var html = '<div style="margin: 8px 0;">';
+            html += '<div style="display: flex; align-items: center; gap: 10px;">';
+            html += '<div style="flex: 1; background: #e9ecef; border-radius: 10px; height: 20px; overflow: hidden;">';
+            html += '<div style="background: ' + color + '; height: 100%; width: ' + progress.percentage + '%; transition: width 0.3s ease;"></div>';
+            html += '</div>';
+            html += '<span style="font-size: 12px; font-weight: 600; color: ' + color + '; min-width: 60px;">';
+            html += progress.completed + '/' + progress.total + ' (' + progress.percentage + '%)';
+            html += '</span>';
+            html += '</div>';
+            html += '</div>';
+
+            return html;
+        }
+
         // Date filtering functions
         function filterByDate(period) {
             currentDateFilter = period;
@@ -3881,7 +3932,10 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                 html += '<strong>' + sample.id + '</strong> ';
                 html += '<span class="status status-' + sample.status.toLowerCase().replace(/ /g, '-') + '">' + sample.status + '</span>';
                 html += '<br><small>Added: ' + sample.dateAdded + ' | ' + sample.initials + '</small>';
-                
+
+                // Add progress bar
+                html += getProgressBarHTML(sample);
+
                 if (sample.bapDetails) {
                     html += '<br>BAP: ' + sample.bapNumber;
                     if (sample.bapDetails.timeIn || sample.bapDetails.timeOut) {
