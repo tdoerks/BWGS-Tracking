@@ -705,6 +705,10 @@
                     <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
                     <strong>Select All</strong>
                 </label>
+
+                <button onclick="toggleCompactView()" id="compactViewBtn" style="padding: 10px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    📋 Compact View
+                </button>
             </div>
 
             <div style="margin-top: 10px;">
@@ -1265,6 +1269,7 @@
         var currentBatchSamples = [];
         var currentBatchType = '';
         var currentDateFilter = 'all'; // Track current date filter
+        var isCompactView = false; // Track compact view state
 
         function generateWellPosition(index) {
             var rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -1353,6 +1358,22 @@
 
             durationText.innerHTML = durationStr + warning;
             durationDiv.style.display = 'block';
+        }
+
+        // Toggle compact view
+        function toggleCompactView() {
+            isCompactView = !isCompactView;
+            var btn = document.getElementById('compactViewBtn');
+
+            if (isCompactView) {
+                btn.textContent = '📄 Detailed View';
+                btn.style.background = '#28a745';
+            } else {
+                btn.textContent = '📋 Compact View';
+                btn.style.background = '#6c757d';
+            }
+
+            renderSamples();
         }
 
         // Calculate sample progress (how many stages completed)
@@ -3936,6 +3957,8 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                 // Add progress bar
                 html += getProgressBarHTML(sample);
 
+                // In compact view, skip all the detailed info
+                if (!isCompactView) {
                 if (sample.bapDetails) {
                     html += '<br>BAP: ' + sample.bapNumber;
                     if (sample.bapDetails.timeIn || sample.bapDetails.timeOut) {
@@ -3999,6 +4022,7 @@ if (sample.qubitDetails) {
                 if (sample.notes && sample.notes.trim()) {
                     html += '<br><small style="color: #6c757d; font-style: italic;">📝 ' + sample.notes + '</small>';
                 }
+                } // End of !isCompactView
 
                 html += '</div>';
                 html += '<div class="sample-actions">';
