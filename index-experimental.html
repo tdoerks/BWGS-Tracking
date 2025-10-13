@@ -620,7 +620,6 @@
             <button onclick="showPlateMap()" style="background: #9c27b0; font-size: 12px; padding: 6px 12px;">🧫 Plate Map</button>
             <button onclick="showTimeline()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📅 Timeline</button>
             <button onclick="showAnalytics()" style="background: #4ecdc4; font-size: 12px; padding: 6px 12px;">📈 Analytics</button>
-            <button onclick="showReagentSearch()" style="background: #fd7e14; font-size: 12px; padding: 6px 12px;">🔬 Reagent Search</button>
             <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
             <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
             <button onclick="toggleDarkMode()" id="darkModeToggle" style="background: #495057; font-size: 12px; padding: 6px 12px;">🌙 Dark Mode</button>
@@ -650,8 +649,7 @@
         <!-- Single Sample Input -->
         <div id="singleInput">
             <h4>Single Sample:</h4>
-            <input type="text" id="sampleId" placeholder="Sample ID" onkeyup="checkDuplicateRealtime(this)">
-            <span id="duplicateWarning" style="color: #dc3545; font-weight: 600; margin-left: 10px; display: none;">⚠️ Already exists!</span>
+            <input type="text" id="sampleId" placeholder="Sample ID">
             <input type="text" id="initials" placeholder="Initials" maxlength="3">
             <button onclick="addSample()">Add Sample</button>
         </div>
@@ -707,10 +705,6 @@
                     <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
                     <strong>Select All</strong>
                 </label>
-
-                <button onclick="toggleCompactView()" id="compactViewBtn" style="padding: 10px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                    📋 Compact View
-                </button>
             </div>
 
             <div style="margin-top: 10px;">
@@ -732,34 +726,6 @@
                 <label style="margin-right: 15px;">
                     <input type="radio" name="statusFilter" value="Complete" onchange="filterSamples()"> Complete
                 </label>
-            </div>
-
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                <strong style="margin-right: 10px;">📅 Date Range:</strong>
-                <button onclick="filterByDate('all')" id="dateFilterAll" class="date-filter-btn active" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #007bff; background: #007bff; color: white; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">All Time</button>
-                <button onclick="filterByDate('today')" id="dateFilterToday" class="date-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #007bff; background: white; color: #007bff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Today</button>
-                <button onclick="filterByDate('week')" id="dateFilterWeek" class="date-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #007bff; background: white; color: #007bff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">This Week</button>
-                <button onclick="filterByDate('month')" id="dateFilterMonth" class="date-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #007bff; background: white; color: #007bff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">This Month</button>
-                <button onclick="filterByDate('30days')" id="dateFilter30Days" class="date-filter-btn" style="padding: 6px 12px; border: 2px solid #007bff; background: white; color: #007bff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Last 30 Days</button>
-            </div>
-
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                <strong style="margin-right: 10px;">🚩 Flag:</strong>
-                <button onclick="filterByFlag('all')" id="flagFilterAll" class="flag-filter-btn active" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #28a745; background: #28a745; color: white; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">All</button>
-                <button onclick="filterByFlag('Rush')" id="flagFilterRush" class="flag-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #dc3545; background: white; color: #dc3545; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">🔴 Rush</button>
-                <button onclick="filterByFlag('Hold')" id="flagFilterHold" class="flag-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #ffc107; background: white; color: #856404; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">⏸️ Hold</button>
-                <button onclick="filterByFlag('Review')" id="flagFilterReview" class="flag-filter-btn" style="padding: 6px 12px; border: 2px solid #fd7e14; background: white; color: #fd7e14; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">⚠️ Review</button>
-            </div>
-
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                <strong style="margin-right: 10px;">⚡ Ready for:</strong>
-                <button onclick="filterReadyFor('BAP')" id="readyFilterBAP" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">BAP</button>
-                <button onclick="filterReadyFor('TSB')" id="readyFilterTSB" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">TSB</button>
-                <button onclick="filterReadyFor('Extraction')" id="readyFilterExtraction" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Extraction</button>
-                <button onclick="filterReadyFor('CleanExtraction')" id="readyFilterCleanExtraction" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Clean Extraction</button>
-                <button onclick="filterReadyFor('CEQubit')" id="readyFilterCEQubit" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">CE Qubit</button>
-                <button onclick="filterReadyFor('Indexing')" id="readyFilterIndexing" class="ready-filter-btn" style="padding: 6px 12px; margin-right: 8px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Indexing</button>
-                <button onclick="filterReadyFor('FinalQubit')" id="readyFilterFinalQubit" class="ready-filter-btn" style="padding: 6px 12px; border: 2px solid #17a2b8; background: white; color: #17a2b8; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Final Qubit</button>
             </div>
         </div>
 
@@ -807,21 +773,7 @@
                     <option value="INC-2">Incubator 2</option>
                 </select>
             </div>
-
-            <div class="form-group">
-                <label>Time In:</label>
-                <input type="time" id="batchTimeIn" placeholder="HH:MM" onchange="calculateBatchIncubationDuration()">
-            </div>
-
-            <div class="form-group">
-                <label>Time Out:</label>
-                <input type="time" id="batchTimeOut" placeholder="HH:MM" onchange="calculateBatchIncubationDuration()">
-            </div>
-
-            <div id="batchIncubationDuration" style="padding: 10px; background: #e8f5e9; border-radius: 4px; margin: 10px 0; display: none;">
-                <strong>Duration:</strong> <span id="batchDurationText"></span>
-            </div>
-
+            
             <button onclick="completeBatchProcess()">Complete Batch</button>
             <button class="btn-cancel" onclick="closeBatchModal()">Cancel</button>
         </div>
@@ -860,21 +812,7 @@
                     <option value="INC-2">Incubator 2</option>
                 </select>
             </div>
-
-            <div class="form-group">
-                <label>Time In:</label>
-                <input type="time" id="timeIn" placeholder="HH:MM" onchange="calculateIncubationDuration()">
-            </div>
-
-            <div class="form-group">
-                <label>Time Out:</label>
-                <input type="time" id="timeOut" placeholder="HH:MM" onchange="calculateIncubationDuration()">
-            </div>
-
-            <div id="incubationDuration" style="padding: 10px; background: #e8f5e9; border-radius: 4px; margin: 10px 0; display: none;">
-                <strong>Duration:</strong> <span id="durationText"></span>
-            </div>
-
+            
             <div id="specificFields"></div>
             
             <button onclick="completeProcess()">Complete</button>
@@ -1049,46 +987,6 @@
                     </tr>
                 </table>
 
-                <h4 style="color: #fd7e14; margin-bottom: 10px;">📈 Views & Tools</h4>
-                <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + T</kbd></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Timeline view</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + A</kbd></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Analytics dashboard</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + R</kbd></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Reagent Search</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + P</kbd></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Plate Map</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + K</kbd></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Show this shortcuts dialog</td>
-                    </tr>
-                </table>
-
-                <h4 style="color: #9c27b0; margin-bottom: 10px;">⚙️ Toggles</h4>
-                <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + B</kbd></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Toggle Bulk Input mode</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + D</kbd></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Toggle Dark Mode</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + M</kbd></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Toggle Compact View</td>
-                    </tr>
-                </table>
-
                 <h4 style="color: #6c757d; margin-bottom: 10px;">🚪 Modals</h4>
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
@@ -1098,36 +996,13 @@
                 </table>
             </div>
 
-            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; text-align: center;">
-                <strong style="font-size: 16px;">💡 Pro Tip: Use these shortcuts to navigate 10x faster!</strong><br>
-                <small style="opacity: 0.9;">Total shortcuts: 17 | Number keys (1-5) only work when not typing</small>
+            <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                <small style="color: #6c757d;">
+                    <strong>Note:</strong> Number key shortcuts (1-5) only work when not typing in an input field.
+                </small>
             </div>
 
             <button class="btn-cancel" onclick="closeShortcutsModal()" style="margin-top: 20px;">Close</button>
-        </div>
-    </div>
-
-    <!-- Reagent Search Modal -->
-    <div id="reagentSearchModal" class="modal">
-        <div class="modal-content" style="max-width: 900px; width: 95%;">
-            <span class="close-btn" onclick="closeReagentSearchModal()">&times;</span>
-            <h3>🔬 Reagent Lot Search & Traceability</h3>
-
-            <div style="margin: 20px 0; padding: 20px; background: var(--bg-secondary); border-radius: 8px;">
-                <label style="display: block; margin-bottom: 10px; font-weight: 600;">Search for samples using a specific reagent lot number:</label>
-                <input type="text" id="reagentSearchInput" placeholder="Enter lot number (e.g., AW1-LOT-2024-123)"
-                       style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid var(--border-color); border-radius: 4px; margin-bottom: 10px;"
-                       onkeyup="if(event.key==='Enter') searchReagentLot()">
-                <button onclick="searchReagentLot()" style="padding: 12px 24px; background: #fd7e14; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 16px;">
-                    🔍 Search
-                </button>
-            </div>
-
-            <div id="reagentSearchResults" style="margin-top: 20px;">
-                <!-- Search results will appear here -->
-            </div>
-
-            <button class="btn-cancel" onclick="closeReagentSearchModal()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
 
@@ -1295,17 +1170,6 @@
             } else {
                 initializeDefaults();
             }
-
-            // Load reagent lot history
-            var savedLotHistory = localStorage.getItem('reagentLotHistory');
-            if (savedLotHistory) {
-                try {
-                    reagentLotHistory = JSON.parse(savedLotHistory);
-                } catch (e) {
-                    console.error('Error loading lot history:', e);
-                    reagentLotHistory = {};
-                }
-            }
         }
 
         function initializeDefaults() {
@@ -1349,11 +1213,8 @@
         var nextIndexingPlate = 1;
         var currentProcessType = '';
         var selectedSamples = [];
-        var reagentLotHistory = {}; // Store recently used lot numbers by field name
         var currentBatchSamples = [];
         var currentBatchType = '';
-        var currentDateFilter = 'all'; // Track current date filter
-        var isCompactView = false; // Track compact view state
 
         function generateWellPosition(index) {
             var rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -1361,427 +1222,6 @@
             var col = String(Math.floor(index / 8) + 1);
             if (col.length === 1) col = '0' + col;
             return row + col;
-        }
-
-        // Calculate incubation duration
-        function calculateIncubationDuration() {
-            var timeIn = document.getElementById('timeIn').value;
-            var timeOut = document.getElementById('timeOut').value;
-            var durationDiv = document.getElementById('incubationDuration');
-            var durationText = document.getElementById('durationText');
-
-            if (!timeIn || !timeOut) {
-                durationDiv.style.display = 'none';
-                return;
-            }
-
-            // Parse times
-            var inParts = timeIn.split(':');
-            var outParts = timeOut.split(':');
-            var inMinutes = parseInt(inParts[0]) * 60 + parseInt(inParts[1]);
-            var outMinutes = parseInt(outParts[0]) * 60 + parseInt(outParts[1]);
-
-            // Calculate difference (handle overnight incubations)
-            var diffMinutes = outMinutes - inMinutes;
-            if (diffMinutes < 0) {
-                diffMinutes += 24 * 60; // Add 24 hours if overnight
-            }
-
-            var hours = Math.floor(diffMinutes / 60);
-            var minutes = diffMinutes % 60;
-
-            var durationStr = hours + 'h ' + minutes + 'm';
-
-            // Check if duration seems unusual (less than 1h or more than 24h)
-            var warning = '';
-            if (diffMinutes < 60) {
-                warning = ' ⚠️ <span style="color: #d32f2f;">Very short incubation!</span>';
-            } else if (diffMinutes > 24 * 60) {
-                warning = ' ⚠️ <span style="color: #d32f2f;">Over 24 hours!</span>';
-            }
-
-            durationText.innerHTML = durationStr + warning;
-            durationDiv.style.display = 'block';
-        }
-
-        function calculateBatchIncubationDuration() {
-            var timeIn = document.getElementById('batchTimeIn').value;
-            var timeOut = document.getElementById('batchTimeOut').value;
-            var durationDiv = document.getElementById('batchIncubationDuration');
-            var durationText = document.getElementById('batchDurationText');
-
-            if (!timeIn || !timeOut) {
-                durationDiv.style.display = 'none';
-                return;
-            }
-
-            // Parse times
-            var inParts = timeIn.split(':');
-            var outParts = timeOut.split(':');
-            var inMinutes = parseInt(inParts[0]) * 60 + parseInt(inParts[1]);
-            var outMinutes = parseInt(outParts[0]) * 60 + parseInt(outParts[1]);
-
-            // Calculate difference (handle overnight incubations)
-            var diffMinutes = outMinutes - inMinutes;
-            if (diffMinutes < 0) {
-                diffMinutes += 24 * 60; // Add 24 hours if overnight
-            }
-
-            var hours = Math.floor(diffMinutes / 60);
-            var minutes = diffMinutes % 60;
-
-            var durationStr = hours + 'h ' + minutes + 'm';
-
-            // Check if duration seems unusual
-            var warning = '';
-            if (diffMinutes < 60) {
-                warning = ' ⚠️ <span style="color: #d32f2f;">Very short incubation!</span>';
-            } else if (diffMinutes > 24 * 60) {
-                warning = ' ⚠️ <span style="color: #d32f2f;">Over 24 hours!</span>';
-            }
-
-            durationText.innerHTML = durationStr + warning;
-            durationDiv.style.display = 'block';
-        }
-
-        // Calculate turnaround time in days
-        function calculateTurnaroundDays(sample) {
-            if (sample.status !== 'Qubit Complete') return null;
-
-            var startDate = new Date(sample.dateAdded);
-            var endDate = sample.qubitDetails && sample.qubitDetails.completedDate
-                ? new Date(sample.qubitDetails.completedDate)
-                : new Date();
-
-            var diffTime = Math.abs(endDate - startDate);
-            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            return diffDays;
-        }
-
-        // Toggle compact view
-        function toggleCompactView() {
-            isCompactView = !isCompactView;
-            var btn = document.getElementById('compactViewBtn');
-
-            if (isCompactView) {
-                btn.textContent = '📄 Detailed View';
-                btn.style.background = '#28a745';
-            } else {
-                btn.textContent = '📋 Compact View';
-                btn.style.background = '#6c757d';
-            }
-
-            renderSamples();
-        }
-
-        // Calculate sample progress (how many stages completed)
-        function getSampleProgress(sample) {
-            var stages = [
-                {key: 'bapDetails', name: 'BAP'},
-                {key: 'tsbDetails', name: 'TSB'},
-                {key: 'extractionDetails', name: 'Extraction'},
-                {key: 'cleanExtractionDetails', name: 'Clean Extraction'},
-                {key: 'cleanExtractionQubitDetails', name: 'CE Qubit'},
-                {key: 'indexingDetails', name: 'Indexing'},
-                {key: 'qubitDetails', name: 'Final Qubit'}
-            ];
-
-            var completed = 0;
-            for (var i = 0; i < stages.length; i++) {
-                if (sample[stages[i].key]) {
-                    completed++;
-                }
-            }
-
-            var total = stages.length;
-            var percentage = Math.round((completed / total) * 100);
-
-            return {
-                completed: completed,
-                total: total,
-                percentage: percentage
-            };
-        }
-
-        // Generate progress bar HTML
-        function getProgressBarHTML(sample) {
-            var progress = getSampleProgress(sample);
-            var color = progress.percentage === 100 ? '#28a745' :
-                       progress.percentage >= 75 ? '#17a2b8' :
-                       progress.percentage >= 50 ? '#ffc107' :
-                       progress.percentage >= 25 ? '#fd7e14' : '#6c757d';
-
-            var html = '<div style="margin: 8px 0;">';
-            html += '<div style="display: flex; align-items: center; gap: 10px;">';
-            html += '<div style="flex: 1; background: #e9ecef; border-radius: 10px; height: 20px; overflow: hidden;">';
-            html += '<div style="background: ' + color + '; height: 100%; width: ' + progress.percentage + '%; transition: width 0.3s ease;"></div>';
-            html += '</div>';
-            html += '<span style="font-size: 12px; font-weight: 600; color: ' + color + '; min-width: 60px;">';
-            html += progress.completed + '/' + progress.total + ' (' + progress.percentage + '%)';
-            html += '</span>';
-            html += '</div>';
-            html += '</div>';
-
-            return html;
-        }
-
-        // Date filtering functions
-        function filterByDate(period) {
-            currentDateFilter = period;
-
-            // Update button styles
-            var buttons = document.querySelectorAll('.date-filter-btn');
-            for (var i = 0; i < buttons.length; i++) {
-                buttons[i].style.background = 'white';
-                buttons[i].style.color = '#007bff';
-            }
-
-            var activeBtn = document.getElementById('dateFilter' + period.charAt(0).toUpperCase() + period.slice(1));
-            if (period === 'all') activeBtn = document.getElementById('dateFilterAll');
-            if (period === '30days') activeBtn = document.getElementById('dateFilter30Days');
-
-            if (activeBtn) {
-                activeBtn.style.background = '#007bff';
-                activeBtn.style.color = 'white';
-            }
-
-            filterSamples();
-        }
-
-        function isWithinDateFilter(dateString) {
-            if (currentDateFilter === 'all') return true;
-
-            var sampleDate = new Date(dateString);
-            var today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            if (currentDateFilter === 'today') {
-                sampleDate.setHours(0, 0, 0, 0);
-                return sampleDate.getTime() === today.getTime();
-            }
-
-            if (currentDateFilter === 'week') {
-                var weekAgo = new Date(today);
-                weekAgo.setDate(today.getDate() - 7);
-                return sampleDate >= weekAgo;
-            }
-
-            if (currentDateFilter === 'month') {
-                var monthAgo = new Date(today);
-                monthAgo.setMonth(today.getMonth() - 1);
-                return sampleDate >= monthAgo;
-            }
-
-            if (currentDateFilter === '30days') {
-                var thirtyDaysAgo = new Date(today);
-                thirtyDaysAgo.setDate(today.getDate() - 30);
-                return sampleDate >= thirtyDaysAgo;
-            }
-
-            return true;
-        }
-
-        // Flag filtering
-        var currentFlagFilter = 'all';
-
-        function filterByFlag(flag) {
-            currentFlagFilter = flag;
-
-            // Update button styles
-            var buttons = document.querySelectorAll('.flag-filter-btn');
-            for (var i = 0; i < buttons.length; i++) {
-                var btn = buttons[i];
-                if (btn.id === 'flagFilterAll') {
-                    btn.style.background = flag === 'all' ? '#28a745' : 'white';
-                    btn.style.color = flag === 'all' ? 'white' : '#28a745';
-                } else if (btn.id === 'flagFilterRush') {
-                    btn.style.background = flag === 'Rush' ? '#dc3545' : 'white';
-                    btn.style.color = flag === 'Rush' ? 'white' : '#dc3545';
-                } else if (btn.id === 'flagFilterHold') {
-                    btn.style.background = flag === 'Hold' ? '#ffc107' : 'white';
-                    btn.style.color = flag === 'Hold' ? '#212529' : '#856404';
-                } else if (btn.id === 'flagFilterReview') {
-                    btn.style.background = flag === 'Review' ? '#fd7e14' : 'white';
-                    btn.style.color = flag === 'Review' ? 'white' : '#fd7e14';
-                }
-            }
-
-            filterSamples();
-        }
-
-        // Ready for stage filtering
-        var currentReadyFilter = null;
-
-        function filterReadyFor(stage) {
-            currentReadyFilter = stage;
-
-            // Update button styles
-            var buttons = document.querySelectorAll('.ready-filter-btn');
-            for (var i = 0; i < buttons.length; i++) {
-                var btn = buttons[i];
-                btn.style.background = 'white';
-                btn.style.color = '#17a2b8';
-            }
-
-            var activeBtn = document.getElementById('readyFilter' + stage);
-            if (activeBtn) {
-                activeBtn.style.background = '#17a2b8';
-                activeBtn.style.color = 'white';
-            }
-
-            // Determine what status to show
-            var targetStatus = '';
-            if (stage === 'BAP') targetStatus = 'Received';
-            else if (stage === 'TSB') targetStatus = 'BAP Complete';
-            else if (stage === 'Extraction') targetStatus = 'TSB Complete';
-            else if (stage === 'CleanExtraction') targetStatus = 'Extraction Complete';
-            else if (stage === 'CEQubit') targetStatus = 'Clean Extraction Complete';
-            else if (stage === 'Indexing') targetStatus = 'Clean Extraction Qubit Complete';
-            else if (stage === 'FinalQubit') targetStatus = 'Indexing Complete';
-
-            // Set the status filter radio button
-            var radios = document.getElementsByName('statusFilter');
-            for (var i = 0; i < radios.length; i++) {
-                if (radios[i].value === targetStatus) {
-                    radios[i].checked = true;
-                    break;
-                }
-            }
-
-            filterSamples();
-        }
-
-        // Change sample flag
-        function changeFlag(sampleId) {
-            var sample = null;
-            for (var i = 0; i < samples.length; i++) {
-                if (samples[i].id === sampleId) {
-                    sample = samples[i];
-                    break;
-                }
-            }
-
-            if (!sample) return;
-
-            var currentFlag = sample.flag || 'None';
-            var options = ['None', 'Rush', 'Hold', 'Review'];
-            var message = 'Current flag: ' + currentFlag + '\n\nSelect new flag:\n\n';
-            message += '1 = None (no flag)\n';
-            message += '2 = Rush 🔴 (expedited processing)\n';
-            message += '3 = Hold ⏸️ (do not process)\n';
-            message += '4 = Review ⚠️ (needs QC review)';
-
-            var choice = prompt(message, currentFlag === 'None' ? '1' : currentFlag === 'Rush' ? '2' : currentFlag === 'Hold' ? '3' : '4');
-
-            if (choice === null) return; // Cancelled
-
-            var newFlag = 'None';
-            if (choice === '1') newFlag = 'None';
-            else if (choice === '2') newFlag = 'Rush';
-            else if (choice === '3') newFlag = 'Hold';
-            else if (choice === '4') newFlag = 'Review';
-            else if (choice === 'None') newFlag = 'None';
-            else if (choice === 'Rush') newFlag = 'Rush';
-            else if (choice === 'Hold') newFlag = 'Hold';
-            else if (choice === 'Review') newFlag = 'Review';
-
-            sample.flag = newFlag;
-            saveData();
-            renderSamples();
-
-            alert('Flag changed to: ' + newFlag);
-        }
-
-        // Clone/duplicate sample
-        function cloneSample(sampleId) {
-            var original = null;
-            for (var i = 0; i < samples.length; i++) {
-                if (samples[i].id === sampleId) {
-                    original = samples[i];
-                    break;
-                }
-            }
-
-            if (!original) return;
-
-            var newId = prompt('Clone sample: ' + sampleId + '\n\nEnter new sample ID:', sampleId + '-COPY');
-            if (!newId) return;
-
-            newId = newId.trim();
-
-            // Check for duplicates
-            for (var i = 0; i < samples.length; i++) {
-                if (samples[i].id === newId) {
-                    alert('Sample ID already exists: ' + newId);
-                    return;
-                }
-            }
-
-            // Create a deep copy of the sample
-            var cloned = JSON.parse(JSON.stringify(original));
-            cloned.id = newId;
-            cloned.dateAdded = new Date().toLocaleDateString();
-
-            samples.push(cloned);
-            saveData();
-            renderSamples();
-
-            alert('Sample cloned successfully!\nOriginal: ' + sampleId + '\nNew: ' + newId);
-        }
-
-        // Track recently used lot numbers
-        function trackLotNumber(fieldName, value) {
-            if (!value || value.trim() === '') return;
-
-            if (!reagentLotHistory[fieldName]) {
-                reagentLotHistory[fieldName] = [];
-            }
-
-            // Remove if already exists (move to front)
-            var index = reagentLotHistory[fieldName].indexOf(value);
-            if (index > -1) {
-                reagentLotHistory[fieldName].splice(index, 1);
-            }
-
-            // Add to front, keep only last 5
-            reagentLotHistory[fieldName].unshift(value);
-            if (reagentLotHistory[fieldName].length > 5) {
-                reagentLotHistory[fieldName].pop();
-            }
-
-            // Save to localStorage
-            localStorage.setItem('reagentLotHistory', JSON.stringify(reagentLotHistory));
-        }
-
-        // Get recent lot numbers for autocomplete
-        function getRecentLots(fieldName) {
-            return reagentLotHistory[fieldName] || [];
-        }
-
-        // Add datalist for autocomplete to an input field
-        function addAutocomplete(inputId, fieldName) {
-            var input = document.getElementById(inputId);
-            if (!input) return;
-
-            var datalistId = inputId + 'List';
-            var existingDatalist = document.getElementById(datalistId);
-            if (existingDatalist) {
-                existingDatalist.remove();
-            }
-
-            var datalist = document.createElement('datalist');
-            datalist.id = datalistId;
-
-            var recentLots = getRecentLots(fieldName);
-            for (var i = 0; i < recentLots.length; i++) {
-                var option = document.createElement('option');
-                option.value = recentLots[i];
-                datalist.appendChild(option);
-            }
-
-            document.body.appendChild(datalist);
-            input.setAttribute('list', datalistId);
         }
 
         function createReferenceTable(sampleIds, sourceType, targetType, targetStartNumber) {
@@ -1843,37 +1283,6 @@
             return html;
         }
 
-        // Real-time duplicate check as user types
-        function checkDuplicateRealtime(input) {
-            var sampleId = input.value.trim();
-            var warning = document.getElementById('duplicateWarning');
-
-            if (!sampleId) {
-                warning.style.display = 'none';
-                input.style.border = '';
-                input.style.background = '';
-                return;
-            }
-
-            var isDuplicate = false;
-            for (var i = 0; i < samples.length; i++) {
-                if (samples[i].id === sampleId) {
-                    isDuplicate = true;
-                    break;
-                }
-            }
-
-            if (isDuplicate) {
-                warning.style.display = 'inline';
-                input.style.border = '2px solid #dc3545';
-                input.style.background = '#ffe6e6';
-            } else {
-                warning.style.display = 'none';
-                input.style.border = '2px solid #28a745';
-                input.style.background = '#e6ffe6';
-            }
-        }
-
         function addSample() {
             var sampleId = document.getElementById('sampleId').value.trim();
             var initials = document.getElementById('initials').value.trim().toUpperCase();
@@ -1883,28 +1292,10 @@
                 return;
             }
             
-            // Check for duplicates with detailed info
+            // Check for duplicates
             for (var i = 0; i < samples.length; i++) {
                 if (samples[i].id === sampleId) {
-                    var existingSample = samples[i];
-                    var msg = '⚠️ DUPLICATE SAMPLE ID\n\n';
-                    msg += 'Sample ID: ' + sampleId + '\n';
-                    msg += 'Already exists with:\n';
-                    msg += '• Status: ' + existingSample.status + '\n';
-                    msg += '• Added: ' + existingSample.dateAdded + '\n';
-                    msg += '• By: ' + existingSample.initials + '\n\n';
-                    msg += 'Cannot add duplicate sample ID!';
-                    alert(msg);
-
-                    // Highlight the input field
-                    var inputField = document.getElementById('sampleId');
-                    inputField.style.border = '3px solid #dc3545';
-                    inputField.style.background = '#ffe6e6';
-                    setTimeout(function() {
-                        inputField.style.border = '';
-                        inputField.style.background = '';
-                    }, 3000);
-
+                    alert('Sample ' + sampleId + ' already exists!');
                     return;
                 }
             }
@@ -1915,7 +1306,6 @@
                 status: 'Received',
                 dateAdded: new Date().toLocaleDateString(),
                 notes: '',
-                flag: 'None',
                 bapNumber: null,
                 bapDetails: null,
                 tsbNumber: null,
@@ -2001,7 +1391,6 @@
                         status: 'Received',
                         dateAdded: new Date().toLocaleDateString(),
                         notes: '',
-                        flag: 'None',
                         bapNumber: null,
                         bapDetails: null,
                         tsbNumber: null,
@@ -2065,14 +1454,9 @@
             document.getElementById('modalTitle').textContent = 'Start ' + type;
             document.getElementById('modalSampleId').textContent = sampleId;
             document.getElementById('modalNumber').innerHTML = '<strong>' + number + '</strong>';
-
+            
             showSpecificFields(type);
             document.getElementById('processModal').style.display = 'block';
-
-            // Add autocomplete to lot number field
-            setTimeout(function() {
-                addAutocomplete('lotNumber', 'lotNumber');
-            }, 100);
         }
 
         function showSpecificFields(type) {
@@ -2472,39 +1856,8 @@ html += '<label>Date Qubited:</label>';
 html += '<input type="date" id="qubitDate" value="' + new Date().toISOString().split('T')[0] + '">';
 html += '</div>';
             }
-
+            
             container.innerHTML = html;
-
-            // Add autocomplete to all reagent lot fields after a short delay
-            setTimeout(function() {
-                // Extraction reagent lots
-                addAutocomplete('aw1Lot', 'aw1Lot');
-                addAutocomplete('aw2Lot', 'aw2Lot');
-                addAutocomplete('ethanolLot', 'ethanolLot');
-                addAutocomplete('bufferALLot', 'bufferALLot');
-                addAutocomplete('bufferATLLot', 'bufferATLLot');
-                addAutocomplete('bufferAELot', 'bufferAELot');
-                addAutocomplete('proteinaseKLot', 'proteinaseKLot');
-                addAutocomplete('dneasyLot', 'dneasyLot');
-
-                // Clean Extraction reagent lots
-                addAutocomplete('beadLot', 'beadLot');
-                addAutocomplete('nfH2oEtohLot', 'nfH2oEtohLot');
-                addAutocomplete('etohDilutionLot', 'etohDilutionLot');
-                addAutocomplete('nfH2oElutionLot', 'nfH2oElutionLot');
-                addAutocomplete('qubitReagentLot', 'qubitReagentLot');
-
-                // Indexing reagent lots
-                addAutocomplete('tdBufferLot', 'tdBufferLot');
-                addAutocomplete('atmBufferLot', 'atmBufferLot');
-                addAutocomplete('ntBufferLot', 'ntBufferLot');
-                addAutocomplete('npmLot', 'npmLot');
-                addAutocomplete('resuspensionBufferLot', 'resuspensionBufferLot');
-                addAutocomplete('indexesKitLot', 'indexesKitLot');
-                addAutocomplete('indexingBeadsLot', 'indexingBeadsLot');
-                addAutocomplete('indexingEtohLot', 'indexingEtohLot');
-                addAutocomplete('indexingNfH2oLot', 'indexingNfH2oLot');
-            }, 100);
         }
 
         function completeProcess() {
@@ -2512,9 +1865,7 @@ html += '</div>';
             var lot = document.getElementById('lotNumber').value.trim();
             var temp = document.getElementById('temperature').value;
             var inc = document.getElementById('incubator').value;
-            var timeIn = document.getElementById('timeIn').value;
-            var timeOut = document.getElementById('timeOut').value;
-
+            
             if (!tech || !lot) {
                 alert('Please fill in required fields');
                 return;
@@ -2535,28 +1886,12 @@ html += '</div>';
                 if (currentProcessType === 'BAP') {
                     sample.bapNumber = '25B' + String(nextBapNumber).padStart(3, '0');
                     sample.status = 'BAP Complete';
-                    sample.bapDetails = {
-                        technician: tech,
-                        lot: lot,
-                        completedDate: today,
-                        temperature: temp,
-                        incubator: inc,
-                        timeIn: timeIn,
-                        timeOut: timeOut
-                    };
+                    sample.bapDetails = { technician: tech, lot: lot, completedDate: today };
                     nextBapNumber++;
                 } else if (currentProcessType === 'TSB') {
                     sample.tsbNumber = '25T' + String(nextTsbNumber).padStart(3, '0');
                     sample.status = 'TSB Complete';
-                    sample.tsbDetails = {
-                        technician: tech,
-                        lot: lot,
-                        completedDate: today,
-                        temperature: temp,
-                        incubator: inc,
-                        timeIn: timeIn,
-                        timeOut: timeOut
-                    };
+                    sample.tsbDetails = { technician: tech, lot: lot, completedDate: today };
                     nextTsbNumber++;
                 } else if (currentProcessType === 'Extraction') {
                     sample.extractionNumber = '25E' + String(nextExtractionNumber).padStart(3, '0');
@@ -2656,38 +1991,6 @@ html += '</div>';
                         technician: tech,
                         completedDate: today
                     };
-                }
-
-                // Track all lot numbers used in this process
-                trackLotNumber('lotNumber', lot);
-
-                if (currentProcessType === 'Extraction') {
-                    trackLotNumber('aw1Lot', document.getElementById('aw1Lot').value);
-                    trackLotNumber('aw2Lot', document.getElementById('aw2Lot').value);
-                    trackLotNumber('ethanolLot', document.getElementById('ethanolLot').value);
-                    trackLotNumber('bufferALLot', document.getElementById('bufferALLot').value);
-                    trackLotNumber('bufferATLLot', document.getElementById('bufferATLLot').value);
-                    trackLotNumber('bufferAELot', document.getElementById('bufferAELot').value);
-                    trackLotNumber('proteinaseKLot', document.getElementById('proteinaseKLot').value);
-                    trackLotNumber('dneasyLot', document.getElementById('dneasyLot').value);
-                } else if (currentProcessType === 'Clean Extraction') {
-                    trackLotNumber('beadLot', document.getElementById('beadLot').value);
-                    trackLotNumber('nfH2oEtohLot', document.getElementById('nfH2oEtohLot').value);
-                    trackLotNumber('etohDilutionLot', document.getElementById('etohDilutionLot').value);
-                    trackLotNumber('nfH2oElutionLot', document.getElementById('nfH2oElutionLot').value);
-                    trackLotNumber('qubitReagentLot', document.getElementById('qubitReagentLot').value);
-                } else if (currentProcessType === 'Indexing') {
-                    trackLotNumber('tdBufferLot', document.getElementById('tdBufferLot').value);
-                    trackLotNumber('atmBufferLot', document.getElementById('atmBufferLot').value);
-                    trackLotNumber('ntBufferLot', document.getElementById('ntBufferLot').value);
-                    trackLotNumber('npmLot', document.getElementById('npmLot').value);
-                    trackLotNumber('resuspensionBufferLot', document.getElementById('resuspensionBufferLot').value);
-                    trackLotNumber('indexesKitLot', document.getElementById('indexesKitLot').value);
-                    trackLotNumber('indexingBeadsLot', document.getElementById('indexingBeadsLot').value);
-                    trackLotNumber('indexingEtohLot', document.getElementById('indexingEtohLot').value);
-                    trackLotNumber('indexingNfH2oLot', document.getElementById('indexingNfH2oLot').value);
-                } else if (currentProcessType === 'Clean Extraction Qubit' || currentProcessType === 'Final Qubit') {
-                    trackLotNumber('qubitReagentLot', document.getElementById('qubitReagentLot').value);
                 }
 
                 saveData();
@@ -2924,16 +2227,12 @@ html += '</div>';
         function completeBatchProcess() {
             var tech = document.getElementById('batchTechInitials').value.trim();
             var lot = document.getElementById('batchLotNumber').value.trim();
-            var temp = document.getElementById('batchTemperature').value;
-            var inc = document.getElementById('batchIncubator').value;
-            var timeIn = document.getElementById('batchTimeIn').value;
-            var timeOut = document.getElementById('batchTimeOut').value;
-
+            
             if (!tech || !lot) {
                 alert('Please fill in required fields');
                 return;
             }
-
+            
             var today = new Date().toLocaleDateString();
             
             for (var i = 0; i < currentBatchSamples.length; i++) {
@@ -2950,27 +2249,11 @@ html += '</div>';
                     if (currentBatchType === 'BAP') {
                         sample.bapNumber = '25B' + String(nextBapNumber + i).padStart(3, '0');
                         sample.status = 'BAP Complete';
-                        sample.bapDetails = {
-                            technician: tech,
-                            lot: lot,
-                            completedDate: today,
-                            temperature: temp,
-                            incubator: inc,
-                            timeIn: timeIn,
-                            timeOut: timeOut
-                        };
+                        sample.bapDetails = { technician: tech, lot: lot, completedDate: today };
                     } else if (currentBatchType === 'TSB') {
                         sample.tsbNumber = '25T' + String(nextTsbNumber + i).padStart(3, '0');
                         sample.status = 'TSB Complete';
-                        sample.tsbDetails = {
-                            technician: tech,
-                            lot: lot,
-                            completedDate: today,
-                            temperature: temp,
-                            incubator: inc,
-                            timeIn: timeIn,
-                            timeOut: timeOut
-                        };
+                        sample.tsbDetails = { technician: tech, lot: lot, completedDate: today };
                     } else if (currentBatchType === 'Extraction') {
                         sample.extractionNumber = '25E' + String(nextExtractionNumber + i).padStart(3, '0');
                         sample.status = 'Extraction Complete';
@@ -3142,29 +2425,15 @@ html += '</div>';
             var sampleItems = document.querySelectorAll('.sample-item');
             for (var i = 0; i < sampleItems.length; i++) {
                 var item = sampleItems[i];
-                var sampleId = item.querySelector('strong').textContent.trim();
-                var sampleIdLower = sampleId.toLowerCase();
+                var sampleId = item.querySelector('strong').textContent.toLowerCase();
                 var status = item.querySelector('.status').textContent;
 
-                // Find the actual sample object to get the date and flag
-                var sample = null;
-                for (var j = 0; j < samples.length; j++) {
-                    if (samples[j].id === sampleId) {
-                        sample = samples[j];
-                        break;
-                    }
-                }
-
-                var matchesSearch = sampleIdLower.includes(searchText);
+                var matchesSearch = sampleId.includes(searchText);
                 var matchesStatus = statusFilter === 'all' ||
                                   status === statusFilter ||
                                   (statusFilter === 'Complete' && status === 'Qubit Complete');
-                var matchesDate = sample ? isWithinDateFilter(sample.dateAdded) : true;
-                var matchesFlag = currentFlagFilter === 'all' ||
-                                (sample && sample.flag === currentFlagFilter) ||
-                                (currentFlagFilter === 'None' && (!sample || !sample.flag || sample.flag === 'None'));
 
-                if (matchesSearch && matchesStatus && matchesDate && matchesFlag) {
+                if (matchesSearch && matchesStatus) {
                     item.style.display = 'flex';
                 } else {
                     item.style.display = 'none';
@@ -3651,136 +2920,6 @@ html += '</div>';
             document.getElementById('analyticsModal').style.display = 'none';
         }
 
-        function showReagentSearch() {
-            document.getElementById('reagentSearchModal').style.display = 'block';
-            document.getElementById('reagentSearchInput').focus();
-        }
-
-        function closeReagentSearchModal() {
-            document.getElementById('reagentSearchModal').style.display = 'none';
-        }
-
-        function searchReagentLot() {
-            var searchLot = document.getElementById('reagentSearchInput').value.trim();
-            if (!searchLot) {
-                alert('Please enter a lot number to search');
-                return;
-            }
-
-            var results = [];
-            var searchLower = searchLot.toLowerCase();
-
-            // Search through all samples
-            for (var i = 0; i < samples.length; i++) {
-                var sample = samples[i];
-                var found = false;
-                var foundIn = [];
-
-                // Check main lot number field (BAP/TSB)
-                if (sample.bapDetails && sample.bapDetails.lot && sample.bapDetails.lot.toLowerCase().includes(searchLower)) {
-                    found = true;
-                    foundIn.push('BAP Lot');
-                }
-                if (sample.tsbDetails && sample.tsbDetails.lot && sample.tsbDetails.lot.toLowerCase().includes(searchLower)) {
-                    found = true;
-                    foundIn.push('TSB Lot');
-                }
-
-                // Check Extraction reagent lots
-                if (sample.extractionDetails && sample.extractionDetails.reagentLots) {
-                    var lots = sample.extractionDetails.reagentLots;
-                    if (lots.aw1 && lots.aw1.toLowerCase().includes(searchLower)) { found = true; foundIn.push('AW1'); }
-                    if (lots.aw2 && lots.aw2.toLowerCase().includes(searchLower)) { found = true; foundIn.push('AW2'); }
-                    if (lots.ethanol && lots.ethanol.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Ethanol'); }
-                    if (lots.bufferAL && lots.bufferAL.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Buffer AL'); }
-                    if (lots.bufferATL && lots.bufferATL.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Buffer ATL'); }
-                    if (lots.bufferAE && lots.bufferAE.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Buffer AE'); }
-                    if (lots.proteinaseK && lots.proteinaseK.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Proteinase K'); }
-                    if (lots.dneasy && lots.dneasy.toLowerCase().includes(searchLower)) { found = true; foundIn.push('DNeasy'); }
-                }
-
-                // Check Clean Extraction reagent lots
-                if (sample.cleanExtractionDetails && sample.cleanExtractionDetails.reagentLots) {
-                    var lots = sample.cleanExtractionDetails.reagentLots;
-                    if (lots.bead && lots.bead.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Bead'); }
-                    if (lots.nfH2oEtoh && lots.nfH2oEtoh.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NF H2O ETOH'); }
-                    if (lots.etohDilution && lots.etohDilution.toLowerCase().includes(searchLower)) { found = true; foundIn.push('EtOH Dilution'); }
-                    if (lots.nfH2oElution && lots.nfH2oElution.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NF H2O Elution'); }
-                    if (lots.qubitReagent && lots.qubitReagent.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Qubit Reagent (CE)'); }
-                }
-
-                // Check Indexing reagent lots
-                if (sample.indexingDetails && sample.indexingDetails.reagentLots) {
-                    var lots = sample.indexingDetails.reagentLots;
-                    if (lots.tdBuffer && lots.tdBuffer.toLowerCase().includes(searchLower)) { found = true; foundIn.push('TD Buffer'); }
-                    if (lots.atmBuffer && lots.atmBuffer.toLowerCase().includes(searchLower)) { found = true; foundIn.push('ATM Buffer'); }
-                    if (lots.ntBuffer && lots.ntBuffer.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NT Buffer'); }
-                    if (lots.npm && lots.npm.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NPM'); }
-                    if (lots.resuspensionBuffer && lots.resuspensionBuffer.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Resuspension Buffer'); }
-                    if (lots.indexesKit && lots.indexesKit.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Indexes Kit'); }
-                    if (lots.beads && lots.beads.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Beads (Indexing)'); }
-                    if (lots.etoh && lots.etoh.toLowerCase().includes(searchLower)) { found = true; foundIn.push('EtOH (Indexing)'); }
-                    if (lots.nfH2o && lots.nfH2o.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NF H2O (Indexing)'); }
-                }
-
-                // Check Qubit reagent lots
-                if (sample.cleanExtractionQubitDetails && sample.cleanExtractionQubitDetails.reagentLot &&
-                    sample.cleanExtractionQubitDetails.reagentLot.toLowerCase().includes(searchLower)) {
-                    found = true;
-                    foundIn.push('CE Qubit Reagent');
-                }
-                if (sample.qubitDetails && sample.qubitDetails.reagentLot &&
-                    sample.qubitDetails.reagentLot.toLowerCase().includes(searchLower)) {
-                    found = true;
-                    foundIn.push('Final Qubit Reagent');
-                }
-
-                if (found) {
-                    results.push({
-                        sample: sample,
-                        foundIn: foundIn
-                    });
-                }
-            }
-
-            // Display results
-            var resultsDiv = document.getElementById('reagentSearchResults');
-
-            if (results.length === 0) {
-                resultsDiv.innerHTML = '<div style="padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; text-align: center;"><strong>⚠️ No samples found</strong><br>No samples use reagent lot: ' + searchLot + '</div>';
-            } else {
-                var html = '<div style="background: #d4edda; border: 2px solid #28a745; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
-                html += '<strong style="color: #155724;">✅ Found ' + results.length + ' sample(s) using lot: ' + searchLot + '</strong>';
-                html += '</div>';
-
-                html += '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse;">';
-                html += '<tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">';
-                html += '<th style="padding: 12px; text-align: left;">Sample ID</th>';
-                html += '<th style="padding: 12px; text-align: left;">Status</th>';
-                html += '<th style="padding: 12px; text-align: left;">Date Added</th>';
-                html += '<th style="padding: 12px; text-align: left;">Found In</th>';
-                html += '</tr>';
-
-                for (var i = 0; i < results.length; i++) {
-                    var r = results[i];
-                    html += '<tr style="border-bottom: 1px solid #dee2e6;">';
-                    html += '<td style="padding: 12px; font-weight: 600;">' + r.sample.id + '</td>';
-                    html += '<td style="padding: 12px;">' + r.sample.status + '</td>';
-                    html += '<td style="padding: 12px;">' + r.sample.dateAdded + '</td>';
-                    html += '<td style="padding: 12px; color: #fd7e14; font-weight: 600;">' + r.foundIn.join(', ') + '</td>';
-                    html += '</tr>';
-                }
-
-                html += '</table></div>';
-
-                html += '<div style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px;">';
-                html += '<strong>💡 Tip:</strong> This is useful for quality control and recalls. Export this data or take a screenshot for your records.';
-                html += '</div>';
-
-                resultsDiv.innerHTML = html;
-            }
-        }
-
         function renderAnalytics() {
             var html = '';
 
@@ -3947,35 +3086,23 @@ html += '</div>';
 
                 // Add BAP event
                 if (s.bapDetails) {
-                    var bapDetails = 'Lot: ' + s.bapDetails.lotNumber + ', ' + s.bapDetails.temperature + '°C, ' + s.bapDetails.incubator;
-                    if (s.bapDetails.timeIn) bapDetails += ', In: ' + s.bapDetails.timeIn;
-                    if (s.bapDetails.timeOut) bapDetails += ', Out: ' + s.bapDetails.timeOut;
                     events.push({
                         date: s.bapDetails.completionDate,
                         sampleId: s.id,
                         stage: 'BAP Complete',
                         tech: s.bapDetails.tech,
-                        details: bapDetails
+                        details: 'Lot: ' + s.bapDetails.lotNumber + ', ' + s.bapDetails.temperature + '°C, ' + s.bapDetails.incubator
                     });
                 }
 
                 // Add TSB event
                 if (s.tsbDetails) {
-                    var tsbDetails = 'Lot: ' + s.tsbDetails.lotNumber;
-                    if (s.tsbDetails.temperature && s.tsbDetails.incubator) {
-                        tsbDetails += ', ' + s.tsbDetails.temperature + '°C, ' + s.tsbDetails.incubator;
-                    }
-                    if (s.tsbDetails.timeIn) tsbDetails += ', In: ' + s.tsbDetails.timeIn;
-                    if (s.tsbDetails.timeOut) tsbDetails += ', Out: ' + s.tsbDetails.timeOut;
-                    if (s.tsbDetails.storagePlate) {
-                        tsbDetails += ', Plate: ' + s.tsbDetails.storagePlate + ', Well: ' + s.tsbDetails.wellPosition;
-                    }
                     events.push({
                         date: s.tsbDetails.completionDate,
                         sampleId: s.id,
                         stage: 'TSB Complete',
                         tech: s.tsbDetails.tech,
-                        details: tsbDetails
+                        details: 'Lot: ' + s.tsbDetails.lotNumber + ', Plate: ' + s.tsbDetails.storagePlate + ', Well: ' + s.tsbDetails.wellPosition
                     });
                 }
 
@@ -4226,27 +3353,6 @@ html += '</div>';
             html += '<div style="font-size: 14px; opacity: 0.9;">QC Warnings</div>';
             html += '</div>';
 
-            // Average turnaround time
-            var turnaroundDays = [];
-            for (var i = 0; i < samples.length; i++) {
-                var days = calculateTurnaroundDays(samples[i]);
-                if (days !== null) {
-                    turnaroundDays.push(days);
-                }
-            }
-            var avgTurnaround = turnaroundDays.length > 0
-                ? Math.round(turnaroundDays.reduce(function(a, b) { return a + b; }, 0) / turnaroundDays.length)
-                : 0;
-
-            if (turnaroundDays.length > 0) {
-                var turnaroundColor = avgTurnaround <= 7 ? '#51cf66' : avgTurnaround <= 14 ? '#ffc107' : '#ff6b6b';
-                html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
-                html += '<div style="font-size: 32px; font-weight: bold; color: ' + turnaroundColor + ';">' + avgTurnaround + '</div>';
-                html += '<div style="font-size: 14px; opacity: 0.9;">Avg Days to Complete</div>';
-                html += '<div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">Based on ' + turnaroundDays.length + ' samples</div>';
-                html += '</div>';
-            }
-
             // Last added
             if (lastAdded) {
                 html += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">';
@@ -4404,46 +3510,10 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                 
                 html += '<strong>' + sample.id + '</strong> ';
                 html += '<span class="status status-' + sample.status.toLowerCase().replace(/ /g, '-') + '">' + sample.status + '</span>';
-
-                // Show flag if not None
-                if (sample.flag && sample.flag !== 'None') {
-                    var flagIcon = sample.flag === 'Rush' ? '🔴' : sample.flag === 'Hold' ? '⏸️' : '⚠️';
-                    var flagColor = sample.flag === 'Rush' ? '#dc3545' : sample.flag === 'Hold' ? '#ffc107' : '#fd7e14';
-                    html += ' <span style="background: ' + flagColor + '; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 4px;">' + flagIcon + ' ' + sample.flag + '</span>';
-                }
-
-                // Show turnaround time for completed samples
-                var turnaroundDays = calculateTurnaroundDays(sample);
-                if (turnaroundDays !== null) {
-                    var turnaroundColor = turnaroundDays <= 7 ? '#28a745' : turnaroundDays <= 14 ? '#ffc107' : '#dc3545';
-                    html += ' <span style="background: ' + turnaroundColor + '; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px;">⏱️ ' + turnaroundDays + ' days</span>';
-                }
-
                 html += '<br><small>Added: ' + sample.dateAdded + ' | ' + sample.initials + '</small>';
-
-                // Add progress bar
-                html += getProgressBarHTML(sample);
-
-                // In compact view, skip all the detailed info
-                if (!isCompactView) {
-                if (sample.bapDetails) {
-                    html += '<br>BAP: ' + sample.bapNumber;
-                    if (sample.bapDetails.timeIn || sample.bapDetails.timeOut) {
-                        html += '<br><small>' + sample.bapDetails.temperature + '°C, ' + sample.bapDetails.incubator;
-                        if (sample.bapDetails.timeIn) html += ' | In: ' + sample.bapDetails.timeIn;
-                        if (sample.bapDetails.timeOut) html += ' | Out: ' + sample.bapDetails.timeOut;
-                        html += '</small>';
-                    }
-                }
-                if (sample.tsbDetails) {
-                    html += '<br>TSB: ' + sample.tsbNumber;
-                    if (sample.tsbDetails.timeIn || sample.tsbDetails.timeOut) {
-                        html += '<br><small>' + sample.tsbDetails.temperature + '°C, ' + sample.tsbDetails.incubator;
-                        if (sample.tsbDetails.timeIn) html += ' | In: ' + sample.tsbDetails.timeIn;
-                        if (sample.tsbDetails.timeOut) html += ' | Out: ' + sample.tsbDetails.timeOut;
-                        html += '</small>';
-                    }
-                }
+                
+                if (sample.bapDetails) html += '<br>BAP: ' + sample.bapNumber;
+                if (sample.tsbDetails) html += '<br>TSB: ' + sample.tsbNumber;
                 if (sample.extractionDetails) {
                     html += '<br>Extraction: ' + sample.extractionNumber + ' | Run: ' + sample.extractionDetails.extractionRun;
                     if (sample.extractionDetails.reagentLots && sample.extractionDetails.reagentLots.aw1) {
@@ -4489,15 +3559,12 @@ if (sample.qubitDetails) {
                 if (sample.notes && sample.notes.trim()) {
                     html += '<br><small style="color: #6c757d; font-style: italic;">📝 ' + sample.notes + '</small>';
                 }
-                } // End of !isCompactView
 
                 html += '</div>';
                 html += '<div class="sample-actions">';
                 html += '<button onclick="viewSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">View</button><br>';
                 html += '<button onclick="editSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #ffc107; color: #212529; border: none; border-radius: 4px; margin-bottom: 4px; font-weight: 600;">Edit</button><br>';
                 html += '<button onclick="editNotes(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #17a2b8; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Notes</button><br>';
-                html += '<button onclick="changeFlag(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="font-size: 11px; padding: 4px 8px; background: #fd7e14; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Flag</button><br>';
-                html += '<button onclick="cloneSample(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="font-size: 11px; padding: 4px 8px; background: #28a745; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Clone</button><br>';
                 html += '<button onclick="showQRCode(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="font-size: 11px; padding: 4px 8px; background: #9c27b0; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">QR Code</button><br>';
                 html += '<button onclick="deleteSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Delete</button><br>';
 
@@ -4601,54 +3668,6 @@ if (sample.qubitDetails) {
                 }
             }
 
-            // Ctrl/Cmd + T - Timeline
-            if ((e.ctrlKey || e.metaKey) && e.key === 't') {
-                e.preventDefault();
-                showTimeline();
-            }
-
-            // Ctrl/Cmd + A - Analytics
-            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-                e.preventDefault();
-                showAnalytics();
-            }
-
-            // Ctrl/Cmd + R - Reagent Search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-                e.preventDefault();
-                showReagentSearch();
-            }
-
-            // Ctrl/Cmd + P - Plate Map
-            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                e.preventDefault();
-                showPlateMap();
-            }
-
-            // Ctrl/Cmd + K - Keyboard Shortcuts
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                showKeyboardShortcuts();
-            }
-
-            // Ctrl/Cmd + B - Toggle Bulk Input
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-                e.preventDefault();
-                toggleBulkInput();
-            }
-
-            // Ctrl/Cmd + D - Toggle Dark Mode
-            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-                e.preventDefault();
-                toggleDarkMode();
-            }
-
-            // Ctrl/Cmd + M - Toggle Compact View
-            if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
-                e.preventDefault();
-                toggleCompactView();
-            }
-
             // Escape - Close modals
             if (e.key === 'Escape') {
                 closeModal();
@@ -4659,7 +3678,6 @@ if (sample.qubitDetails) {
                 closeTimelineModal();
                 closeAnalyticsModal();
                 closeQRCodeModal();
-                closeReagentSearchModal();
             }
         });
 
