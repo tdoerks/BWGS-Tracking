@@ -1030,6 +1030,46 @@
                     </tr>
                 </table>
 
+                <h4 style="color: #fd7e14; margin-bottom: 10px;">📈 Views & Tools</h4>
+                <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + T</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Timeline view</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + A</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Analytics dashboard</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + R</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Reagent Search</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + P</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Plate Map</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + K</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Show this shortcuts dialog</td>
+                    </tr>
+                </table>
+
+                <h4 style="color: #9c27b0; margin-bottom: 10px;">⚙️ Toggles</h4>
+                <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + B</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Toggle Bulk Input mode</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + D</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Toggle Dark Mode</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + M</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Toggle Compact View</td>
+                    </tr>
+                </table>
+
                 <h4 style="color: #6c757d; margin-bottom: 10px;">🚪 Modals</h4>
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
@@ -1039,10 +1079,9 @@
                 </table>
             </div>
 
-            <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                <small style="color: #6c757d;">
-                    <strong>Note:</strong> Number key shortcuts (1-5) only work when not typing in an input field.
-                </small>
+            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; text-align: center;">
+                <strong style="font-size: 16px;">💡 Pro Tip: Use these shortcuts to navigate 10x faster!</strong><br>
+                <small style="opacity: 0.9;">Total shortcuts: 17 | Number keys (1-5) only work when not typing</small>
             </div>
 
             <button class="btn-cancel" onclick="closeShortcutsModal()" style="margin-top: 20px;">Close</button>
@@ -4381,6 +4420,54 @@ if (sample.qubitDetails) {
                 }
             }
 
+            // Ctrl/Cmd + T - Timeline
+            if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+                e.preventDefault();
+                showTimeline();
+            }
+
+            // Ctrl/Cmd + A - Analytics
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                e.preventDefault();
+                showAnalytics();
+            }
+
+            // Ctrl/Cmd + R - Reagent Search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                showReagentSearch();
+            }
+
+            // Ctrl/Cmd + P - Plate Map
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                showPlateMap();
+            }
+
+            // Ctrl/Cmd + K - Keyboard Shortcuts
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                showKeyboardShortcuts();
+            }
+
+            // Ctrl/Cmd + B - Toggle Bulk Input
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                toggleBulkInput();
+            }
+
+            // Ctrl/Cmd + D - Toggle Dark Mode
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleDarkMode();
+            }
+
+            // Ctrl/Cmd + M - Toggle Compact View
+            if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+                e.preventDefault();
+                toggleCompactView();
+            }
+
             // Escape - Close modals
             if (e.key === 'Escape') {
                 closeModal();
@@ -4391,6 +4478,7 @@ if (sample.qubitDetails) {
                 closeTimelineModal();
                 closeAnalyticsModal();
                 closeQRCodeModal();
+                closeReagentSearchModal();
             }
         });
 
