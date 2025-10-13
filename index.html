@@ -624,6 +624,7 @@
             <button onclick="showTimeline()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📅 Timeline</button>
             <button onclick="showAnalytics()" style="background: #4ecdc4; font-size: 12px; padding: 6px 12px;">📈 Analytics</button>
             <button onclick="showReagentSearch()" style="background: #fd7e14; font-size: 12px; padding: 6px 12px;">🔬 Reagent Search</button>
+            <button onclick="showReagentTemplates()" style="background: #17a2b8; font-size: 12px; padding: 6px 12px;">📋 Reagent Templates</button>
             <button onclick="undo()" id="undoBtn" style="background: #6c757d; font-size: 12px; padding: 6px 12px;" disabled title="No actions to undo">↶ Undo</button>
             <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
             <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
@@ -895,6 +896,11 @@
                 <small style="color: #6c757d;">e.g., "Sample looked cloudy", "Had to repeat step", "Extra incubation time needed"</small>
             </div>
 
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                <button onclick="saveAsTemplate()" style="background: #17a2b8; font-size: 13px; padding: 8px 16px;">💾 Save as Template</button>
+                <button onclick="loadTemplate()" style="background: #6c757d; font-size: 13px; padding: 8px 16px;">📋 Load Template</button>
+            </div>
+
             <button onclick="completeProcess()">Complete</button>
             <button class="btn-cancel" onclick="closeModal()">Cancel</button>
         </div>
@@ -1158,6 +1164,24 @@
             </div>
 
             <button class="btn-cancel" onclick="closeReagentSearchModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Reagent Templates Modal -->
+    <div id="reagentTemplatesModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; width: 95%;">
+            <span class="close-btn" onclick="closeReagentTemplatesModal()">&times;</span>
+            <h3>📋 Reagent Lot Templates</h3>
+            <p style="color: #666; margin-bottom: 20px;">Save commonly used reagent lot combinations and reuse them later. Perfect when using the same lots for days or weeks!</p>
+
+            <div style="margin: 20px 0;">
+                <h4>💾 Saved Templates:</h4>
+                <div id="templatesList" style="margin-top: 15px;">
+                    <!-- Templates will be listed here -->
+                </div>
+            </div>
+
+            <button class="btn-cancel" onclick="closeReagentTemplatesModal()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
 
@@ -4336,6 +4360,154 @@ html += '</div>';
                 html += '</div>';
 
                 resultsDiv.innerHTML = html;
+            }
+        }
+
+        // Reagent Templates System
+        var reagentTemplates = JSON.parse(localStorage.getItem('reagentTemplates') || '[]');
+
+        function showReagentTemplates() {
+            document.getElementById('reagentTemplatesModal').style.display = 'block';
+            renderTemplatesList();
+        }
+
+        function closeReagentTemplatesModal() {
+            document.getElementById('reagentTemplatesModal').style.display = 'none';
+        }
+
+        function renderTemplatesList() {
+            var listDiv = document.getElementById('templatesList');
+
+            if (reagentTemplates.length === 0) {
+                listDiv.innerHTML = '<p style="color: #999; font-style: italic;">No templates saved yet. Use "Save as Template" button when processing a sample to save reagent lots.</p>';
+                return;
+            }
+
+            var html = '<div style="display: grid; gap: 15px;">';
+            for (var i = 0; i < reagentTemplates.length; i++) {
+                var template = reagentTemplates[i];
+                html += '<div style="border: 2px solid #17a2b8; border-radius: 8px; padding: 15px; background: #f0f9ff;">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: start;">';
+                html += '<div>';
+                html += '<h4 style="margin: 0 0 5px 0; color: #17a2b8;">' + template.name + '</h4>';
+                html += '<small style="color: #666;">Stage: ' + template.stage + ' • Saved: ' + template.dateSaved + '</small>';
+                html += '</div>';
+                html += '<div>';
+                html += '<button onclick="applyTemplate(' + i + ')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">Apply</button>';
+                html += '<button onclick="deleteTemplate(' + i + ')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Delete</button>';
+                html += '</div>';
+                html += '</div>';
+
+                // Show saved lots
+                var lotsCount = Object.keys(template.lots).length;
+                html += '<div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px; font-size: 13px;">';
+                html += '<strong>' + lotsCount + ' reagent lots saved</strong>';
+                html += '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+
+            listDiv.innerHTML = html;
+        }
+
+        function saveAsTemplate() {
+            var templateName = prompt('Enter a name for this template (e.g., "Week of Jan 15" or "Batch 2025-01"):');
+            if (!templateName) return;
+
+            var lots = {};
+            var stage = currentProcessType;
+
+            // Collect all visible reagent lot inputs
+            var inputs = document.querySelectorAll('#specificFields input[type="text"], #lotNumber, #techInitials, #temperature, #incubator');
+            for (var i = 0; i < inputs.length; i++) {
+                var input = inputs[i];
+                if (input.value && input.id) {
+                    lots[input.id] = input.value;
+                }
+            }
+
+            if (Object.keys(lots).length === 0) {
+                alert('No reagent lots to save. Fill in some lot numbers first!');
+                return;
+            }
+
+            var template = {
+                name: templateName,
+                stage: stage,
+                lots: lots,
+                dateSaved: new Date().toLocaleDateString()
+            };
+
+            reagentTemplates.push(template);
+            localStorage.setItem('reagentTemplates', JSON.stringify(reagentTemplates));
+
+            alert('✅ Template "' + templateName + '" saved with ' + Object.keys(lots).length + ' fields!');
+        }
+
+        function loadTemplate() {
+            if (reagentTemplates.length === 0) {
+                alert('No templates saved yet. Use "Save as Template" first!');
+                return;
+            }
+
+            // Filter templates for current stage
+            var stage = currentProcessType;
+            var stageTemplates = [];
+            for (var i = 0; i < reagentTemplates.length; i++) {
+                if (reagentTemplates[i].stage === stage) {
+                    stageTemplates.push({index: i, template: reagentTemplates[i]});
+                }
+            }
+
+            if (stageTemplates.length === 0) {
+                alert('No templates saved for ' + stage + ' stage yet.');
+                return;
+            }
+
+            // Show template selection
+            var message = 'Select a template to load:\n\n';
+            for (var i = 0; i < stageTemplates.length; i++) {
+                var t = stageTemplates[i].template;
+                message += (i+1) + '. ' + t.name + ' (saved ' + t.dateSaved + ')\n';
+            }
+
+            var choice = prompt(message, '1');
+            if (!choice) return;
+
+            var choiceNum = parseInt(choice);
+            if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > stageTemplates.length) {
+                alert('Invalid selection');
+                return;
+            }
+
+            var template = stageTemplates[choiceNum - 1].template;
+            applyTemplateData(template.lots);
+            alert('✅ Template "' + template.name + '" loaded!');
+        }
+
+        function applyTemplate(templateIndex) {
+            var template = reagentTemplates[templateIndex];
+            applyTemplateData(template.lots);
+            closeReagentTemplatesModal();
+            alert('✅ Template "' + template.name + '" applied!');
+        }
+
+        function applyTemplateData(lots) {
+            // Fill in all matching input fields
+            for (var fieldId in lots) {
+                var input = document.getElementById(fieldId);
+                if (input) {
+                    input.value = lots[fieldId];
+                }
+            }
+        }
+
+        function deleteTemplate(templateIndex) {
+            var template = reagentTemplates[templateIndex];
+            if (confirm('Delete template "' + template.name + '"?')) {
+                reagentTemplates.splice(templateIndex, 1);
+                localStorage.setItem('reagentTemplates', JSON.stringify(reagentTemplates));
+                renderTemplatesList();
             }
         }
 
