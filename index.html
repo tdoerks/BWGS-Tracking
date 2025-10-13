@@ -650,7 +650,8 @@
         <!-- Single Sample Input -->
         <div id="singleInput">
             <h4>Single Sample:</h4>
-            <input type="text" id="sampleId" placeholder="Sample ID">
+            <input type="text" id="sampleId" placeholder="Sample ID" onkeyup="checkDuplicateRealtime(this)">
+            <span id="duplicateWarning" style="color: #dc3545; font-weight: 600; margin-left: 10px; display: none;">⚠️ Already exists!</span>
             <input type="text" id="initials" placeholder="Initials" maxlength="3">
             <button onclick="addSample()">Add Sample</button>
         </div>
@@ -1636,6 +1637,37 @@
             return html;
         }
 
+        // Real-time duplicate check as user types
+        function checkDuplicateRealtime(input) {
+            var sampleId = input.value.trim();
+            var warning = document.getElementById('duplicateWarning');
+
+            if (!sampleId) {
+                warning.style.display = 'none';
+                input.style.border = '';
+                input.style.background = '';
+                return;
+            }
+
+            var isDuplicate = false;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+
+            if (isDuplicate) {
+                warning.style.display = 'inline';
+                input.style.border = '2px solid #dc3545';
+                input.style.background = '#ffe6e6';
+            } else {
+                warning.style.display = 'none';
+                input.style.border = '2px solid #28a745';
+                input.style.background = '#e6ffe6';
+            }
+        }
+
         function addSample() {
             var sampleId = document.getElementById('sampleId').value.trim();
             var initials = document.getElementById('initials').value.trim().toUpperCase();
@@ -1645,10 +1677,28 @@
                 return;
             }
             
-            // Check for duplicates
+            // Check for duplicates with detailed info
             for (var i = 0; i < samples.length; i++) {
                 if (samples[i].id === sampleId) {
-                    alert('Sample ' + sampleId + ' already exists!');
+                    var existingSample = samples[i];
+                    var msg = '⚠️ DUPLICATE SAMPLE ID\n\n';
+                    msg += 'Sample ID: ' + sampleId + '\n';
+                    msg += 'Already exists with:\n';
+                    msg += '• Status: ' + existingSample.status + '\n';
+                    msg += '• Added: ' + existingSample.dateAdded + '\n';
+                    msg += '• By: ' + existingSample.initials + '\n\n';
+                    msg += 'Cannot add duplicate sample ID!';
+                    alert(msg);
+
+                    // Highlight the input field
+                    var inputField = document.getElementById('sampleId');
+                    inputField.style.border = '3px solid #dc3545';
+                    inputField.style.background = '#ffe6e6';
+                    setTimeout(function() {
+                        inputField.style.border = '';
+                        inputField.style.background = '';
+                    }, 3000);
+
                     return;
                 }
             }
