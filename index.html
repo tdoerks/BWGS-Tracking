@@ -620,6 +620,7 @@
             <button onclick="showPlateMap()" style="background: #9c27b0; font-size: 12px; padding: 6px 12px;">🧫 Plate Map</button>
             <button onclick="showTimeline()" style="background: #ff6b6b; font-size: 12px; padding: 6px 12px;">📅 Timeline</button>
             <button onclick="showAnalytics()" style="background: #4ecdc4; font-size: 12px; padding: 6px 12px;">📈 Analytics</button>
+            <button onclick="showReagentSearch()" style="background: #fd7e14; font-size: 12px; padding: 6px 12px;">🔬 Reagent Search</button>
             <button onclick="clearAllData()" style="background: #dc3545; font-size: 12px; padding: 6px 12px;">🗑️ Clear All Data</button>
             <button onclick="showKeyboardShortcuts()" style="background: #6c757d; font-size: 12px; padding: 6px 12px;">⌨️ Shortcuts</button>
             <button onclick="toggleDarkMode()" id="darkModeToggle" style="background: #495057; font-size: 12px; padding: 6px 12px;">🌙 Dark Mode</button>
@@ -1044,6 +1045,30 @@
             </div>
 
             <button class="btn-cancel" onclick="closeShortcutsModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Reagent Search Modal -->
+    <div id="reagentSearchModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; width: 95%;">
+            <span class="close-btn" onclick="closeReagentSearchModal()">&times;</span>
+            <h3>🔬 Reagent Lot Search & Traceability</h3>
+
+            <div style="margin: 20px 0; padding: 20px; background: var(--bg-secondary); border-radius: 8px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600;">Search for samples using a specific reagent lot number:</label>
+                <input type="text" id="reagentSearchInput" placeholder="Enter lot number (e.g., AW1-LOT-2024-123)"
+                       style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid var(--border-color); border-radius: 4px; margin-bottom: 10px;"
+                       onkeyup="if(event.key==='Enter') searchReagentLot()">
+                <button onclick="searchReagentLot()" style="padding: 12px 24px; background: #fd7e14; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 16px;">
+                    🔍 Search
+                </button>
+            </div>
+
+            <div id="reagentSearchResults" style="margin-top: 20px;">
+                <!-- Search results will appear here -->
+            </div>
+
+            <button class="btn-cancel" onclick="closeReagentSearchModal()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
 
@@ -3348,6 +3373,136 @@ html += '</div>';
 
         function closeAnalyticsModal() {
             document.getElementById('analyticsModal').style.display = 'none';
+        }
+
+        function showReagentSearch() {
+            document.getElementById('reagentSearchModal').style.display = 'block';
+            document.getElementById('reagentSearchInput').focus();
+        }
+
+        function closeReagentSearchModal() {
+            document.getElementById('reagentSearchModal').style.display = 'none';
+        }
+
+        function searchReagentLot() {
+            var searchLot = document.getElementById('reagentSearchInput').value.trim();
+            if (!searchLot) {
+                alert('Please enter a lot number to search');
+                return;
+            }
+
+            var results = [];
+            var searchLower = searchLot.toLowerCase();
+
+            // Search through all samples
+            for (var i = 0; i < samples.length; i++) {
+                var sample = samples[i];
+                var found = false;
+                var foundIn = [];
+
+                // Check main lot number field (BAP/TSB)
+                if (sample.bapDetails && sample.bapDetails.lot && sample.bapDetails.lot.toLowerCase().includes(searchLower)) {
+                    found = true;
+                    foundIn.push('BAP Lot');
+                }
+                if (sample.tsbDetails && sample.tsbDetails.lot && sample.tsbDetails.lot.toLowerCase().includes(searchLower)) {
+                    found = true;
+                    foundIn.push('TSB Lot');
+                }
+
+                // Check Extraction reagent lots
+                if (sample.extractionDetails && sample.extractionDetails.reagentLots) {
+                    var lots = sample.extractionDetails.reagentLots;
+                    if (lots.aw1 && lots.aw1.toLowerCase().includes(searchLower)) { found = true; foundIn.push('AW1'); }
+                    if (lots.aw2 && lots.aw2.toLowerCase().includes(searchLower)) { found = true; foundIn.push('AW2'); }
+                    if (lots.ethanol && lots.ethanol.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Ethanol'); }
+                    if (lots.bufferAL && lots.bufferAL.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Buffer AL'); }
+                    if (lots.bufferATL && lots.bufferATL.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Buffer ATL'); }
+                    if (lots.bufferAE && lots.bufferAE.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Buffer AE'); }
+                    if (lots.proteinaseK && lots.proteinaseK.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Proteinase K'); }
+                    if (lots.dneasy && lots.dneasy.toLowerCase().includes(searchLower)) { found = true; foundIn.push('DNeasy'); }
+                }
+
+                // Check Clean Extraction reagent lots
+                if (sample.cleanExtractionDetails && sample.cleanExtractionDetails.reagentLots) {
+                    var lots = sample.cleanExtractionDetails.reagentLots;
+                    if (lots.bead && lots.bead.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Bead'); }
+                    if (lots.nfH2oEtoh && lots.nfH2oEtoh.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NF H2O ETOH'); }
+                    if (lots.etohDilution && lots.etohDilution.toLowerCase().includes(searchLower)) { found = true; foundIn.push('EtOH Dilution'); }
+                    if (lots.nfH2oElution && lots.nfH2oElution.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NF H2O Elution'); }
+                    if (lots.qubitReagent && lots.qubitReagent.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Qubit Reagent (CE)'); }
+                }
+
+                // Check Indexing reagent lots
+                if (sample.indexingDetails && sample.indexingDetails.reagentLots) {
+                    var lots = sample.indexingDetails.reagentLots;
+                    if (lots.tdBuffer && lots.tdBuffer.toLowerCase().includes(searchLower)) { found = true; foundIn.push('TD Buffer'); }
+                    if (lots.atmBuffer && lots.atmBuffer.toLowerCase().includes(searchLower)) { found = true; foundIn.push('ATM Buffer'); }
+                    if (lots.ntBuffer && lots.ntBuffer.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NT Buffer'); }
+                    if (lots.npm && lots.npm.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NPM'); }
+                    if (lots.resuspensionBuffer && lots.resuspensionBuffer.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Resuspension Buffer'); }
+                    if (lots.indexesKit && lots.indexesKit.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Indexes Kit'); }
+                    if (lots.beads && lots.beads.toLowerCase().includes(searchLower)) { found = true; foundIn.push('Beads (Indexing)'); }
+                    if (lots.etoh && lots.etoh.toLowerCase().includes(searchLower)) { found = true; foundIn.push('EtOH (Indexing)'); }
+                    if (lots.nfH2o && lots.nfH2o.toLowerCase().includes(searchLower)) { found = true; foundIn.push('NF H2O (Indexing)'); }
+                }
+
+                // Check Qubit reagent lots
+                if (sample.cleanExtractionQubitDetails && sample.cleanExtractionQubitDetails.reagentLot &&
+                    sample.cleanExtractionQubitDetails.reagentLot.toLowerCase().includes(searchLower)) {
+                    found = true;
+                    foundIn.push('CE Qubit Reagent');
+                }
+                if (sample.qubitDetails && sample.qubitDetails.reagentLot &&
+                    sample.qubitDetails.reagentLot.toLowerCase().includes(searchLower)) {
+                    found = true;
+                    foundIn.push('Final Qubit Reagent');
+                }
+
+                if (found) {
+                    results.push({
+                        sample: sample,
+                        foundIn: foundIn
+                    });
+                }
+            }
+
+            // Display results
+            var resultsDiv = document.getElementById('reagentSearchResults');
+
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div style="padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; text-align: center;"><strong>⚠️ No samples found</strong><br>No samples use reagent lot: ' + searchLot + '</div>';
+            } else {
+                var html = '<div style="background: #d4edda; border: 2px solid #28a745; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+                html += '<strong style="color: #155724;">✅ Found ' + results.length + ' sample(s) using lot: ' + searchLot + '</strong>';
+                html += '</div>';
+
+                html += '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse;">';
+                html += '<tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">';
+                html += '<th style="padding: 12px; text-align: left;">Sample ID</th>';
+                html += '<th style="padding: 12px; text-align: left;">Status</th>';
+                html += '<th style="padding: 12px; text-align: left;">Date Added</th>';
+                html += '<th style="padding: 12px; text-align: left;">Found In</th>';
+                html += '</tr>';
+
+                for (var i = 0; i < results.length; i++) {
+                    var r = results[i];
+                    html += '<tr style="border-bottom: 1px solid #dee2e6;">';
+                    html += '<td style="padding: 12px; font-weight: 600;">' + r.sample.id + '</td>';
+                    html += '<td style="padding: 12px;">' + r.sample.status + '</td>';
+                    html += '<td style="padding: 12px;">' + r.sample.dateAdded + '</td>';
+                    html += '<td style="padding: 12px; color: #fd7e14; font-weight: 600;">' + r.foundIn.join(', ') + '</td>';
+                    html += '</tr>';
+                }
+
+                html += '</table></div>';
+
+                html += '<div style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px;">';
+                html += '<strong>💡 Tip:</strong> This is useful for quality control and recalls. Export this data or take a screenshot for your records.';
+                html += '</div>';
+
+                resultsDiv.innerHTML = html;
+            }
         }
 
         function renderAnalytics() {
