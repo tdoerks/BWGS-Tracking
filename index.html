@@ -878,7 +878,13 @@
             </div>
 
             <div id="specificFields"></div>
-            
+
+            <div class="form-group">
+                <label>Stage Notes (optional):</label>
+                <textarea id="stageNotes" rows="3" placeholder="Any observations or notes about this processing stage..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif;"></textarea>
+                <small style="color: #6c757d;">e.g., "Sample looked cloudy", "Had to repeat step", "Extra incubation time needed"</small>
+            </div>
+
             <button onclick="completeProcess()">Complete</button>
             <button class="btn-cancel" onclick="closeModal()">Cancel</button>
         </div>
@@ -2745,6 +2751,7 @@ html += '</div>';
             var inc = document.getElementById('incubator').value;
             var timeIn = document.getElementById('timeIn').value;
             var timeOut = document.getElementById('timeOut').value;
+            var stageNotes = document.getElementById('stageNotes').value.trim();
 
             if (!tech || !lot) {
                 alert('Please fill in required fields');
@@ -2773,7 +2780,8 @@ html += '</div>';
                         temperature: temp,
                         incubator: inc,
                         timeIn: timeIn,
-                        timeOut: timeOut
+                        timeOut: timeOut,
+                        stageNotes: stageNotes
                     };
                     nextBapNumber++;
                 } else if (currentProcessType === 'TSB') {
@@ -2786,15 +2794,16 @@ html += '</div>';
                         temperature: temp,
                         incubator: inc,
                         timeIn: timeIn,
-                        timeOut: timeOut
+                        timeOut: timeOut,
+                        stageNotes: stageNotes
                     };
                     nextTsbNumber++;
                 } else if (currentProcessType === 'Extraction') {
                     sample.extractionNumber = '25E' + String(nextExtractionNumber).padStart(3, '0');
                     sample.status = 'Extraction Complete';
-                    sample.extractionDetails = { 
-                        technician: tech, 
-                        lot: lot, 
+                    sample.extractionDetails = {
+                        technician: tech,
+                        lot: lot,
                         completedDate: today,
                         extractionRun: document.getElementById('extractionRun').value,
                         reagentLots: {
@@ -2806,7 +2815,8 @@ html += '</div>';
                             bufferAE: document.getElementById('bufferAELot').value,
                             proteinaseK: document.getElementById('proteinaseKLot').value,
                             dneasy: document.getElementById('dneasyLot').value
-                        }
+                        },
+                        stageNotes: stageNotes
                     };
                     nextExtractionNumber++;
                     if (nextExtractionNumber % 24 === 1) {
@@ -2815,9 +2825,9 @@ html += '</div>';
                 } else if (currentProcessType === 'Clean Extraction') {
                     sample.cleanExtractionNumber = '25CE' + String(nextCleanExtractionNumber).padStart(3, '0');
                     sample.status = 'Clean Extraction Complete';
-                    sample.cleanExtractionDetails = { 
-                        technician: tech, 
-                        lot: lot, 
+                    sample.cleanExtractionDetails = {
+                        technician: tech,
+                        lot: lot,
                         completedDate: today,
                         storagePlate: document.getElementById('storagePlate').value,
                         wellPosition: document.getElementById('wellPosition').value,
@@ -2832,16 +2842,17 @@ html += '</div>';
                             cleanup: document.getElementById('cleanupVolume').value,
                             elutionIn: document.getElementById('elutionVolumeIn').value,
                             elutionOut: document.getElementById('elutionVolumeOut').value
-                        }
+                        },
+                        stageNotes: stageNotes
                     };
                     nextCleanExtractionNumber++;
                     nextCleanExtractionPlate++;
                 } else if (currentProcessType === 'Indexing') {
                     sample.indexingNumber = '25XT' + String(nextIndexingNumber).padStart(3, '0');
                     sample.status = 'Indexing Complete';
-                    sample.indexingDetails = { 
-                        technician: tech, 
-                        lot: lot, 
+                    sample.indexingDetails = {
+                        technician: tech,
+                        lot: lot,
                         completedDate: today,
                         storagePlate: document.getElementById('indexingStoragePlate').value,
                         wellPosition: document.getElementById('indexingWellPosition').value,
@@ -2865,27 +2876,30 @@ html += '</div>';
                         cleanupConcentrations: {
                             step1: document.getElementById('cleanup1Concentrations').value,
                             step2: document.getElementById('cleanup2Concentrations').value
-                        }
+                        },
+                        stageNotes: stageNotes
                     };
                     nextIndexingNumber++;
                     nextIndexingPlate++;
                 } else if (currentProcessType === 'Clean Extraction Qubit') {
                     sample.status = 'Clean Extraction Qubit Complete';
-                    sample.cleanExtractionQubitDetails = { 
+                    sample.cleanExtractionQubitDetails = {
                         concentration: document.getElementById('qubitConcentration').value,
                         reagentLot: document.getElementById('qubitReagentLot').value,
                         dateQubited: document.getElementById('qubitDate').value,
                         technician: tech,
-                        completedDate: today
+                        completedDate: today,
+                        stageNotes: stageNotes
                     };
                 } else if (currentProcessType === 'Final Qubit') {
                     sample.status = 'Qubit Complete';
-                    sample.qubitDetails = { 
+                    sample.qubitDetails = {
                         concentration: document.getElementById('qubitConcentration').value,
                         reagentLot: document.getElementById('qubitReagentLot').value,
                         dateQubited: document.getElementById('qubitDate').value,
                         technician: tech,
-                        completedDate: today
+                        completedDate: today,
+                        stageNotes: stageNotes
                     };
                 }
 
