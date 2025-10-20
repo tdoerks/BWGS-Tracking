@@ -1679,6 +1679,22 @@
                     </tr>
                 </table>
 
+                <h4 style="color: #6366f1; margin-bottom: 10px;">🎯 View Switching (NEW!)</h4>
+                <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
+                    <tr style="background: #f0f4ff;">
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + 1</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Switch to Kanban (Pipeline) view</strong></td>
+                    </tr>
+                    <tr style="background: #f0f4ff;">
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + 2</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Switch to List view</strong></td>
+                    </tr>
+                    <tr style="background: #f0f4ff;">
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + 3</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Switch to Table view</strong></td>
+                    </tr>
+                </table>
+
                 <h4 style="color: #fd7e14; margin-bottom: 10px;">📈 Views & Tools</h4>
                 <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
                     <tr>
@@ -1696,6 +1712,18 @@
                     <tr>
                         <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + P</kbd></td>
                         <td style="padding: 8px; border-bottom: 1px solid #ddd;">Open Plate Map</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + L</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Print Labels</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + G</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Go to sample (search)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + S</kbd></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">Save/Export backup</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px; border-bottom: 1px solid #ddd;"><kbd>Ctrl/Cmd + K</kbd></td>
@@ -1730,7 +1758,7 @@
 
             <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; text-align: center;">
                 <strong style="font-size: 16px;">💡 Pro Tip: Use these shortcuts to navigate 10x faster!</strong><br>
-                <small style="opacity: 0.9;">Total shortcuts: 17 | Number keys (1-5) only work when not typing</small>
+                <small style="opacity: 0.9;">Total shortcuts: 23+ | NEW: Ctrl/Cmd + 1/2/3 for view switching!</small>
             </div>
 
             <button class="btn-cancel" onclick="closeShortcutsModal()" style="margin-top: 20px;">Close</button>
@@ -8058,6 +8086,43 @@ if (sample.qubitDetails) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
                 e.preventDefault();
                 toggleCompactView();
+            }
+
+            // Ctrl/Cmd + 1 - Switch to Kanban View
+            if ((e.ctrlKey || e.metaKey) && e.key === '1') {
+                e.preventDefault();
+                switchView('kanban');
+            }
+
+            // Ctrl/Cmd + 2 - Switch to List View
+            if ((e.ctrlKey || e.metaKey) && e.key === '2') {
+                e.preventDefault();
+                switchView('list');
+            }
+
+            // Ctrl/Cmd + 3 - Switch to Table View
+            if ((e.ctrlKey || e.metaKey) && e.key === '3') {
+                e.preventDefault();
+                switchView('table');
+            }
+
+            // Ctrl/Cmd + L - Print Labels
+            if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                showPrintLabels();
+            }
+
+            // Ctrl/Cmd + S - Save/Export backup (override browser default)
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                exportData();
+            }
+
+            // Ctrl/Cmd + G - Go to sample (search focus)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+                document.getElementById('searchInput').select();
             }
 
             // Escape - Close modals
