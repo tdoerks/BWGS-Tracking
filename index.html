@@ -2173,20 +2173,31 @@
             nextIndexingPlate = 1;
         }
 
-        // Data migration: Add day1BPW stage to existing E. coli workflows
+        // Data migration: Update E. coli workflows to new Day 1A/1B structure
         function migrateEcoliWorkflows() {
             var migrated = 0;
             pathogenWorkflows.forEach(function(wf) {
-                if (wf.pathogenCode === 'EC' && wf.stages && !wf.stages.day1BPW) {
-                    // Old workflow without BPW stage - add it
-                    wf.stages.day1BPW = {completed: false};
-                    migrated++;
-                    console.log('Migrated E. coli workflow: ' + wf.id + ' - Added day1BPW stage');
+                if (wf.pathogenCode === 'EC' && wf.stages) {
+                    // Check if using old structure (day1BPW or day2MacBroth keys)
+                    if (wf.stages.day1BPW !== undefined || wf.stages.day2MacBroth !== undefined) {
+                        // Old structure - convert to new Day 1A/1B structure
+                        var newStages = {
+                            day1A_BPWPrep: wf.stages.day1BPW || {completed: false},
+                            day1B_MacBroth: wf.stages.day2MacBroth || {completed: false},
+                            day2_MacAgar: wf.stages.day2MacAgar || {completed: false},
+                            day3_PinkColonies: wf.stages.day3PinkColonies || {completed: false},
+                            day4_BAP: wf.stages.day4BAP || {completed: false},
+                            day5_MALDI: wf.stages.day5MALDI || {completed: false}
+                        };
+                        wf.stages = newStages;
+                        migrated++;
+                        console.log('Migrated E. coli workflow: ' + wf.id + ' - Updated to Day 1A/1B structure');
+                    }
                 }
             });
 
             if (migrated > 0) {
-                console.log('Migration complete: Added day1BPW stage to ' + migrated + ' existing E. coli workflow(s)');
+                console.log('Migration complete: Updated ' + migrated + ' E. coli workflow(s) to Day 1A/1B structure');
                 saveData(); // Save migrated data
             }
         }
@@ -5581,14 +5592,14 @@ html += '</div>';
                 pathogenCode: pathogenCode,
                 pathogenName: pathogens[pathogenCode].name,
                 dateCreated: new Date().toISOString().split('T')[0],
-                status: 'Day 1 - Pending', // Starting status (BPW)
+                status: 'Day 1A - Pending', // Starting status (BPW Prep)
                 stages: {
-                    day1BPW: {completed: false},           // NEW: Day 1 - BPW Enrichment
-                    day2MacBroth: {completed: false},
-                    day2MacAgar: {completed: false},
-                    day3PinkColonies: {completed: false},
-                    day4BAP: {completed: false},
-                    day5MALDI: {completed: false}
+                    day1A_BPWPrep: {completed: false},      // Day 1A - BPW Sample Prep
+                    day1B_MacBroth: {completed: false},     // Day 1B - MAC Broth Enrichment
+                    day2_MacAgar: {completed: false},       // Day 2 - MAC Agar
+                    day3_PinkColonies: {completed: false},  // Day 3 - Pink Colonies
+                    day4_BAP: {completed: false},           // Day 4 - BAP
+                    day5_MALDI: {completed: false}          // Day 5 - MALDI
                 },
                 isolateGenerated: false,
                 isolateId: null
@@ -5617,16 +5628,16 @@ html += '</div>';
                 html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples with E. coli testing to create workflows</div>';
                 html += '</div>';
             } else {
-                // Kanban board for E. coli workflows - NOW 6 STAGES (added BPW)
+                // Kanban board for E. coli workflows - 6 STAGES (Day 1A/1B split)
                 html += '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; overflow-x: auto;">';
 
                 var stages = [
-                    {name: 'Day 1 - BPW', key: 'day1BPW', emoji: '💧', color: '#00bcd4'},                    // NEW!
-                    {name: 'Day 2 - MAC Broth', key: 'day2MacBroth', emoji: '🧪', color: '#e91e63'},
-                    {name: 'Day 2 - MAC Agar', key: 'day2MacAgar', emoji: '🧫', color: '#9c27b0'},
-                    {name: 'Day 3 - Pink Colonies', key: 'day3PinkColonies', emoji: '🔬', color: '#673ab7'},
-                    {name: 'Day 4 - BAP', key: 'day4BAP', emoji: '🧫', color: '#3f51b5'},
-                    {name: 'Day 5 - MALDI', key: 'day5MALDI', emoji: '✅', color: '#4caf50'}
+                    {name: 'Day 1A - BPW Prep', key: 'day1A_BPWPrep', emoji: '💧', color: '#00bcd4'},
+                    {name: 'Day 1B - MAC Broth', key: 'day1B_MacBroth', emoji: '🧪', color: '#e91e63'},
+                    {name: 'Day 2 - MAC Agar', key: 'day2_MacAgar', emoji: '🧫', color: '#9c27b0'},
+                    {name: 'Day 3 - Pink Colonies', key: 'day3_PinkColonies', emoji: '🔬', color: '#673ab7'},
+                    {name: 'Day 4 - BAP', key: 'day4_BAP', emoji: '🧫', color: '#3f51b5'},
+                    {name: 'Day 5 - MALDI', key: 'day5_MALDI', emoji: '✅', color: '#4caf50'}
                 ];
 
                 stages.forEach(function(stage) {
@@ -5638,12 +5649,12 @@ html += '</div>';
                     // Count workflows in this stage
                     var count = 0;
                     ecoliWorkflows.forEach(function(wf) {
-                        if (!wf.stages.day1BPW.completed && stage.key === 'day1BPW') count++;                                                      // NEW!
-                        else if (wf.stages.day1BPW.completed && !wf.stages.day2MacBroth.completed && stage.key === 'day2MacBroth') count++;        // UPDATED
-                        else if (wf.stages.day2MacBroth.completed && !wf.stages.day2MacAgar.completed && stage.key === 'day2MacAgar') count++;
-                        else if (wf.stages.day2MacAgar.completed && !wf.stages.day3PinkColonies.completed && stage.key === 'day3PinkColonies') count++;
-                        else if (wf.stages.day3PinkColonies.completed && !wf.stages.day4BAP.completed && stage.key === 'day4BAP') count++;
-                        else if (wf.stages.day4BAP.completed && !wf.stages.day5MALDI.completed && stage.key === 'day5MALDI') count++;
+                        if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') count++;
+                        else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_MacBroth.completed && stage.key === 'day1B_MacBroth') count++;
+                        else if (wf.stages.day1B_MacBroth.completed && !wf.stages.day2_MacAgar.completed && stage.key === 'day2_MacAgar') count++;
+                        else if (wf.stages.day2_MacAgar.completed && !wf.stages.day3_PinkColonies.completed && stage.key === 'day3_PinkColonies') count++;
+                        else if (wf.stages.day3_PinkColonies.completed && !wf.stages.day4_BAP.completed && stage.key === 'day4_BAP') count++;
+                        else if (wf.stages.day4_BAP.completed && !wf.stages.day5_MALDI.completed && stage.key === 'day5_MALDI') count++;
                     });
 
                     html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
@@ -5652,12 +5663,12 @@ html += '</div>';
                     ecoliWorkflows.forEach(function(wf) {
                         var shouldShow = false;
 
-                        if (!wf.stages.day1BPW.completed && stage.key === 'day1BPW') shouldShow = true;                                            // NEW!
-                        else if (wf.stages.day1BPW.completed && !wf.stages.day2MacBroth.completed && stage.key === 'day2MacBroth') shouldShow = true;  // UPDATED
-                        else if (wf.stages.day2MacBroth.completed && !wf.stages.day2MacAgar.completed && stage.key === 'day2MacAgar') shouldShow = true;
-                        else if (wf.stages.day2MacAgar.completed && !wf.stages.day3PinkColonies.completed && stage.key === 'day3PinkColonies') shouldShow = true;
-                        else if (wf.stages.day3PinkColonies.completed && !wf.stages.day4BAP.completed && stage.key === 'day4BAP') shouldShow = true;
-                        else if (wf.stages.day4BAP.completed && !wf.stages.day5MALDI.completed && stage.key === 'day5MALDI') shouldShow = true;
+                        if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') shouldShow = true;
+                        else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_MacBroth.completed && stage.key === 'day1B_MacBroth') shouldShow = true;
+                        else if (wf.stages.day1B_MacBroth.completed && !wf.stages.day2_MacAgar.completed && stage.key === 'day2_MacAgar') shouldShow = true;
+                        else if (wf.stages.day2_MacAgar.completed && !wf.stages.day3_PinkColonies.completed && stage.key === 'day3_PinkColonies') shouldShow = true;
+                        else if (wf.stages.day3_PinkColonies.completed && !wf.stages.day4_BAP.completed && stage.key === 'day4_BAP') shouldShow = true;
+                        else if (wf.stages.day4_BAP.completed && !wf.stages.day5_MALDI.completed && stage.key === 'day5_MALDI') shouldShow = true;
 
                         if (shouldShow) {
                             html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openEcoliWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
@@ -5771,21 +5782,49 @@ html += '</div>';
 
             // Title based on stage
             var stageTitle = '';
-            if (stageKey === 'day1BPW') stageTitle = '💧 Day 1 - BPW Enrichment';                         // NEW!
-            else if (stageKey === 'day2MacBroth') stageTitle = '🧪 Day 2 - MAC Broth Enrichment';
-            else if (stageKey === 'day2MacAgar') stageTitle = '🧫 Day 2 - Streak to MAC Agar';
-            else if (stageKey === 'day3PinkColonies') stageTitle = '🔬 Day 3 - Check for Pink Colonies';
-            else if (stageKey === 'day4BAP') stageTitle = '🧫 Day 4 - Streak to BAP';
-            else if (stageKey === 'day5MALDI') stageTitle = '✅ Day 5 - MALDI Identification';
+            if (stageKey === 'day1A_BPWPrep') stageTitle = '💧 Day 1A - BPW Sample Prep';
+            else if (stageKey === 'day1B_MacBroth') stageTitle = '🧪 Day 1B - MAC Broth Enrichment';
+            else if (stageKey === 'day2_MacAgar') stageTitle = '🧫 Day 2 - Streak to MAC Agar';
+            else if (stageKey === 'day3_PinkColonies') stageTitle = '🔬 Day 3 - Check for Pink Colonies';
+            else if (stageKey === 'day4_BAP') stageTitle = '🧫 Day 4 - Streak to BAP';
+            else if (stageKey === 'day5_MALDI') stageTitle = '✅ Day 5 - MALDI Identification';
 
             html += '<h3 style="margin-top: 0;">' + stageTitle + '</h3>';
             html += '<p>Sample: <strong>' + workflow.foodSampleId + '</strong></p>';
 
             // Form fields based on stage
-            if (stageKey === 'day1BPW') {                                                                 // NEW!
+            if (stageKey === 'day1A_BPWPrep') {
                 html += '<div class="form-group">';
                 html += '<label>BPW Lot #:</label>';
-                html += '<input type="text" id="ecoli_bpwLot" placeholder="LOT-BPW-001" />';
+                html += '<input type="text" id="ecoli_bpwLot" placeholder="LOT-BPW-2025-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Sample Weight (g):</label>';
+                html += '<input type="number" id="ecoli_sampleWeight" value="50" step="0.1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>BPW Volume (ml):</label>';
+                html += '<input type="number" id="ecoli_bpwVolume" value="250" step="1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Stomach Time (minutes):</label>';
+                html += '<input type="number" id="ecoli_stomachTime" value="2" step="0.5" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Volume Pulled for EC (ml):</label>';
+                html += '<input type="number" id="ecoli_volumePulled" value="50" step="1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Remaining BPW to Incubator?:</label>';
+                html += '<select id="ecoli_bpwToIncubator">';
+                html += '<option value="Yes">Yes (for Salmonella)</option>';
+                html += '<option value="No">No</option>';
+                html += '</select>';
                 html += '</div>';
 
                 html += '<div class="form-group">';
@@ -5793,34 +5832,7 @@ html += '</div>';
                 html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
                 html += '</div>';
 
-                html += '<div class="form-group">';
-                html += '<label>Temperature:</label>';
-                html += '<select id="ecoli_temperature">';
-                html += '<option value="37">37°C</option>';
-                html += '<option value="35">35°C</option>';
-                html += '</select>';
-                html += '</div>';
-
-                html += '<div class="form-group">';
-                html += '<label>Incubator:</label>';
-                html += '<select id="ecoli_incubator">';
-                html += '<option value="INC-1">Incubator 1</option>';
-                html += '<option value="INC-2">Incubator 2</option>';
-                html += '<option value="INC-3">Incubator 3</option>';
-                html += '</select>';
-                html += '</div>';
-
-                html += '<div class="form-group">';
-                html += '<label>Time In:</label>';
-                html += '<input type="time" id="ecoli_timeIn" />';
-                html += '</div>';
-
-                html += '<div class="form-group">';
-                html += '<label>Time Out:</label>';
-                html += '<input type="time" id="ecoli_timeOut" />';
-                html += '</div>';
-
-            } else if (stageKey === 'day2MacBroth') {
+            } else if (stageKey === 'day1B_MacBroth') {
                 html += '<div class="form-group">';
                 html += '<label>MAC Broth Lot #:</label>';
                 html += '<input type="text" id="ecoli_macBrothLot" placeholder="LOT-MAC-001" />';
@@ -5858,7 +5870,7 @@ html += '</div>';
                 html += '<input type="time" id="ecoli_timeOut" />';
                 html += '</div>';
 
-            } else if (stageKey === 'day2MacAgar') {
+            } else if (stageKey === 'day2_MacAgar') {
                 html += '<div class="form-group">';
                 html += '<label>MAC Agar Plate Lot #:</label>';
                 html += '<input type="text" id="ecoli_macAgarLot" placeholder="LOT-MACAGAR-001" />';
@@ -5896,7 +5908,7 @@ html += '</div>';
                 html += '<input type="time" id="ecoli_timeOut" />';
                 html += '</div>';
 
-            } else if (stageKey === 'day3PinkColonies') {
+            } else if (stageKey === 'day3_PinkColonies') {
                 html += '<div class="form-group">';
                 html += '<label>Pink Colonies Present?</label>';
                 html += '<select id="ecoli_pinkColonies">';
@@ -5915,7 +5927,7 @@ html += '</div>';
                 html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
                 html += '</div>';
 
-            } else if (stageKey === 'day4BAP') {
+            } else if (stageKey === 'day4_BAP') {
                 html += '<div class="form-group">';
                 html += '<label>BAP Plate Lot #:</label>';
                 html += '<input type="text" id="ecoli_bapLot" placeholder="LOT-BAP-001" />';
@@ -5961,7 +5973,7 @@ html += '</div>';
                 html += '<input type="time" id="ecoli_timeOut" />';
                 html += '</div>';
 
-            } else if (stageKey === 'day5MALDI') {
+            } else if (stageKey === 'day5_MALDI') {
                 html += '<div class="form-group">';
                 html += '<label>MALDI Species ID:</label>';
                 html += '<input type="text" id="ecoli_maldiSpecies" placeholder="e.g., Escherichia coli" />';
@@ -6017,35 +6029,36 @@ html += '</div>';
             if (techInitials) stageData.techInitials = techInitials.value;
 
             // Collect stage-specific data
-            if (currentEcoliStage === 'day1BPW') {                                                        // NEW!
+            if (currentEcoliStage === 'day1A_BPWPrep') {
                 stageData.bpwLot = document.getElementById('ecoli_bpwLot').value;
-                stageData.temperature = document.getElementById('ecoli_temperature').value;
-                stageData.incubator = document.getElementById('ecoli_incubator').value;
-                stageData.timeIn = document.getElementById('ecoli_timeIn').value;
-                stageData.timeOut = document.getElementById('ecoli_timeOut').value;
-            } else if (currentEcoliStage === 'day2MacBroth') {
+                stageData.sampleWeight = document.getElementById('ecoli_sampleWeight').value;
+                stageData.bpwVolume = document.getElementById('ecoli_bpwVolume').value;
+                stageData.stomachTime = document.getElementById('ecoli_stomachTime').value;
+                stageData.volumePulled = document.getElementById('ecoli_volumePulled').value;
+                stageData.bpwToIncubator = document.getElementById('ecoli_bpwToIncubator').value;
+            } else if (currentEcoliStage === 'day1B_MacBroth') {
                 stageData.macBrothLot = document.getElementById('ecoli_macBrothLot').value;
                 stageData.temperature = document.getElementById('ecoli_temperature').value;
                 stageData.incubator = document.getElementById('ecoli_incubator').value;
                 stageData.timeIn = document.getElementById('ecoli_timeIn').value;
                 stageData.timeOut = document.getElementById('ecoli_timeOut').value;
-            } else if (currentEcoliStage === 'day2MacAgar') {
+            } else if (currentEcoliStage === 'day2_MacAgar') {
                 stageData.macAgarLot = document.getElementById('ecoli_macAgarLot').value;
                 stageData.temperature = document.getElementById('ecoli_temperature').value;
                 stageData.incubator = document.getElementById('ecoli_incubator').value;
                 stageData.timeIn = document.getElementById('ecoli_timeIn').value;
                 stageData.timeOut = document.getElementById('ecoli_timeOut').value;
-            } else if (currentEcoliStage === 'day3PinkColonies') {
+            } else if (currentEcoliStage === 'day3_PinkColonies') {
                 stageData.pinkColonies = document.getElementById('ecoli_pinkColonies').value;
                 stageData.colonyCount = document.getElementById('ecoli_colonyCount').value;
-            } else if (currentEcoliStage === 'day4BAP') {
+            } else if (currentEcoliStage === 'day4_BAP') {
                 stageData.bapLot = document.getElementById('ecoli_bapLot').value;
                 stageData.typicalGrowth = document.getElementById('ecoli_typicalGrowth').value;
                 stageData.temperature = document.getElementById('ecoli_temperature').value;
                 stageData.incubator = document.getElementById('ecoli_incubator').value;
                 stageData.timeIn = document.getElementById('ecoli_timeIn').value;
                 stageData.timeOut = document.getElementById('ecoli_timeOut').value;
-            } else if (currentEcoliStage === 'day5MALDI') {
+            } else if (currentEcoliStage === 'day5_MALDI') {
                 stageData.maldiSpecies = document.getElementById('ecoli_maldiSpecies').value;
                 stageData.maldiConfidence = document.getElementById('ecoli_maldiConfidence').value;
                 stageData.confirmed = document.getElementById('ecoli_confirmed').value;
@@ -6058,7 +6071,7 @@ html += '</div>';
             currentEcoliWorkflow.stages[currentEcoliStage] = stageData;
 
             // If MALDI stage and confirmed, generate isolate
-            if (currentEcoliStage === 'day5MALDI' && stageData.confirmed === 'Yes') {
+            if (currentEcoliStage === 'day5_MALDI' && stageData.confirmed === 'Yes') {
                 generateIsolate(currentEcoliWorkflow, stageData.maldiSpecies);
             }
 
