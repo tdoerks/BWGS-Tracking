@@ -898,6 +898,10 @@
                         <span class="nav-icon">🧫</span>
                         <span>Plate Map</span>
                     </div>
+                    <div class="nav-item" onclick="showPrintLabels()">
+                        <span class="nav-icon">🏷️</span>
+                        <span>Print Labels</span>
+                    </div>
                 </div>
 
                 <!-- Data -->
@@ -960,6 +964,11 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center;">
+                    <div id="autoSaveIndicator" style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #e8f5e9; border-radius: 6px; font-size: 12px; color: #2e7d32;">
+                        <span id="saveIcon">✓</span>
+                        <span id="saveText">Auto-saved</span>
+                        <span id="saveTime" style="color: #666; font-size: 11px;"></span>
+                    </div>
                     <button onclick="undo()" id="undoBtn" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" disabled title="No actions to undo">↶ Undo</button>
                 </div>
             </div>
@@ -987,12 +996,23 @@
 
         <!-- Single Sample Input -->
         <div id="singleInput">
-            <h4>Single Sample: <span style="font-size: 12px; font-weight: normal; color: #6c757d;">📷 Barcode scanner supported</span></h4>
-            <input type="text" id="sampleId" placeholder="Sample ID" onkeyup="checkDuplicateRealtime(this)">
-            <span id="duplicateWarning" style="color: #dc3545; font-weight: 600; margin-left: 10px; display: none;">⚠️ Already exists!</span>
-            <input type="text" id="initials" placeholder="Initials" maxlength="3">
-            <button onclick="addSample(false)">Add Sample</button>
-            <button onclick="addSample(true)" style="background: #28a745; margin-left: 10px;">✚ Add & Next</button>
+            <h4>Single Sample: <span style="font-size: 12px; font-weight: normal; color: #6c757d;">📷 Barcode scanner | 🎤 Voice input supported</span></h4>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="sampleId" placeholder="Sample ID (or say it)" onkeyup="checkDuplicateRealtime(this)" style="flex: 1; min-width: 200px;">
+                <button onclick="startVoiceInput('sampleId')" id="voiceSampleBtn" style="background: #17a2b8; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;" title="Click to speak Sample ID">🎤 Speak ID</button>
+                <span id="duplicateWarning" style="color: #dc3545; font-weight: 600; display: none;">⚠️ Already exists!</span>
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="initials" placeholder="Initials" maxlength="3" style="width: 150px;">
+                <button onclick="startVoiceInput('initials')" id="voiceInitialsBtn" style="background: #17a2b8; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" title="Click to speak Initials">🎤</button>
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="addSample(false)">Add Sample</button>
+                <button onclick="addSample(true)" style="background: #28a745;">✚ Add & Next</button>
+            </div>
+            <div id="voiceStatus" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none; background: #e3f2fd; color: #1976d2; font-weight: 600;">
+                🎤 Listening...
+            </div>
             <div id="quickAddFeedback" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
         </div>
         
@@ -1367,6 +1387,74 @@
 
             <button onclick="printQRCode()" style="background: #28a745; color: white; margin-right: 10px;">🖨️ Print Label</button>
             <button class="btn-cancel" onclick="closeQRCodeModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Batch Print Labels Modal -->
+    <div id="printLabelsModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close-btn" onclick="closePrintLabelsModal()">&times;</span>
+            <h3>🏷️ Print Sample Labels</h3>
+
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4caf50;">
+                <strong>📌 Tip:</strong> Labels can be printed on standard Avery 5160 (2.625" x 1") or similar label sheets.
+                Each label includes the sample ID and a QR code for easy scanning.
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <label><strong>Filter by Status:</strong></label>
+                    <select id="labelFilterStatus" onchange="updateLabelPreview()" style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <option value="all">All Samples</option>
+                        <option value="Received">Received</option>
+                        <option value="BAP Complete">BAP Complete</option>
+                        <option value="TSB Complete">TSB Complete</option>
+                        <option value="Extraction Complete">Extraction Complete</option>
+                        <option value="Clean Extraction Complete">Clean Extraction Complete</option>
+                        <option value="Clean Extraction Qubit Complete">CE Qubit Complete</option>
+                        <option value="Indexing Complete">Indexing Complete</option>
+                        <option value="Qubit Complete">Qubit Complete</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label><strong>Label Size:</strong></label>
+                    <select id="labelSize" onchange="updateLabelPreview()" style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <option value="medium">Medium (2.625" x 1")</option>
+                        <option value="small">Small (1.5" x 0.5")</option>
+                        <option value="large">Large (4" x 2")</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="includeQR" checked onchange="updateLabelPreview()">
+                    <span><strong>Include QR Code</strong> (recommended for barcode scanning)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 10px;">
+                    <input type="checkbox" id="includeDate" checked onchange="updateLabelPreview()">
+                    <span><strong>Include Date Added</strong></span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 10px;">
+                    <input type="checkbox" id="includeStatus" checked onchange="updateLabelPreview()">
+                    <span><strong>Include Current Status</strong></span>
+                </label>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4 style="margin: 0;">Label Preview (<span id="labelCount">0</span> labels)</h4>
+                    <button onclick="printLabels()" style="background: #4caf50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                        🖨️ Print All Labels
+                    </button>
+                </div>
+
+                <div id="labelPreviewContainer" style="max-height: 500px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    <!-- Label previews will be rendered here -->
+                </div>
+            </div>
+
+            <button class="btn-cancel" onclick="closePrintLabelsModal()">Close</button>
         </div>
     </div>
 
@@ -1884,6 +1972,7 @@
 
         // Save data to localStorage
         function saveData() {
+            var now = new Date();
             var data = {
                 samples: samples,
                 nextBapNumber: nextBapNumber,
@@ -1894,10 +1983,47 @@
                 nextCleanExtractionPlate: nextCleanExtractionPlate,
                 nextIndexingNumber: nextIndexingNumber,
                 nextIndexingPlate: nextIndexingPlate,
-                lastSaved: new Date().toISOString()
+                lastSaved: now.toISOString()
             };
             localStorage.setItem('bwgsTrackerData', JSON.stringify(data));
             console.log('Data saved to localStorage');
+
+            // Update auto-save indicator with animation
+            updateSaveIndicator(now);
+        }
+
+        function updateSaveIndicator(saveTime) {
+            var indicator = document.getElementById('autoSaveIndicator');
+            var icon = document.getElementById('saveIcon');
+            var text = document.getElementById('saveText');
+            var timeSpan = document.getElementById('saveTime');
+
+            if (!indicator) return;
+
+            // Show "Saving..." briefly
+            indicator.style.background = '#fff3cd';
+            indicator.style.color = '#856404';
+            icon.textContent = '⏳';
+            text.textContent = 'Saving...';
+
+            setTimeout(function() {
+                // Show "Saved!" with checkmark
+                indicator.style.background = '#e8f5e9';
+                indicator.style.color = '#2e7d32';
+                icon.textContent = '✓';
+                text.textContent = 'Auto-saved';
+
+                // Format time
+                var hours = saveTime.getHours();
+                var minutes = saveTime.getMinutes();
+                var ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // 0 should be 12
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                var timeStr = hours + ':' + minutes + ' ' + ampm;
+
+                timeSpan.textContent = 'at ' + timeStr;
+            }, 300);
         }
 
         var samples = [];
@@ -2689,6 +2815,159 @@
                 warning.style.display = 'none';
                 input.style.border = '2px solid #28a745';
                 input.style.background = '#e6ffe6';
+            }
+        }
+
+        // Voice Input Feature
+        var voiceRecognition = null;
+        var currentVoiceTarget = null;
+
+        function initializeVoiceRecognition() {
+            // Check if browser supports speech recognition
+            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (!SpeechRecognition) {
+                console.log('Speech recognition not supported in this browser');
+                return false;
+            }
+
+            voiceRecognition = new SpeechRecognition();
+            voiceRecognition.continuous = false;
+            voiceRecognition.interimResults = false;
+            voiceRecognition.lang = 'en-US';
+
+            voiceRecognition.onstart = function() {
+                var statusDiv = document.getElementById('voiceStatus');
+                if (statusDiv) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.innerHTML = '🎤 Listening... Speak now!';
+                    statusDiv.style.background = '#e3f2fd';
+                    statusDiv.style.color = '#1976d2';
+                }
+
+                // Visual feedback on button
+                if (currentVoiceTarget === 'sampleId') {
+                    document.getElementById('voiceSampleBtn').style.background = '#d32f2f';
+                    document.getElementById('voiceSampleBtn').innerHTML = '🔴 Listening...';
+                } else if (currentVoiceTarget === 'initials') {
+                    document.getElementById('voiceInitialsBtn').style.background = '#d32f2f';
+                    document.getElementById('voiceInitialsBtn').innerHTML = '🔴';
+                }
+            };
+
+            voiceRecognition.onresult = function(event) {
+                var transcript = event.results[0][0].transcript;
+                var confidence = event.results[0][0].confidence;
+
+                console.log('Voice recognition result:', transcript, 'Confidence:', confidence);
+
+                // Clean up the transcript
+                var cleanedText = transcript.trim();
+
+                // For initials, take first 3 characters and uppercase
+                if (currentVoiceTarget === 'initials') {
+                    cleanedText = cleanedText.replace(/\s/g, '').substring(0, 3).toUpperCase();
+                }
+
+                // Fill the target field
+                var targetField = document.getElementById(currentVoiceTarget);
+                if (targetField) {
+                    targetField.value = cleanedText;
+
+                    // Trigger duplicate check if it's the sample ID field
+                    if (currentVoiceTarget === 'sampleId') {
+                        checkDuplicateRealtime(targetField);
+                    }
+                }
+
+                // Show success feedback
+                var statusDiv = document.getElementById('voiceStatus');
+                if (statusDiv) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.innerHTML = '✅ Heard: "' + transcript + '"' +
+                                        (confidence < 0.8 ? ' (Low confidence: ' + Math.round(confidence * 100) + '%)' : '');
+                    statusDiv.style.background = '#e8f5e9';
+                    statusDiv.style.color = '#2e7d32';
+
+                    setTimeout(function() {
+                        statusDiv.style.display = 'none';
+                    }, 3000);
+                }
+            };
+
+            voiceRecognition.onerror = function(event) {
+                console.error('Voice recognition error:', event.error);
+
+                var statusDiv = document.getElementById('voiceStatus');
+                if (statusDiv) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.background = '#ffebee';
+                    statusDiv.style.color = '#c62828';
+
+                    if (event.error === 'no-speech') {
+                        statusDiv.innerHTML = '❌ No speech detected. Try again!';
+                    } else if (event.error === 'not-allowed') {
+                        statusDiv.innerHTML = '❌ Microphone access denied. Please allow microphone access.';
+                    } else {
+                        statusDiv.innerHTML = '❌ Error: ' + event.error;
+                    }
+
+                    setTimeout(function() {
+                        statusDiv.style.display = 'none';
+                    }, 4000);
+                }
+
+                // Reset button state
+                resetVoiceButton();
+            };
+
+            voiceRecognition.onend = function() {
+                resetVoiceButton();
+            };
+
+            return true;
+        }
+
+        function resetVoiceButton() {
+            if (currentVoiceTarget === 'sampleId') {
+                var btn = document.getElementById('voiceSampleBtn');
+                if (btn) {
+                    btn.style.background = '#17a2b8';
+                    btn.innerHTML = '🎤 Speak ID';
+                }
+            } else if (currentVoiceTarget === 'initials') {
+                var btn = document.getElementById('voiceInitialsBtn');
+                if (btn) {
+                    btn.style.background = '#17a2b8';
+                    btn.innerHTML = '🎤';
+                }
+            }
+        }
+
+        function startVoiceInput(targetFieldId) {
+            currentVoiceTarget = targetFieldId;
+
+            // Initialize voice recognition if not already done
+            if (!voiceRecognition) {
+                var initialized = initializeVoiceRecognition();
+                if (!initialized) {
+                    alert('Voice recognition is not supported in this browser.\n\nPlease use Chrome, Edge, or Safari for voice input.');
+                    return;
+                }
+            }
+
+            try {
+                voiceRecognition.start();
+            } catch (e) {
+                console.error('Error starting voice recognition:', e);
+
+                // If already running, stop and restart
+                if (e.message && e.message.includes('already started')) {
+                    voiceRecognition.stop();
+                    setTimeout(function() {
+                        voiceRecognition.start();
+                    }, 100);
+                }
             }
         }
 
@@ -4611,6 +4890,186 @@ html += '</div>';
                 printWindow.print();
                 printWindow.close();
             }, 500);
+        }
+
+        // Batch Print Labels Feature
+        function showPrintLabels() {
+            var modal = document.getElementById('printLabelsModal');
+            modal.style.display = 'block';
+            updateLabelPreview();
+            closeSidebar();
+        }
+
+        function closePrintLabelsModal() {
+            var modal = document.getElementById('printLabelsModal');
+            modal.style.display = 'none';
+        }
+
+        function updateLabelPreview() {
+            var filterStatus = document.getElementById('labelFilterStatus').value;
+            var includeQR = document.getElementById('includeQR').checked;
+            var includeDate = document.getElementById('includeDate').checked;
+            var includeStatus = document.getElementById('includeStatus').checked;
+            var labelSize = document.getElementById('labelSize').value;
+
+            // Filter samples
+            var filteredSamples = samples.filter(function(s) {
+                return filterStatus === 'all' || s.status === filterStatus;
+            });
+
+            // Update count
+            document.getElementById('labelCount').textContent = filteredSamples.length;
+
+            // Generate preview
+            var container = document.getElementById('labelPreviewContainer');
+            container.innerHTML = '';
+
+            if (filteredSamples.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #999;">No samples match the selected filter</div>';
+                return;
+            }
+
+            filteredSamples.forEach(function(sample) {
+                var labelDiv = document.createElement('div');
+                labelDiv.className = 'print-label-preview';
+                labelDiv.style.cssText = 'border: 2px dashed #ccc; padding: 15px; background: white; border-radius: 8px;';
+
+                var html = '<div style="text-align: center;">';
+                html += '<div style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">' + sample.id + '</div>';
+
+                if (includeQR) {
+                    html += '<div style="margin: 10px 0;"><canvas id="qr-preview-' + sample.id.replace(/[^a-zA-Z0-9]/g, '_') + '" style="width: 80px; height: 80px;"></canvas></div>';
+                }
+
+                if (includeDate) {
+                    html += '<div style="font-size: 11px; color: #666; margin-top: 5px;">Added: ' + sample.dateAdded + '</div>';
+                }
+
+                if (includeStatus) {
+                    html += '<div style="font-size: 11px; color: #666; margin-top: 3px;">Status: ' + sample.status + '</div>';
+                }
+
+                html += '</div>';
+                labelDiv.innerHTML = html;
+                container.appendChild(labelDiv);
+
+                // Generate QR code if enabled
+                if (includeQR) {
+                    setTimeout(function() {
+                        var canvas = document.getElementById('qr-preview-' + sample.id.replace(/[^a-zA-Z0-9]/g, '_'));
+                        if (canvas) {
+                            try {
+                                QRCode.toCanvas(canvas, sample.id, {width: 80, margin: 1}, function(error) {
+                                    if (error) console.error('QR code error:', error);
+                                });
+                            } catch (e) {
+                                console.log('QR code library not available, using placeholder');
+                                canvas.style.background = '#f0f0f0';
+                            }
+                        }
+                    }, 100);
+                }
+            });
+        }
+
+        function printLabels() {
+            var filterStatus = document.getElementById('labelFilterStatus').value;
+            var includeQR = document.getElementById('includeQR').checked;
+            var includeDate = document.getElementById('includeDate').checked;
+            var includeStatus = document.getElementById('includeStatus').checked;
+            var labelSize = document.getElementById('labelSize').value;
+
+            // Filter samples
+            var filteredSamples = samples.filter(function(s) {
+                return filterStatus === 'all' || s.status === filterStatus;
+            });
+
+            if (filteredSamples.length === 0) {
+                alert('No samples to print!');
+                return;
+            }
+
+            // Create print window
+            var printWindow = window.open('', '', 'width=800,height=600');
+            printWindow.document.write('<html><head><title>Sample Labels - ' + filteredSamples.length + ' labels</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('@media print { @page { margin: 0.5in; } }');
+            printWindow.document.write('body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }');
+            printWindow.document.write('.label-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }');
+
+            if (labelSize === 'small') {
+                printWindow.document.write('.label { border: 1px solid #000; padding: 5px; text-align: center; font-size: 10px; page-break-inside: avoid; }');
+                printWindow.document.write('.label-id { font-size: 11px; font-weight: bold; }');
+                printWindow.document.write('.qr-code { width: 40px; height: 40px; margin: 3px auto; }');
+            } else if (labelSize === 'large') {
+                printWindow.document.write('.label { border: 2px solid #000; padding: 20px; text-align: center; font-size: 14px; page-break-inside: avoid; }');
+                printWindow.document.write('.label-id { font-size: 20px; font-weight: bold; margin-bottom: 10px; }');
+                printWindow.document.write('.qr-code { width: 120px; height: 120px; margin: 10px auto; }');
+            } else {
+                // Medium (default - Avery 5160 compatible)
+                printWindow.document.write('.label { border: 1.5px solid #000; padding: 8px; text-align: center; font-size: 11px; height: 0.9in; page-break-inside: avoid; }');
+                printWindow.document.write('.label-id { font-size: 14px; font-weight: bold; margin-bottom: 5px; }');
+                printWindow.document.write('.qr-code { width: 60px; height: 60px; margin: 5px auto; }');
+            }
+
+            printWindow.document.write('.label-info { font-size: 9px; color: #555; margin-top: 3px; }');
+            printWindow.document.write('</style></head><body>');
+
+            printWindow.document.write('<h2 style="text-align: center; margin-bottom: 20px;">BWGS Sample Labels (' + filteredSamples.length + ' labels)</h2>');
+            printWindow.document.write('<div class="label-grid">');
+
+            filteredSamples.forEach(function(sample) {
+                printWindow.document.write('<div class="label">');
+                printWindow.document.write('<div class="label-id">' + sample.id + '</div>');
+
+                if (includeQR) {
+                    var canvasId = 'qr-print-' + sample.id.replace(/[^a-zA-Z0-9]/g, '_');
+                    printWindow.document.write('<canvas id="' + canvasId + '" class="qr-code"></canvas>');
+                }
+
+                if (includeDate) {
+                    printWindow.document.write('<div class="label-info">Added: ' + sample.dateAdded + '</div>');
+                }
+
+                if (includeStatus) {
+                    printWindow.document.write('<div class="label-info">' + sample.status + '</div>');
+                }
+
+                printWindow.document.write('</div>');
+            });
+
+            printWindow.document.write('</div></body></html>');
+            printWindow.document.close();
+
+            // Generate QR codes if enabled
+            if (includeQR) {
+                setTimeout(function() {
+                    filteredSamples.forEach(function(sample) {
+                        var canvasId = 'qr-print-' + sample.id.replace(/[^a-zA-Z0-9]/g, '_');
+                        var canvas = printWindow.document.getElementById(canvasId);
+                        if (canvas) {
+                            try {
+                                var size = labelSize === 'small' ? 40 : labelSize === 'large' ? 120 : 60;
+                                QRCode.toCanvas(canvas, sample.id, {width: size, margin: 1}, function(error) {
+                                    if (error) console.error('QR code error:', error);
+                                });
+                            } catch (e) {
+                                console.log('QR code library not available');
+                            }
+                        }
+                    });
+
+                    // Wait for QR codes to render then print
+                    setTimeout(function() {
+                        printWindow.print();
+                    }, 1000);
+                }, 500);
+            } else {
+                // No QR codes, print immediately
+                setTimeout(function() {
+                    printWindow.print();
+                }, 500);
+            }
         }
 
         function toggleSampleSelection(sampleId, checkbox) {
