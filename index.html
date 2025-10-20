@@ -6425,12 +6425,44 @@ html += '</div>';
             var techCounts = {};
             var dailyThroughput = {};
             var avgTimePerStage = {};
+            var flagCounts = { 'Rush': 0, 'Hold': 0, 'Review': 0 };
+            var weeklyThroughput = {};
+            var monthlyThroughput = {};
+
+            // Define pipeline stages for funnel
+            var pipelineStages = [
+                {name: 'Received', statuses: ['Received']},
+                {name: 'BAP', statuses: ['BAP In Progress', 'BAP Complete']},
+                {name: 'TSB', statuses: ['TSB In Progress', 'TSB Complete']},
+                {name: 'Extraction', statuses: ['Extraction Complete']},
+                {name: 'Clean Extraction', statuses: ['Clean Extraction Complete']},
+                {name: 'CE Qubit', statuses: ['Clean Extraction Qubit Complete']},
+                {name: 'Indexing', statuses: ['Indexing Complete']},
+                {name: 'Complete', statuses: ['Qubit Complete']}
+            ];
+
+            var stageCounts = {};
+            pipelineStages.forEach(function(stage) {
+                stageCounts[stage.name] = 0;
+            });
 
             for (var i = 0; i < samples.length; i++) {
                 var s = samples[i];
 
                 // Count by status
                 statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
+
+                // Count flags
+                if (s.flag && flagCounts.hasOwnProperty(s.flag)) {
+                    flagCounts[s.flag]++;
+                }
+
+                // Count samples in each pipeline stage (cumulative - samples that have reached each stage)
+                pipelineStages.forEach(function(stage) {
+                    if (stage.statuses.indexOf(s.status) !== -1 || hasPassedStage(s, stage.statuses)) {
+                        stageCounts[stage.name]++;
+                    }
+                });
 
                 // Count by technician
                 if (s.initials) techCounts[s.initials] = (techCounts[s.initials] || 0) + 1;
@@ -6440,18 +6472,126 @@ html += '</div>';
                 // Daily throughput (samples added per day)
                 var dateKey = s.dateAdded.split('T')[0];
                 dailyThroughput[dateKey] = (dailyThroughput[dateKey] || 0) + 1;
+
+                // Weekly throughput (group by week)
+                var weekKey = getWeekKey(dateKey);
+                weeklyThroughput[weekKey] = (weeklyThroughput[weekKey] || 0) + 1;
+
+                // Monthly throughput
+                var monthKey = dateKey.substring(0, 7); // YYYY-MM
+                monthlyThroughput[monthKey] = (monthlyThroughput[monthKey] || 0) + 1;
             }
 
-            // Top stats grid
-            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">';
-            html += '<div class="stat-card"><div class="stat-label">Total Samples</div><div class="stat-value">' + totalSamples + '</div></div>';
-            html += '<div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color: #28a745;">' + (statusCounts['Qubit Complete'] || 0) + '</div></div>';
-            html += '<div class="stat-card"><div class="stat-label">In Progress</div><div class="stat-value" style="color: #ffc107;">' + (totalSamples - (statusCounts['Qubit Complete'] || 0)) + '</div></div>';
-            html += '<div class="stat-card"><div class="stat-label">Completion Rate</div><div class="stat-value" style="color: #17a2b8;">' + (totalSamples > 0 ? Math.round(((statusCounts['Qubit Complete'] || 0) / totalSamples) * 100) : 0) + '%</div></div>';
+            // Calculate bottlenecks (stages with most samples currently stuck)
+            var bottlenecks = [];
+            for (var status in statusCounts) {
+                if (status !== 'Qubit Complete') {
+                    bottlenecks.push({status: status, count: statusCounts[status]});
+                }
+            }
+            bottlenecks.sort(function(a, b) { return b.count - a.count; });
+            var topBottleneck = bottlenecks[0] || {status: 'None', count: 0};
+
+            // Calculate throughput metrics
+            var datesArray = Object.keys(dailyThroughput).sort();
+            var avgDailyThroughput = datesArray.length > 0 ? Math.round(totalSamples / datesArray.length) : 0;
+
+            // Calculate samples processed in last 7 days
+            var last7Days = datesArray.slice(-7);
+            var samplesLast7Days = last7Days.reduce(function(sum, date) {
+                return sum + dailyThroughput[date];
+            }, 0);
+
+            // Top stats grid - enhanced with more metrics
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px;">';
+            html += '<div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;"><div class="stat-label" style="color: rgba(255,255,255,0.9);">Total Samples</div><div class="stat-value" style="color: white;">' + totalSamples + '</div></div>';
+            html += '<div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none;"><div class="stat-label" style="color: rgba(255,255,255,0.9);">Completed</div><div class="stat-value" style="color: white;">' + (statusCounts['Qubit Complete'] || 0) + '</div></div>';
+            html += '<div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none;"><div class="stat-label" style="color: rgba(255,255,255,0.9);">In Progress</div><div class="stat-value" style="color: white;">' + (totalSamples - (statusCounts['Qubit Complete'] || 0)) + '</div></div>';
+            html += '<div class="stat-card" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; border: none;"><div class="stat-label" style="color: rgba(255,255,255,0.9);">Completion Rate</div><div class="stat-value" style="color: white;">' + (totalSamples > 0 ? Math.round(((statusCounts['Qubit Complete'] || 0) / totalSamples) * 100) : 0) + '%</div></div>';
+            html += '<div class="stat-card" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border: none;"><div class="stat-label" style="color: rgba(255,255,255,0.9);">Avg/Day</div><div class="stat-value" style="color: white;">' + avgDailyThroughput + '</div></div>';
+            html += '<div class="stat-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none;"><div class="stat-label" style="color: rgba(255,255,255,0.9);">Last 7 Days</div><div class="stat-value" style="color: white;">' + samplesLast7Days + '</div></div>';
             html += '</div>';
+
+            // Alert cards for flags and bottlenecks
+            html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">';
+            html += '<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px;">';
+            html += '<div style="font-weight: 600; color: #92400e; margin-bottom: 10px;">⚠️ Flagged Samples</div>';
+            html += '<div style="display: flex; gap: 15px; font-size: 14px;">';
+            html += '<span>🔴 Rush: <strong>' + flagCounts['Rush'] + '</strong></span>';
+            html += '<span>⏸️ Hold: <strong>' + flagCounts['Hold'] + '</strong></span>';
+            html += '<span>⚠️ Review: <strong>' + flagCounts['Review'] + '</strong></span>';
+            html += '</div></div>';
+            html += '<div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 8px;">';
+            html += '<div style="font-weight: 600; color: #1e40af; margin-bottom: 10px;">🔍 Largest Bottleneck</div>';
+            html += '<div style="font-size: 14px;">' + topBottleneck.status + ': <strong style="font-size: 20px;">' + topBottleneck.count + ' samples</strong></div>';
+            html += '</div></div>';
 
             // Charts grid
             html += '<div class="analytics-grid">';
+
+            // WORKFLOW FUNNEL CHART - New!
+            html += '<div class="chart-container" style="grid-column: 1 / -1;">';
+            html += '<div class="chart-title">🔀 Workflow Funnel - Sample Flow Through Pipeline</div>';
+            html += '<div style="padding: 20px;">';
+            var maxStageCount = totalSamples;
+            pipelineStages.forEach(function(stage, index) {
+                var count = stageCounts[stage.name];
+                var percentage = maxStageCount > 0 ? (count / maxStageCount) * 100 : 0;
+                var barWidth = Math.max(percentage, 5); // Min 5% so it's visible
+                var dropoff = index > 0 ? stageCounts[pipelineStages[index - 1].name] - count : 0;
+
+                // Color gradient for funnel
+                var colors = ['#6c757d', '#28a745', '#ffc107', '#9c27b0', '#4caf50', '#17a2b8', '#007bff', '#10b981'];
+                var bgColor = colors[index];
+
+                html += '<div style="margin-bottom: 15px;">';
+                html += '<div style="display: flex; align-items: center; margin-bottom: 5px;">';
+                html += '<span style="width: 120px; font-weight: 600; font-size: 13px;">' + stage.name + '</span>';
+                html += '<div style="flex: 1; background: #e9ecef; border-radius: 8px; height: 32px; position: relative; overflow: hidden;">';
+                html += '<div style="background: linear-gradient(90deg, ' + bgColor + ' 0%, ' + bgColor + 'dd 100%); height: 100%; width: ' + barWidth + '%; display: flex; align-items: center; padding: 0 12px; color: white; font-weight: 600; font-size: 14px; transition: width 0.5s; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+                html += count + ' samples (' + Math.round(percentage) + '%)';
+                html += '</div></div>';
+                if (dropoff > 0) {
+                    html += '<span style="margin-left: 10px; color: #dc3545; font-size: 12px; font-weight: 600;">↓ ' + dropoff + ' dropped</span>';
+                }
+                html += '</div></div>';
+            });
+            html += '</div></div>';
+
+            // THROUGHPUT TREND LINE CHART - New!
+            html += '<div class="chart-container" style="grid-column: 1 / -1;">';
+            html += '<div class="chart-title">📈 Throughput Trend - Samples Per Day (Last 30 Days)</div>';
+            html += '<div style="padding: 20px; position: relative; height: 200px;">';
+
+            var last30Days = datesArray.slice(-30);
+            if (last30Days.length > 0) {
+                var maxDaily = Math.max.apply(null, last30Days.map(function(d) { return dailyThroughput[d]; }));
+                var chartHeight = 150;
+
+                html += '<div style="display: flex; height: ' + chartHeight + 'px; align-items: flex-end; gap: 3px; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;">';
+
+                last30Days.forEach(function(date, index) {
+                    var count = dailyThroughput[date];
+                    var barHeight = maxDaily > 0 ? (count / maxDaily) * chartHeight : 0;
+                    var isWeekend = new Date(date).getDay() === 0 || new Date(date).getDay() === 6;
+                    var barColor = isWeekend ? '#fbbf24' : '#3b82f6';
+
+                    html += '<div style="flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer;" title="' + date + ': ' + count + ' samples">';
+                    html += '<div style="background: linear-gradient(180deg, ' + barColor + ' 0%, ' + barColor + 'aa 100%); width: 100%; height: ' + barHeight + 'px; border-radius: 3px 3px 0 0; transition: opacity 0.2s; box-shadow: 0 -2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.opacity=\'0.7\'" onmouseout="this.style.opacity=\'1\'"></div>';
+                    html += '</div>';
+                });
+
+                html += '</div>';
+                html += '<div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #6c757d;">';
+                html += '<span>' + last30Days[0] + '</span>';
+                html += '<span>Peak: ' + maxDaily + ' samples</span>';
+                html += '<span>' + last30Days[last30Days.length - 1] + '</span>';
+                html += '</div>';
+            } else {
+                html += '<div style="text-align: center; color: #adb5bd; padding: 60px 0;">No data available</div>';
+            }
+
+            html += '</div></div>';
 
             // Status distribution chart
             html += '<div class="chart-container">';
@@ -6552,6 +6692,30 @@ html += '</div>';
             var currentIndex = stageOrder.indexOf(sample.status);
             var checkIndex = stageOrder.indexOf(stage);
             return currentIndex >= checkIndex;
+        }
+
+        // Helper function to check if sample has passed a specific stage
+        function hasPassedStage(sample, statuses) {
+            var stageOrder = ['Received', 'BAP In Progress', 'BAP Complete', 'TSB In Progress', 'TSB Complete', 'Extraction Complete', 'Clean Extraction Complete', 'Clean Extraction Qubit Complete', 'Indexing Complete', 'Qubit Complete'];
+            var currentIndex = stageOrder.indexOf(sample.status);
+
+            for (var i = 0; i < statuses.length; i++) {
+                var stageIndex = stageOrder.indexOf(statuses[i]);
+                if (currentIndex >= stageIndex) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Helper function to get week key for grouping (returns ISO week string)
+        function getWeekKey(dateString) {
+            var date = new Date(dateString);
+            var year = date.getFullYear();
+            var firstDayOfYear = new Date(year, 0, 1);
+            var pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            var weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+            return year + '-W' + String(weekNumber).padStart(2, '0');
         }
 
         function showTimeline() {
