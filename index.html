@@ -2136,6 +2136,10 @@
                     pathogenWorkflows = data.pathogenWorkflows || [];
                     isolates = data.isolates || [];
                     currentModule = data.currentModule || 'sequencing';
+
+                    // DATA MIGRATION: Add day1BPW stage to existing E. coli workflows
+                    migrateEcoliWorkflows();
+
                     console.log('Data loaded from localStorage');
                 } catch (e) {
                     console.error('Error loading data:', e);
@@ -2167,6 +2171,24 @@
             nextCleanExtractionPlate = 1;
             nextIndexingNumber = 1;
             nextIndexingPlate = 1;
+        }
+
+        // Data migration: Add day1BPW stage to existing E. coli workflows
+        function migrateEcoliWorkflows() {
+            var migrated = 0;
+            pathogenWorkflows.forEach(function(wf) {
+                if (wf.pathogenCode === 'EC' && wf.stages && !wf.stages.day1BPW) {
+                    // Old workflow without BPW stage - add it
+                    wf.stages.day1BPW = {completed: false};
+                    migrated++;
+                    console.log('Migrated E. coli workflow: ' + wf.id + ' - Added day1BPW stage');
+                }
+            });
+
+            if (migrated > 0) {
+                console.log('Migration complete: Added day1BPW stage to ' + migrated + ' existing E. coli workflow(s)');
+                saveData(); // Save migrated data
+            }
         }
 
         // Save data to localStorage
