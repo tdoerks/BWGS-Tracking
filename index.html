@@ -877,6 +877,44 @@
                 background: #138496;
             }
         }
+
+        /* Drag and drop animations */
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .kanban-column.drag-over {
+            background: #e3f2fd !important;
+            transform: scale(1.02);
+            transition: all 0.2s;
+        }
+
+        .kanban-card[draggable="true"]:hover {
+            cursor: move;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .kanban-card.dragging {
+            opacity: 0.4;
+        }
     </style>
 </head>
 <body>
@@ -7484,22 +7522,22 @@ html += '</div>';
                     return stage.statuses.indexOf(s.status) !== -1;
                 });
 
-                html += '<div class="kanban-column">';
+                html += '<div class="kanban-column" data-stage="' + stage.statuses[stage.statuses.length - 1] + '" ondrop="handleKanbanDrop(event)" ondragover="handleKanbanDragOver(event)" ondragleave="handleKanbanDragLeave(event)">';
                 html += '<div class="kanban-header" style="background: ' + stage.color + '; color: white;">';
                 html += '<span>' + stage.emoji + ' ' + stage.name + '</span>';
                 html += '<span class="kanban-count">' + stageSamples.length + '</span>';
                 html += '</div>';
 
                 if (stageSamples.length === 0) {
-                    html += '<div style="padding: 20px; text-align: center; color: #adb5bd; font-size: 12px;">No samples</div>';
+                    html += '<div style="padding: 20px; text-align: center; color: #adb5bd; font-size: 12px; min-height: 80px;">Drop samples here</div>';
                 } else {
                     stageSamples.forEach(function(sample) {
                         var progress = getSampleProgress(sample);
                         var borderColor = sample.flag === 'Rush' ? '#dc3545' : sample.flag === 'Hold' ? '#ffc107' : sample.flag === 'Review' ? '#fd7e14' : '#e9ecef';
 
-                        html += '<div class="kanban-card" style="border-left-color: ' + borderColor + ';" onclick="viewSample(\'' + sample.id.replace(/'/g, "\\'") + '\')">';
+                        html += '<div class="kanban-card" style="border-left-color: ' + borderColor + '; cursor: move;" draggable="true" ondragstart="handleKanbanDragStart(event, \'' + sample.id.replace(/'/g, "\\'") + '\')" onclick="viewSample(\'' + sample.id.replace(/'/g, "\\'") + '\')" data-sample-id="' + sample.id.replace(/'/g, "\\'") + '">';
                         html += '<div class="kanban-card-header">';
-                        html += '<span>' + sample.id + '</span>';
+                        html += '<span>⋮⋮ ' + sample.id + '</span>';
                         if (sample.flag && sample.flag !== 'None') {
                             var flagIcon = sample.flag === 'Rush' ? '🔴' : sample.flag === 'Hold' ? '⏸️' : '⚠️';
                             html += '<span>' + flagIcon + '</span>';
@@ -7526,6 +7564,99 @@ html += '</div>';
             });
 
             container.innerHTML = html;
+        }
+
+        // Kanban Drag and Drop Handlers
+        var draggedSampleId = null;
+
+        function handleKanbanDragStart(event, sampleId) {
+            draggedSampleId = sampleId;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/html', event.target.innerHTML);
+
+            // Add visual feedback
+            event.target.style.opacity = '0.4';
+            event.stopPropagation(); // Prevent click event from firing
+        }
+
+        function handleKanbanDragOver(event) {
+            if (event.preventDefault) {
+                event.preventDefault();
+            }
+            event.dataTransfer.dropEffect = 'move';
+
+            // Add visual feedback to drop zone
+            var column = event.currentTarget;
+            if (column.classList.contains('kanban-column')) {
+                column.style.background = '#e3f2fd';
+                column.style.transform = 'scale(1.02)';
+            }
+
+            return false;
+        }
+
+        function handleKanbanDragLeave(event) {
+            var column = event.currentTarget;
+            if (column.classList.contains('kanban-column')) {
+                column.style.background = '';
+                column.style.transform = '';
+            }
+        }
+
+        function handleKanbanDrop(event) {
+            if (event.stopPropagation) {
+                event.stopPropagation();
+            }
+
+            var column = event.currentTarget;
+            column.style.background = '';
+            column.style.transform = '';
+
+            if (!draggedSampleId) {
+                return false;
+            }
+
+            var targetStatus = column.getAttribute('data-stage');
+
+            // Find the sample
+            var sample = samples.find(function(s) { return s.id === draggedSampleId; });
+
+            if (!sample) {
+                draggedSampleId = null;
+                return false;
+            }
+
+            // Show confirmation dialog
+            var statusName = targetStatus;
+            var confirmMsg = 'Move sample ' + sample.id + ' to stage: ' + statusName + '?';
+
+            if (confirm(confirmMsg)) {
+                // Update the sample status
+                sample.status = targetStatus;
+
+                // Save and re-render
+                saveData();
+                renderSamples();
+
+                // Show success message
+                var successDiv = document.createElement('div');
+                successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; font-weight: 600; animation: slideInRight 0.3s ease-out;';
+                successDiv.innerHTML = '✓ Moved ' + sample.id + ' to ' + statusName;
+                document.body.appendChild(successDiv);
+
+                setTimeout(function() {
+                    successDiv.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(function() {
+                        document.body.removeChild(successDiv);
+                    }, 300);
+                }, 2000);
+            } else {
+                // User canceled - just re-render to restore original position
+                renderSamples();
+            }
+
+            draggedSampleId = null;
+            return false;
         }
 
         // Table View Rendering
