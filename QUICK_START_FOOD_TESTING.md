@@ -40,11 +40,11 @@
 ## Step 3: Process E. coli Workflow
 
 1. Click **🧫 E. coli Testing** tab
-2. See your sample in **Day 2 - MAC Broth** column
+2. See your sample in **Day 1 - BPW** column (NEW - cyan color!)
 3. Click the sample card
 4. Modal opens - fill it out:
    ```
-   MAC Broth Lot #:  LOT-MAC-001
+   BPW Lot #:        LOT-BPW-2025-001
    Technician:       AB
    Temperature:      37°C
    Incubator:        INC-1
@@ -52,10 +52,10 @@
    Time Out:         17:00
    ```
 5. Click **✓ Complete Stage**
-6. Sample moves to **Day 2 - MAC Agar** column!
+6. Sample moves to **Day 2 - MAC Broth** column!
 
-**Keep going through all 5 stages:**
-- Day 2 MAC Broth → Day 2 MAC Agar → Day 3 Pink Colonies → Day 4 BAP → Day 5 MALDI
+**Keep going through all 6 stages:**
+- Day 1 BPW → Day 2 MAC Broth → Day 2 MAC Agar → Day 3 Pink Colonies → Day 4 BAP → Day 5 MALDI
 
 ---
 
@@ -134,6 +134,7 @@ When sample reaches **Day 5 - MALDI**:
 
 | Stage | What to Record | Duration |
 |-------|----------------|----------|
+| **Day 1 - BPW** | Lot #, Tech, Temp, Incubator, Times | ~18-24h |
 | **Day 2 - MAC Broth** | Lot #, Tech, Temp, Incubator, Times | ~18-24h |
 | **Day 2 - MAC Agar** | Plate Lot #, Tech, Temp, Incubator, Times | ~18-24h |
 | **Day 3 - Pink Colonies** | Y/N, Colony count, Tech | Visual inspection |
@@ -141,6 +142,7 @@ When sample reaches **Day 5 - MALDI**:
 | **Day 5 - MALDI** | Species, Confidence, Confirmed?, Tech | ~15 min |
 
 **Total Time:** ~5 days from sample receipt to isolate generation
+**Protocol:** NARMS 2025 Compliant
 
 ---
 
@@ -166,7 +168,7 @@ A: LocalStorage (browser) - use Export JSON for backups
 ## 🎯 **NEXT STEPS**
 
 1. **Add more samples:** Try different sample types (GT, SA, etc.)
-2. **Process workflows:** Move samples through all 5 stages
+2. **Process workflows:** Move samples through all 6 stages
 3. **Generate isolates:** Complete MALDI stage
 4. **Track in sequencing:** Follow isolates through WGS pipeline
 5. **Export data:** Use Ctrl+E or sidebar Export button

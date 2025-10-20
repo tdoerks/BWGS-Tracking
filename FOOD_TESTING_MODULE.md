@@ -94,23 +94,39 @@ When you add a food sample, the system automatically creates workflow entries fo
 
 ## 🧫 **E. COLI TESTING WORKFLOW**
 
-### **5-Stage Kanban Board**
+### **6-Stage Kanban Board (UPDATED - Added Day 1 BPW)**
 
-The E. coli testing workflow is visualized as a beautiful 5-column Kanban board:
+The E. coli testing workflow is visualized as a beautiful 6-column Kanban board:
 
 ```
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│ Day 2        │  │ Day 2        │  │ Day 3        │  │ Day 4        │  │ Day 5        │
-│ MAC Broth    │→ │ MAC Agar     │→ │ Pink         │→ │ BAP          │→ │ MALDI        │
-│              │  │              │  │ Colonies     │  │              │  │              │
-│ 25KS01CB01   │  │ 25KS01CB02   │  │ 25KS01CB03   │  │ 25KS01CB04   │  │ 25KS01CB05   │
-│ Click to     │  │ Click to     │  │ Click to     │  │ Click to     │  │ Click to     │
-│ process →    │  │ process →    │  │ process →    │  │ process →    │  │ process →    │
-└──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
-   🧪 #e91e63      🧫 #9c27b0        🔬 #673ab7         🧫 #3f51b5        ✅ #4caf50
+┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐
+│ Day 1   │  │ Day 2   │  │ Day 2   │  │ Day 3   │  │ Day 4   │  │ Day 5   │
+│ BPW     │→ │ MAC     │→ │ MAC     │→ │ Pink    │→ │ BAP     │→ │ MALDI   │
+│         │  │ Broth   │  │ Agar    │  │ Colony  │  │         │  │         │
+│25KS01.. │  │25KS01.. │  │25KS01.. │  │25KS01.. │  │25KS01.. │  │25KS01.. │
+│Click to │  │Click to │  │Click to │  │Click to │  │Click to │  │Click to │
+│process →│  │process →│  │process →│  │process →│  │process →│  │process →│
+└─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘
+ 💧#00bcd4    🧪#e91e63    🧫#9c27b0    🔬#673ab7    🧫#3f51b5    ✅#4caf50
 ```
 
-### **Stage 1: Day 2 - MAC Broth Enrichment**
+### **Stage 1: Day 1 - BPW Enrichment (NEW!)**
+
+**Data Captured:**
+- BPW Lot # (Buffered Peptone Water lot number)
+- Technician Initials
+- Temperature (37°C/35°C)
+- Incubator (INC-1/2/3)
+- Time In
+- Time Out
+
+**Purpose:** Non-selective enrichment broth that allows all bacteria to grow. This is the first step in the NARMS 2025 protocol for all pathogens (Salmonella, Campylobacter, E. coli, and Enterococcus).
+
+**Protocol Compliance:** Matches NARMS 2025 Retail Meat Surveillance Laboratory Protocol exactly.
+
+---
+
+### **Stage 2: Day 2 - MAC Broth Enrichment**
 
 **Data Captured:**
 - MAC Broth Lot #
@@ -124,7 +140,7 @@ The E. coli testing workflow is visualized as a beautiful 5-column Kanban board:
 
 ---
 
-### **Stage 2: Day 2 - Streak to MAC Agar**
+### **Stage 3: Day 2 - Streak to MAC Agar**
 
 **Data Captured:**
 - MAC Agar Plate Lot #
@@ -138,7 +154,7 @@ The E. coli testing workflow is visualized as a beautiful 5-column Kanban board:
 
 ---
 
-### **Stage 3: Day 3 - Pink Colony Check**
+### **Stage 4: Day 3 - Pink Colony Check**
 
 **Data Captured:**
 - Pink Colonies Present? (Yes - Presumptive Positive / No - Negative)
@@ -153,7 +169,7 @@ The E. coli testing workflow is visualized as a beautiful 5-column Kanban board:
 
 ---
 
-### **Stage 4: Day 4 - BAP Confirmation**
+### **Stage 5: Day 4 - BAP Confirmation**
 
 **Data Captured:**
 - BAP Plate Lot #
@@ -168,7 +184,7 @@ The E. coli testing workflow is visualized as a beautiful 5-column Kanban board:
 
 ---
 
-### **Stage 5: Day 5 - MALDI Identification**
+### **Stage 6: Day 5 - MALDI Identification**
 
 **Data Captured:**
 - MALDI Species ID (e.g., "Escherichia coli")
@@ -256,20 +272,20 @@ Only **EC, C1, and S1** isolates are automatically sent to the sequencing pipeli
 ### **2. Process E. coli Workflow**
 
 1. Switch to **🧫 E. coli Testing** tab
-2. See Kanban board with 5 stages
-3. Click on a sample card in **Day 2 - MAC Broth** column
+2. See Kanban board with 6 stages
+3. Click on a sample card in **Day 1 - BPW** column
 4. Modal opens with stage-specific form:
-   - MAC Broth Lot #: `LOT-MAC-2025-001`
+   - BPW Lot #: `LOT-BPW-2025-001`
    - Technician: `AB`
    - Temperature: `37°C`
    - Incubator: `INC-1`
    - Time In: `09:00`
    - Time Out: `17:00`
 5. Click **✓ Complete Stage**
-6. Sample moves to next column (**Day 2 - MAC Agar**)
+6. Sample moves to next column (**Day 2 - MAC Broth**)
 
 **Repeat for each stage:**
-- Day 2 → Day 3 → Day 4 → Day 5
+- Day 1 BPW → Day 2 MAC Broth → Day 2 MAC Agar → Day 3 Pink Colonies → Day 4 BAP → Day 5 MALDI
 
 ---
 
@@ -350,11 +366,11 @@ Only **EC, C1, and S1** isolates are automatically sent to the sequencing pipeli
 
 ### **Tab 2: 🧫 E. coli Testing**
 
-**Purpose:** Process E. coli workflows through 5 stages
+**Purpose:** Process E. coli workflows through 6 stages
 
 **Features:**
-- 5-column Kanban board
-- Color-coded stages (pink → purple → violet → blue → green)
+- 6-column Kanban board
+- Color-coded stages (cyan → pink → purple → violet → blue → green)
 - Sample count per column
 - Click-to-process cards
 - Modal-based data entry
@@ -519,14 +535,14 @@ All food testing data is saved to LocalStorage alongside sequencing data:
 ### **Feature Count:**
 - **Food Sample Types:** 9 (6 meat + 3 seafood)
 - **Pathogen Definitions:** 7 (EC, C1, S1, E, V1, V2, A)
-- **E. coli Workflow Stages:** 5
+- **E. coli Workflow Stages:** 6 (includes Day 1 BPW)
 - **Data Structures:** 3 (foodSamples, pathogenWorkflows, isolates)
 - **Tabs:** 3 (Samples, E. coli, Isolates)
 - **Modules:** 2 (Food Testing, Sequencing)
 
 ### **Functionality:**
 - ✅ Complete food sample reception
-- ✅ E. coli 5-stage workflow with data capture
+- ✅ E. coli 6-stage workflow with data capture (NARMS 2025 compliant)
 - ✅ Automatic isolate generation
 - ✅ Auto-send to sequencing (EC, C1, S1)
 - ✅ Bi-directional module linking
