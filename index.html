@@ -940,6 +940,19 @@
                 <button class="sidebar-toggle" onclick="toggleSidebar()">✕</button>
             </div>
 
+            <!-- Module Switcher -->
+            <div style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Module</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button id="foodTestingModuleBtn" onclick="switchModule('food-testing')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s;">
+                        🥩 Food Testing
+                    </button>
+                    <button id="sequencingModuleBtn" onclick="switchModule('sequencing')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(102,126,234,0.4); transition: all 0.2s;">
+                        🧬 Sequencing
+                    </button>
+                </div>
+            </div>
+
             <div class="sidebar-nav">
                 <!-- Main Section -->
                 <div class="nav-section">
@@ -1085,6 +1098,9 @@
                     <button onclick="undo()" id="undoBtn" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" disabled title="No actions to undo">↶ Undo</button>
                 </div>
             </div>
+
+        <!-- Sequencing Module UI (wrapped for showing/hiding) -->
+        <div id="sequencingUI">
 
         <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
 
@@ -2115,6 +2131,11 @@
                     nextCleanExtractionPlate = data.nextCleanExtractionPlate || 1;
                     nextIndexingNumber = data.nextIndexingNumber || 1;
                     nextIndexingPlate = data.nextIndexingPlate || 1;
+                    // Load food testing module data
+                    foodSamples = data.foodSamples || [];
+                    pathogenWorkflows = data.pathogenWorkflows || [];
+                    isolates = data.isolates || [];
+                    currentModule = data.currentModule || 'sequencing';
                     console.log('Data loaded from localStorage');
                 } catch (e) {
                     console.error('Error loading data:', e);
@@ -2161,6 +2182,11 @@
                 nextCleanExtractionPlate: nextCleanExtractionPlate,
                 nextIndexingNumber: nextIndexingNumber,
                 nextIndexingPlate: nextIndexingPlate,
+                // Food testing module data
+                foodSamples: foodSamples,
+                pathogenWorkflows: pathogenWorkflows,
+                isolates: isolates,
+                currentModule: currentModule,
                 lastSaved: now.toISOString()
             };
             localStorage.setItem('bwgsTrackerData', JSON.stringify(data));
@@ -2222,6 +2248,38 @@
         var currentDateFilter = 'all'; // Track current date filter
         var lastWellPositions = {}; // Track last well position used per plate type
         var isCompactView = false; // Track compact view state
+
+        // FOOD TESTING MODULE - Data Structures
+        var foodSamples = []; // Food samples (meat/seafood)
+        var pathogenWorkflows = []; // E. coli, Campylobacter, Salmonella, etc.
+        var isolates = []; // Generated isolates that go to sequencing
+        var currentModule = 'sequencing'; // 'sequencing' or 'food-testing'
+
+        // Sample type definitions
+        var sampleTypes = {
+            // Meat types
+            'CB': {name: 'Chicken Breast', category: 'meat', pathogens: ['EC', 'C1', 'S1', 'E']},
+            'GT': {name: 'Ground Turkey', category: 'meat', pathogens: ['EC', 'C1', 'S1', 'E']},
+            'GB': {name: 'Ground Beef', category: 'meat', pathogens: ['EC', 'C1', 'S1', 'E']},
+            'CL': {name: 'Chicken Liver', category: 'meat', pathogens: ['EC', 'C1', 'S1', 'E']},
+            'CG': {name: 'Chicken Gizzard', category: 'meat', pathogens: ['EC', 'C1', 'S1', 'E']},
+            'CH': {name: 'Chicken Heart', category: 'meat', pathogens: ['EC', 'C1', 'S1', 'E']},
+            // Seafood types
+            'SA': {name: 'Salmon', category: 'seafood', pathogens: ['V1', 'V2', 'E', 'A']},
+            'SH': {name: 'Shrimp', category: 'seafood', pathogens: ['V1', 'V2', 'E', 'A']},
+            'TI': {name: 'Tilapia', category: 'seafood', pathogens: ['V1', 'V2', 'E', 'A']}
+        };
+
+        // Pathogen definitions
+        var pathogens = {
+            'EC': {name: 'E. coli', fullName: 'Escherichia coli', sequenced: true, color: '#e91e63'},
+            'C1': {name: 'Campylobacter', fullName: 'Campylobacter spp.', sequenced: true, color: '#9c27b0'},
+            'S1': {name: 'Salmonella', fullName: 'Salmonella spp.', sequenced: true, color: '#f44336'},
+            'E': {name: 'Enterococcus', fullName: 'Enterococcus spp.', sequenced: false, color: '#ff9800'},
+            'V1': {name: 'Vibrio (Yellow)', fullName: 'Vibrio spp. (Yellow colonies)', sequenced: false, color: '#ffc107'},
+            'V2': {name: 'Vibrio (Green)', fullName: 'Vibrio spp. (Green colonies)', sequenced: false, color: '#4caf50'},
+            'A': {name: 'Aeromonas', fullName: 'Aeromonas spp.', sequenced: false, color: '#00bcd4'}
+        };
 
         function generateWellPosition(index) {
             var rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -5031,6 +5089,964 @@ html += '</div>';
 
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('expanded');
+        }
+
+        // Module Switching
+        function switchModule(module) {
+            currentModule = module;
+
+            // Update button styles
+            var foodBtn = document.getElementById('foodTestingModuleBtn');
+            var seqBtn = document.getElementById('sequencingModuleBtn');
+
+            if (module === 'food-testing') {
+                foodBtn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)';
+                foodBtn.style.border = '1px solid rgba(255,255,255,0.3)';
+                foodBtn.style.boxShadow = '0 2px 8px rgba(255,107,107,0.4)';
+
+                seqBtn.style.background = 'rgba(255,255,255,0.1)';
+                seqBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+                seqBtn.style.boxShadow = 'none';
+            } else {
+                seqBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                seqBtn.style.border = '1px solid rgba(255,255,255,0.3)';
+                seqBtn.style.boxShadow = '0 2px 8px rgba(102,126,234,0.4)';
+
+                foodBtn.style.background = 'rgba(255,255,255,0.1)';
+                foodBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+                foodBtn.style.boxShadow = 'none';
+            }
+
+            // Show/hide appropriate interface
+            renderCurrentModule();
+            saveData();
+        }
+
+        // Render current module interface
+        function renderCurrentModule() {
+            var container = document.querySelector('.main-content');
+
+            if (currentModule === 'food-testing') {
+                renderFoodTestingModule();
+            } else {
+                // Show normal sequencing interface - already handled by existing code
+                // Just need to make sure food testing UI is hidden
+                var foodUI = document.getElementById('foodTestingUI');
+                if (foodUI) {
+                    foodUI.style.display = 'none';
+                }
+                // Show sequencing UI
+                var seqUI = document.getElementById('sequencingUI');
+                if (seqUI) {
+                    seqUI.style.display = 'block';
+                }
+            }
+        }
+
+        // FOOD TESTING MODULE - Main Render Function
+        function renderFoodTestingModule() {
+            // Hide sequencing UI
+            var seqUI = document.getElementById('sequencingUI');
+            if (seqUI) {
+                seqUI.style.display = 'none';
+            }
+
+            // Check if food testing UI exists, if not create it
+            var foodUI = document.getElementById('foodTestingUI');
+            if (!foodUI) {
+                // Create new container for food testing
+                var mainContent = document.querySelector('.main-content');
+                foodUI = document.createElement('div');
+                foodUI.id = 'foodTestingUI';
+                mainContent.appendChild(foodUI);
+            }
+
+            foodUI.style.display = 'block';
+
+            // Build food testing interface
+            var html = '';
+
+            // Header
+            html += '<div class="top-bar" style="margin-bottom: 20px;">';
+            html += '<div><h1 style="margin: 0; font-size: 24px;">🥩 Food Testing Module</h1>';
+            html += '<p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Sample Reception → Pathogen Detection → Isolate Generation → Sequencing</p></div>';
+            html += '</div>';
+
+            // Tab Navigation
+            html += '<div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<div style="display: flex; gap: 10px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">';
+            html += '<button onclick="switchFoodTestingTab(\'samples\')" id="foodTabSamples" style="padding: 10px 20px; border: none; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Food Samples</button>';
+            html += '<button onclick="switchFoodTestingTab(\'ecoli\')" id="foodTabEcoli" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🧫 E. coli Testing</button>';
+            html += '<button onclick="switchFoodTestingTab(\'isolates\')" id="foodTabIsolates" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🧬 Isolates</button>';
+            html += '</div>';
+            html += '</div>';
+
+            // Tab Content Containers
+            html += '<div id="foodTabContentSamples"></div>';
+            html += '<div id="foodTabContentEcoli" style="display: none;"></div>';
+            html += '<div id="foodTabContentIsolates" style="display: none;"></div>';
+
+            foodUI.innerHTML = html;
+
+            // Render default tab content
+            renderFoodSamplesTab();
+        }
+
+        // Switch tabs within food testing module
+        var currentFoodTab = 'samples';
+        function switchFoodTestingTab(tab) {
+            currentFoodTab = tab;
+
+            // Update tab button styles
+            var tabs = ['samples', 'ecoli', 'isolates'];
+            tabs.forEach(function(t) {
+                var btn = document.getElementById('foodTab' + t.charAt(0).toUpperCase() + t.slice(1));
+                var content = document.getElementById('foodTabContent' + t.charAt(0).toUpperCase() + t.slice(1));
+
+                if (t === tab) {
+                    btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)';
+                    btn.style.color = 'white';
+                    content.style.display = 'block';
+                } else {
+                    btn.style.background = '#e0e0e0';
+                    btn.style.color = '#666';
+                    content.style.display = 'none';
+                }
+            });
+
+            // Render appropriate content
+            if (tab === 'samples') {
+                renderFoodSamplesTab();
+            } else if (tab === 'ecoli') {
+                renderEcoliTab();
+            } else if (tab === 'isolates') {
+                renderIsolatesTab();
+            }
+        }
+
+        // Render Food Samples Tab
+        function renderFoodSamplesTab() {
+            var container = document.getElementById('foodTabContentSamples');
+            var html = '';
+
+            // Add Food Sample Form
+            html += '<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<h3 style="margin-top: 0;">📥 Add New Food Sample</h3>';
+
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Sample ID
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Sample ID *</label>';
+            html += '<input type="text" id="foodSampleId" placeholder="25KS01CB01" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '<div style="font-size: 11px; color: #666; margin-top: 3px;">Format: YYSSTNN... (e.g., 25KS01CB01)</div>';
+            html += '</div>';
+
+            // Sample Type
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Sample Type *</label>';
+            html += '<select id="foodSampleType" onchange="updateFoodSampleFields()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+            html += '<option value="">-- Select Type --</option>';
+            html += '<optgroup label="Meat">';
+            html += '<option value="CB">CB - Chicken Breast</option>';
+            html += '<option value="GT">GT - Ground Turkey</option>';
+            html += '<option value="GB">GB - Ground Beef</option>';
+            html += '<option value="CL">CL - Chicken Liver</option>';
+            html += '<option value="CG">CG - Chicken Gizzard</option>';
+            html += '<option value="CH">CH - Chicken Heart</option>';
+            html += '</optgroup>';
+            html += '<optgroup label="Seafood">';
+            html += '<option value="SA">SA - Salmon</option>';
+            html += '<option value="SH">SH - Shrimp</option>';
+            html += '<option value="TI">TI - Tilapia</option>';
+            html += '</optgroup>';
+            html += '</select>';
+            html += '</div>';
+
+            // Store Number
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Store # *</label>';
+            html += '<input type="text" id="foodStoreNum" placeholder="12345" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
+
+            html += '</div>'; // End grid row 1
+
+            // Row 2
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Brand
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Brand</label>';
+            html += '<input type="text" id="foodBrand" placeholder="e.g., Tyson, Perdue" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
+
+            // Sell-By Date
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Sell-By Date</label>';
+            html += '<input type="date" id="foodSellByDate" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
+
+            // Date Received
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Date Received *</label>';
+            html += '<input type="date" id="foodDateReceived" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
+
+            html += '</div>'; // End grid row 2
+
+            // Category-specific fields container
+            html += '<div id="categorySpecificFields" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;"></div>';
+
+            // Pathogens to Test
+            html += '<div style="margin-bottom: 15px;">';
+            html += '<label style="display: block; margin-bottom: 8px; font-weight: 600;">Pathogens to Test *</label>';
+            html += '<div id="pathogenCheckboxes" style="display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 6px;"></div>';
+            html += '</div>';
+
+            // Add button
+            html += '<button onclick="addFoodSample()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">➕ Add Food Sample & Create Workflows</button>';
+
+            html += '</div>'; // End form section
+
+            // List of Food Samples
+            html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<h3 style="margin-top: 0;">🥩 Food Samples (' + foodSamples.length + ')</h3>';
+
+            if (foodSamples.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">📦</div>';
+                html += '<div style="font-size: 16px;">No food samples yet</div>';
+                html += '<div style="font-size: 14px; margin-top: 5px;">Add your first sample above to get started!</div>';
+                html += '</div>';
+            } else {
+                // Render samples
+                foodSamples.forEach(function(sample) {
+                    var sampleType = sampleTypes[sample.sampleTypeCode];
+                    var category = sampleType ? sampleType.category : 'unknown';
+
+                    html += '<div style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: linear-gradient(135deg, #fff 0%, #f9f9f9 100%);">';
+
+                    // Header row
+                    html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">';
+                    html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                    html += '<span style="font-size: 24px;">' + (category === 'meat' ? '🥩' : '🐟') + '</span>';
+                    html += '<div>';
+                    html += '<div style="font-weight: 700; font-size: 16px;">' + sample.id + '</div>';
+                    html += '<div style="font-size: 13px; color: #666;">' + (sampleType ? sampleType.name : sample.sampleTypeCode) + '</div>';
+                    html += '</div>';
+                    html += '</div>';
+
+                    // Pathogen badges
+                    html += '<div style="display: flex; gap: 5px;">';
+                    sample.pathogensToTest.forEach(function(p) {
+                        var pathogen = pathogens[p];
+                        if (pathogen) {
+                            html += '<span style="background: ' + pathogen.color + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + p + '</span>';
+                        }
+                    });
+                    html += '</div>';
+
+                    html += '</div>'; // End header row
+
+                    // Details grid
+                    html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px; padding-top: 10px; border-top: 1px solid #e0e0e0;">';
+                    html += '<div><strong>Store:</strong> ' + sample.storeNum + '</div>';
+                    html += '<div><strong>Brand:</strong> ' + (sample.brand || 'N/A') + '</div>';
+                    html += '<div><strong>Sell-By:</strong> ' + (sample.sellByDate || 'N/A') + '</div>';
+                    html += '<div><strong>Received:</strong> ' + sample.dateReceived + '</div>';
+                    html += '</div>';
+
+                    html += '</div>'; // End sample card
+                });
+            }
+
+            html += '</div>'; // End samples list section
+
+            container.innerHTML = html;
+
+            // Set default date to today
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById('foodDateReceived').value = today;
+        }
+
+        // Update form fields based on sample type
+        function updateFoodSampleFields() {
+            var sampleTypeCode = document.getElementById('foodSampleType').value;
+            var categoryFields = document.getElementById('categorySpecificFields');
+            var pathogenCheckboxes = document.getElementById('pathogenCheckboxes');
+
+            if (!sampleTypeCode) {
+                categoryFields.innerHTML = '';
+                pathogenCheckboxes.innerHTML = '';
+                return;
+            }
+
+            var sampleType = sampleTypes[sampleTypeCode];
+            var html = '';
+
+            // Category-specific fields
+            if (sampleType.category === 'meat') {
+                // Meat-specific fields
+                html += '<div>';
+                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Grind/Whole</label>';
+                html += '<select id="foodMeatType" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                html += '<option value="Grind">Grind</option>';
+                html += '<option value="Whole">Whole</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div>';
+                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Organic Claim</label>';
+                html += '<select id="foodOrganicClaim" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                html += '<option value="None">None</option>';
+                html += '<option value="Organic">Organic</option>';
+                html += '<option value="Natural">Natural</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div>';
+                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">RWA Claim</label>';
+                html += '<input type="text" id="foodRWAClaim" placeholder="e.g., No antibiotics" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</div>';
+            } else if (sampleType.category === 'seafood') {
+                // Seafood-specific fields
+                html += '<div>';
+                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Fresh/Frozen</label>';
+                html += '<select id="foodSeafoodState" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                html += '<option value="Fresh">Fresh</option>';
+                html += '<option value="Frozen">Frozen</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div>';
+                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Raising Claim</label>';
+                html += '<input type="text" id="foodRaisingClaim" placeholder="e.g., Wild-caught, Farm-raised" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</div>';
+
+                html += '<div>';
+                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Country of Origin</label>';
+                html += '<input type="text" id="foodCountryOrigin" placeholder="e.g., USA, Thailand" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</div>';
+            }
+
+            categoryFields.innerHTML = html;
+
+            // Pathogen checkboxes
+            var pathogenHTML = '';
+            sampleType.pathogens.forEach(function(p) {
+                var pathogen = pathogens[p];
+                pathogenHTML += '<label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid ' + pathogen.color + ';">';
+                pathogenHTML += '<input type="checkbox" name="pathogenTest" value="' + p + '" checked style="width: 18px; height: 18px; cursor: pointer;" />';
+                pathogenHTML += '<div>';
+                pathogenHTML += '<div style="font-weight: 600; color: ' + pathogen.color + ';">' + p + ' - ' + pathogen.name + '</div>';
+                pathogenHTML += '<div style="font-size: 11px; color: #666;">' + pathogen.fullName + '</div>';
+                pathogenHTML += '</div>';
+                pathogenHTML += '</label>';
+            });
+
+            pathogenCheckboxes.innerHTML = pathogenHTML;
+        }
+
+        // Add Food Sample
+        function addFoodSample() {
+            // Get form values
+            var id = document.getElementById('foodSampleId').value.trim();
+            var sampleTypeCode = document.getElementById('foodSampleType').value;
+            var storeNum = document.getElementById('foodStoreNum').value.trim();
+            var brand = document.getElementById('foodBrand').value.trim();
+            var sellByDate = document.getElementById('foodSellByDate').value;
+            var dateReceived = document.getElementById('foodDateReceived').value;
+
+            // Validation
+            if (!id) {
+                alert('Please enter Sample ID');
+                return;
+            }
+            if (!sampleTypeCode) {
+                alert('Please select Sample Type');
+                return;
+            }
+            if (!storeNum) {
+                alert('Please enter Store #');
+                return;
+            }
+            if (!dateReceived) {
+                alert('Please select Date Received');
+                return;
+            }
+
+            // Get selected pathogens
+            var pathogenCheckboxes = document.querySelectorAll('input[name="pathogenTest"]:checked');
+            if (pathogenCheckboxes.length === 0) {
+                alert('Please select at least one pathogen to test');
+                return;
+            }
+
+            var pathogensToTest = [];
+            pathogenCheckboxes.forEach(function(cb) {
+                pathogensToTest.push(cb.value);
+            });
+
+            // Get category-specific fields
+            var sampleType = sampleTypes[sampleTypeCode];
+            var categoryData = {};
+
+            if (sampleType.category === 'meat') {
+                var meatTypeEl = document.getElementById('foodMeatType');
+                var organicClaimEl = document.getElementById('foodOrganicClaim');
+                var rwaClaimEl = document.getElementById('foodRWAClaim');
+
+                if (meatTypeEl) categoryData.meatType = meatTypeEl.value;
+                if (organicClaimEl) categoryData.organicClaim = organicClaimEl.value;
+                if (rwaClaimEl) categoryData.rwaClaim = rwaClaimEl.value.trim();
+            } else if (sampleType.category === 'seafood') {
+                var seafoodStateEl = document.getElementById('foodSeafoodState');
+                var raisingClaimEl = document.getElementById('foodRaisingClaim');
+                var countryOriginEl = document.getElementById('foodCountryOrigin');
+
+                if (seafoodStateEl) categoryData.seafoodState = seafoodStateEl.value;
+                if (raisingClaimEl) categoryData.raisingClaim = raisingClaimEl.value.trim();
+                if (countryOriginEl) categoryData.countryOrigin = countryOriginEl.value.trim();
+            }
+
+            // Create food sample object
+            var foodSample = {
+                id: id,
+                sampleTypeCode: sampleTypeCode,
+                storeNum: storeNum,
+                brand: brand,
+                sellByDate: sellByDate,
+                dateReceived: dateReceived,
+                dateAdded: new Date().toISOString().split('T')[0],
+                pathogensToTest: pathogensToTest,
+                categoryData: categoryData
+            };
+
+            foodSamples.push(foodSample);
+
+            // Auto-create pathogen workflow entries
+            pathogensToTest.forEach(function(pathogenCode) {
+                if (pathogenCode === 'EC') {
+                    createEcoliWorkflow(id, pathogenCode);
+                }
+                // TODO: Add other pathogen workflows in future increments
+                // else if (pathogenCode === 'C1') { createCampyloWorkflow(id, pathogenCode); }
+                // else if (pathogenCode === 'S1') { createSalmonellaWorkflow(id, pathogenCode); }
+            });
+
+            // Save and refresh
+            saveData();
+            showSuccessNotification('Food sample ' + id + ' added with ' + pathogensToTest.length + ' pathogen workflow(s)!');
+
+            // Clear form
+            document.getElementById('foodSampleId').value = '';
+            document.getElementById('foodSampleType').value = '';
+            document.getElementById('foodStoreNum').value = '';
+            document.getElementById('foodBrand').value = '';
+            document.getElementById('foodSellByDate').value = '';
+            document.getElementById('categorySpecificFields').innerHTML = '';
+            document.getElementById('pathogenCheckboxes').innerHTML = '';
+
+            // Re-render
+            renderFoodSamplesTab();
+        }
+
+        // Create E. coli workflow
+        function createEcoliWorkflow(foodSampleId, pathogenCode) {
+            var workflow = {
+                id: foodSampleId + '-WF-' + pathogenCode,
+                foodSampleId: foodSampleId,
+                pathogenCode: pathogenCode,
+                pathogenName: pathogens[pathogenCode].name,
+                dateCreated: new Date().toISOString().split('T')[0],
+                status: 'Day 2 - Pending', // Starting status
+                stages: {
+                    day2MacBroth: {completed: false},
+                    day2MacAgar: {completed: false},
+                    day3PinkColonies: {completed: false},
+                    day4BAP: {completed: false},
+                    day5MALDI: {completed: false}
+                },
+                isolateGenerated: false,
+                isolateId: null
+            };
+
+            pathogenWorkflows.push(workflow);
+        }
+
+        // Render E. coli Tab
+        function renderEcoliTab() {
+            var container = document.getElementById('foodTabContentEcoli');
+            var html = '';
+
+            // Filter E. coli workflows
+            var ecoliWorkflows = pathogenWorkflows.filter(function(wf) {
+                return wf.pathogenCode === 'EC';
+            });
+
+            html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<h3 style="margin-top: 0;">🧫 E. coli Testing Workflows (' + ecoliWorkflows.length + ')</h3>';
+
+            if (ecoliWorkflows.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">🧫</div>';
+                html += '<div style="font-size: 16px;">No E. coli workflows yet</div>';
+                html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples with E. coli testing to create workflows</div>';
+                html += '</div>';
+            } else {
+                // Kanban board for E. coli workflows
+                html += '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; overflow-x: auto;">';
+
+                var stages = [
+                    {name: 'Day 2 - MAC Broth', key: 'day2MacBroth', emoji: '🧪', color: '#e91e63'},
+                    {name: 'Day 2 - MAC Agar', key: 'day2MacAgar', emoji: '🧫', color: '#9c27b0'},
+                    {name: 'Day 3 - Pink Colonies', key: 'day3PinkColonies', emoji: '🔬', color: '#673ab7'},
+                    {name: 'Day 4 - BAP', key: 'day4BAP', emoji: '🧫', color: '#3f51b5'},
+                    {name: 'Day 5 - MALDI', key: 'day5MALDI', emoji: '✅', color: '#4caf50'}
+                ];
+
+                stages.forEach(function(stage) {
+                    html += '<div style="background: ' + stage.color + '15; border: 2px solid ' + stage.color + '; border-radius: 8px; padding: 15px; min-height: 300px;">';
+                    html += '<div style="font-weight: 700; font-size: 14px; margin-bottom: 10px; color: ' + stage.color + ';">';
+                    html += stage.emoji + ' ' + stage.name;
+                    html += '</div>';
+
+                    // Count workflows in this stage
+                    var count = 0;
+                    ecoliWorkflows.forEach(function(wf) {
+                        if (!wf.stages.day2MacBroth.completed && stage.key === 'day2MacBroth') count++;
+                        else if (wf.stages.day2MacBroth.completed && !wf.stages.day2MacAgar.completed && stage.key === 'day2MacAgar') count++;
+                        else if (wf.stages.day2MacAgar.completed && !wf.stages.day3PinkColonies.completed && stage.key === 'day3PinkColonies') count++;
+                        else if (wf.stages.day3PinkColonies.completed && !wf.stages.day4BAP.completed && stage.key === 'day4BAP') count++;
+                        else if (wf.stages.day4BAP.completed && !wf.stages.day5MALDI.completed && stage.key === 'day5MALDI') count++;
+                    });
+
+                    html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
+
+                    // Render workflow cards in this stage
+                    ecoliWorkflows.forEach(function(wf) {
+                        var shouldShow = false;
+
+                        if (!wf.stages.day2MacBroth.completed && stage.key === 'day2MacBroth') shouldShow = true;
+                        else if (wf.stages.day2MacBroth.completed && !wf.stages.day2MacAgar.completed && stage.key === 'day2MacAgar') shouldShow = true;
+                        else if (wf.stages.day2MacAgar.completed && !wf.stages.day3PinkColonies.completed && stage.key === 'day3PinkColonies') shouldShow = true;
+                        else if (wf.stages.day3PinkColonies.completed && !wf.stages.day4BAP.completed && stage.key === 'day4BAP') shouldShow = true;
+                        else if (wf.stages.day4BAP.completed && !wf.stages.day5MALDI.completed && stage.key === 'day5MALDI') shouldShow = true;
+
+                        if (shouldShow) {
+                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openEcoliWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                            html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
+                            html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
+                            html += '</div>';
+                        }
+                    });
+
+                    html += '</div>'; // End column
+                });
+
+                html += '</div>'; // End kanban grid
+            }
+
+            html += '</div>'; // End container
+
+            container.innerHTML = html;
+        }
+
+        // Render Isolates Tab
+        function renderIsolatesTab() {
+            var container = document.getElementById('foodTabContentIsolates');
+            var html = '';
+
+            html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<h3 style="margin-top: 0;">🧬 Generated Isolates (' + isolates.length + ')</h3>';
+
+            if (isolates.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">🧬</div>';
+                html += '<div style="font-size: 16px;">No isolates generated yet</div>';
+                html += '<div style="font-size: 14px; margin-top: 5px;">Complete pathogen testing workflows to generate isolates</div>';
+                html += '</div>';
+            } else {
+                // Render isolates
+                isolates.forEach(function(isolate) {
+                    var pathogen = pathogens[isolate.pathogenCode];
+
+                    html += '<div style="border: 2px solid ' + pathogen.color + '; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: linear-gradient(135deg, #fff 0%, #f9f9f9 100%);">';
+
+                    // Header
+                    html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">';
+                    html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                    html += '<span style="font-size: 24px;">🧬</span>';
+                    html += '<div>';
+                    html += '<div style="font-weight: 700; font-size: 16px;">' + isolate.id + '</div>';
+                    html += '<div style="font-size: 13px; color: #666;">From: ' + isolate.foodSampleId + '</div>';
+                    html += '</div>';
+                    html += '</div>';
+
+                    // Pathogen badge
+                    html += '<span style="background: ' + pathogen.color + '; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">' + isolate.pathogenCode + ' - ' + pathogen.name + '</span>';
+
+                    html += '</div>'; // End header
+
+                    // Details
+                    html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px; padding-top: 10px; border-top: 1px solid #e0e0e0;">';
+                    html += '<div><strong>Species:</strong> ' + isolate.species + '</div>';
+                    html += '<div><strong>Generated:</strong> ' + isolate.dateGenerated + '</div>';
+                    html += '<div><strong>Status:</strong> ' + (isolate.sentToSequencing ? '✅ Sent to Sequencing' : '⏳ Pending') + '</div>';
+                    html += '</div>';
+
+                    // If sent to sequencing, show link
+                    if (isolate.sentToSequencing && isolate.sequencingSampleId) {
+                        html += '<div style="margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 4px;">';
+                        html += '<span style="font-weight: 600; color: #2e7d32;">🧬 Sequencing Sample: </span>';
+                        html += '<a href="#" onclick="switchModule(\'sequencing\'); highlightSample(\'' + isolate.sequencingSampleId + '\'); return false;" style="color: #1976d2; text-decoration: underline;">' + isolate.sequencingSampleId + '</a>';
+                        html += '</div>';
+                    }
+
+                    html += '</div>'; // End isolate card
+                });
+            }
+
+            html += '</div>'; // End container
+
+            container.innerHTML = html;
+        }
+
+        // Open E. coli Workflow Modal
+        var currentEcoliWorkflow = null;
+        var currentEcoliStage = null;
+
+        function openEcoliWorkflowModal(workflowId, stageKey) {
+            // Find the workflow
+            var workflow = pathogenWorkflows.find(function(wf) {
+                return wf.id === workflowId;
+            });
+
+            if (!workflow) {
+                alert('Workflow not found');
+                return;
+            }
+
+            currentEcoliWorkflow = workflow;
+            currentEcoliStage = stageKey;
+
+            // Create modal
+            var modal = document.getElementById('ecoliWorkflowModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'ecoliWorkflowModal';
+                modal.className = 'modal';
+                document.body.appendChild(modal);
+            }
+
+            var html = '';
+            html += '<div class="modal-content" style="max-width: 600px;">';
+            html += '<span class="close-btn" onclick="closeEcoliWorkflowModal()">&times;</span>';
+
+            // Title based on stage
+            var stageTitle = '';
+            if (stageKey === 'day2MacBroth') stageTitle = '🧪 Day 2 - MAC Broth Enrichment';
+            else if (stageKey === 'day2MacAgar') stageTitle = '🧫 Day 2 - Streak to MAC Agar';
+            else if (stageKey === 'day3PinkColonies') stageTitle = '🔬 Day 3 - Check for Pink Colonies';
+            else if (stageKey === 'day4BAP') stageTitle = '🧫 Day 4 - Streak to BAP';
+            else if (stageKey === 'day5MALDI') stageTitle = '✅ Day 5 - MALDI Identification';
+
+            html += '<h3 style="margin-top: 0;">' + stageTitle + '</h3>';
+            html += '<p>Sample: <strong>' + workflow.foodSampleId + '</strong></p>';
+
+            // Form fields based on stage
+            if (stageKey === 'day2MacBroth') {
+                html += '<div class="form-group">';
+                html += '<label>MAC Broth Lot #:</label>';
+                html += '<input type="text" id="ecoli_macBrothLot" placeholder="LOT-MAC-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="ecoli_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="ecoli_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="ecoli_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="ecoli_timeOut" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day2MacAgar') {
+                html += '<div class="form-group">';
+                html += '<label>MAC Agar Plate Lot #:</label>';
+                html += '<input type="text" id="ecoli_macAgarLot" placeholder="LOT-MACAGAR-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="ecoli_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="ecoli_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="ecoli_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="ecoli_timeOut" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day3PinkColonies') {
+                html += '<div class="form-group">';
+                html += '<label>Pink Colonies Present?</label>';
+                html += '<select id="ecoli_pinkColonies">';
+                html += '<option value="Yes">Yes - Presumptive Positive</option>';
+                html += '<option value="No">No - Negative</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Colony Count (approx):</label>';
+                html += '<input type="number" id="ecoli_colonyCount" placeholder="e.g., 20" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day4BAP') {
+                html += '<div class="form-group">';
+                html += '<label>BAP Plate Lot #:</label>';
+                html += '<input type="text" id="ecoli_bapLot" placeholder="LOT-BAP-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Typical Growth?</label>';
+                html += '<select id="ecoli_typicalGrowth">';
+                html += '<option value="Yes">Yes</option>';
+                html += '<option value="No">No</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="ecoli_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="ecoli_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="ecoli_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="ecoli_timeOut" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day5MALDI') {
+                html += '<div class="form-group">';
+                html += '<label>MALDI Species ID:</label>';
+                html += '<input type="text" id="ecoli_maldiSpecies" placeholder="e.g., Escherichia coli" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confidence Score:</label>';
+                html += '<input type="text" id="ecoli_maldiConfidence" placeholder="e.g., 2.3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confirmed as E. coli?</label>';
+                html += '<select id="ecoli_confirmed">';
+                html += '<option value="Yes">Yes - Generate Isolate</option>';
+                html += '<option value="No">No - Not E. coli</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
+                html += '</div>';
+            }
+
+            html += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            html += '<button onclick="completeEcoliStage()" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Complete Stage</button>';
+            html += '<button onclick="closeEcoliWorkflowModal()" style="background: #6c757d; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>';
+            html += '</div>';
+
+            html += '</div>'; // End modal-content
+
+            modal.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function closeEcoliWorkflowModal() {
+            var modal = document.getElementById('ecoliWorkflowModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            currentEcoliWorkflow = null;
+            currentEcoliStage = null;
+        }
+
+        function completeEcoliStage() {
+            if (!currentEcoliWorkflow || !currentEcoliStage) {
+                alert('No workflow selected');
+                return;
+            }
+
+            var stageData = {};
+            var techInitials = document.getElementById('ecoli_techInitials');
+            if (techInitials) stageData.techInitials = techInitials.value;
+
+            // Collect stage-specific data
+            if (currentEcoliStage === 'day2MacBroth') {
+                stageData.macBrothLot = document.getElementById('ecoli_macBrothLot').value;
+                stageData.temperature = document.getElementById('ecoli_temperature').value;
+                stageData.incubator = document.getElementById('ecoli_incubator').value;
+                stageData.timeIn = document.getElementById('ecoli_timeIn').value;
+                stageData.timeOut = document.getElementById('ecoli_timeOut').value;
+            } else if (currentEcoliStage === 'day2MacAgar') {
+                stageData.macAgarLot = document.getElementById('ecoli_macAgarLot').value;
+                stageData.temperature = document.getElementById('ecoli_temperature').value;
+                stageData.incubator = document.getElementById('ecoli_incubator').value;
+                stageData.timeIn = document.getElementById('ecoli_timeIn').value;
+                stageData.timeOut = document.getElementById('ecoli_timeOut').value;
+            } else if (currentEcoliStage === 'day3PinkColonies') {
+                stageData.pinkColonies = document.getElementById('ecoli_pinkColonies').value;
+                stageData.colonyCount = document.getElementById('ecoli_colonyCount').value;
+            } else if (currentEcoliStage === 'day4BAP') {
+                stageData.bapLot = document.getElementById('ecoli_bapLot').value;
+                stageData.typicalGrowth = document.getElementById('ecoli_typicalGrowth').value;
+                stageData.temperature = document.getElementById('ecoli_temperature').value;
+                stageData.incubator = document.getElementById('ecoli_incubator').value;
+                stageData.timeIn = document.getElementById('ecoli_timeIn').value;
+                stageData.timeOut = document.getElementById('ecoli_timeOut').value;
+            } else if (currentEcoliStage === 'day5MALDI') {
+                stageData.maldiSpecies = document.getElementById('ecoli_maldiSpecies').value;
+                stageData.maldiConfidence = document.getElementById('ecoli_maldiConfidence').value;
+                stageData.confirmed = document.getElementById('ecoli_confirmed').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            // Update workflow
+            currentEcoliWorkflow.stages[currentEcoliStage] = stageData;
+
+            // If MALDI stage and confirmed, generate isolate
+            if (currentEcoliStage === 'day5MALDI' && stageData.confirmed === 'Yes') {
+                generateIsolate(currentEcoliWorkflow, stageData.maldiSpecies);
+            }
+
+            // Save and close
+            saveData();
+            closeEcoliWorkflowModal();
+            showSuccessNotification('E. coli stage completed!');
+
+            // Refresh view
+            renderEcoliTab();
+        }
+
+        // Generate Isolate and send to sequencing
+        function generateIsolate(workflow, species) {
+            var isolateId = workflow.foodSampleId + '-' + workflow.pathogenCode;
+
+            var isolate = {
+                id: isolateId,
+                foodSampleId: workflow.foodSampleId,
+                pathogenCode: workflow.pathogenCode,
+                species: species,
+                dateGenerated: new Date().toISOString().split('T')[0],
+                sentToSequencing: false,
+                sequencingSampleId: null
+            };
+
+            isolates.push(isolate);
+
+            // Mark workflow as complete
+            workflow.isolateGenerated = true;
+            workflow.isolateId = isolateId;
+
+            // Auto-send to sequencing if EC, C1, or S1
+            if (workflow.pathogenCode === 'EC' || workflow.pathogenCode === 'C1' || workflow.pathogenCode === 'S1') {
+                sendIsolateToSequencing(isolate);
+            }
+        }
+
+        // Send isolate to sequencing module
+        function sendIsolateToSequencing(isolate) {
+            // Create a new sample in the sequencing module
+            var seqSample = {
+                id: isolate.id,
+                dateAdded: isolate.dateGenerated,
+                initials: 'AUTO',
+                status: 'Received',
+                sourceType: 'Food Testing Isolate',
+                foodSampleId: isolate.foodSampleId,
+                pathogen: isolate.pathogenCode,
+                species: isolate.species
+            };
+
+            samples.push(seqSample);
+
+            // Mark isolate as sent
+            isolate.sentToSequencing = true;
+            isolate.sequencingSampleId = isolate.id;
+
+            showSuccessNotification('Isolate ' + isolate.id + ' automatically sent to sequencing!');
         }
 
         // Scroll to Section
@@ -8359,6 +9375,7 @@ if (sample.qubitDetails) {
         console.log('🎨 Sidebar navigation enabled - toggle with hamburger menu');
     </script>
 
+        </div> <!-- Close sequencingUI div -->
         </div> <!-- Close main-content div -->
     </div> <!-- Close appContent div -->
 </body>
