@@ -1164,9 +1164,15 @@
         <!-- Search and Filter Section -->
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;">
-                <input type="text" id="searchInput" placeholder="🔍 Search by Sample ID..."
-                       onkeyup="filterSamples()"
-                       style="flex: 1; min-width: 250px; max-width: 400px; padding: 10px; font-size: 14px;">
+                <div style="position: relative; flex: 1; min-width: 250px; max-width: 400px;">
+                    <input type="text" id="searchInput" placeholder="🔍 Search by Sample ID..."
+                           onkeyup="handleSearchInput(event)"
+                           onfocus="showSearchSuggestions()"
+                           style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px;">
+                    <div id="searchSuggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #6366f1; border-top: none; border-radius: 0 0 8px 8px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000;">
+                        <!-- Autocomplete suggestions will appear here -->
+                    </div>
+                </div>
 
                 <button onclick="showAdvancedSearch()" style="padding: 10px 15px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
                     🔎 Advanced Search
@@ -4544,6 +4550,127 @@ html += '</div>';
             selectedSamples = [];
             updateSelection();
         }
+
+        // Search autocomplete functions
+        function handleSearchInput(event) {
+            filterSamples();
+
+            // Show suggestions as user types
+            if (event.key !== 'Enter' && event.key !== 'Escape' && event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+                showSearchSuggestions();
+            }
+
+            // Navigate suggestions with arrow keys
+            var suggestionsDiv = document.getElementById('searchSuggestions');
+            if (suggestionsDiv.style.display === 'block') {
+                var suggestions = suggestionsDiv.querySelectorAll('.suggestion-item');
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    if (suggestions.length > 0) {
+                        suggestions[0].focus();
+                    }
+                } else if (event.key === 'Escape') {
+                    hideSuggestions();
+                } else if (event.key === 'Enter' && suggestions.length === 1) {
+                    // If only one match, select it
+                    selectSuggestion(suggestions[0].getAttribute('data-sample-id'));
+                }
+            }
+        }
+
+        function showSearchSuggestions() {
+            var searchText = document.getElementById('searchInput').value.toLowerCase();
+            var suggestionsDiv = document.getElementById('searchSuggestions');
+
+            if (searchText.length === 0) {
+                hideSuggestions();
+                return;
+            }
+
+            // Find matching samples
+            var matches = samples.filter(function(s) {
+                return s.id.toLowerCase().includes(searchText);
+            }).slice(0, 10); // Limit to 10 suggestions
+
+            if (matches.length === 0) {
+                hideSuggestions();
+                return;
+            }
+
+            // Build suggestions HTML
+            var html = '';
+            matches.forEach(function(sample, index) {
+                var statusColor = getStatusColor(sample.status);
+                var flagIcon = sample.flag && sample.flag !== 'None' ? (sample.flag === 'Rush' ? '🔴' : sample.flag === 'Hold' ? '⏸️' : '⚠️') : '';
+
+                html += '<div class="suggestion-item" data-sample-id="' + sample.id + '" ';
+                html += 'onclick="selectSuggestion(\'' + sample.id.replace(/'/g, "\\'") + '\')" ';
+                html += 'tabindex="0" ';
+                html += 'onkeydown="if(event.key===\'Enter\') selectSuggestion(\'' + sample.id.replace(/'/g, "\\'") + '\')" ';
+                html += 'style="padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;" ';
+                html += 'onmouseover="this.style.background=\'#f0f4ff\'" ';
+                html += 'onmouseout="this.style.background=\'white\'">';
+                html += '<div>';
+                html += '<span style="font-weight: 600; color: #333;">' + flagIcon + ' ' + sample.id + '</span>';
+                html += '<div style="font-size: 11px; color: #666; margin-top: 2px;">' + sample.dateAdded + '</div>';
+                html += '</div>';
+                html += '<span style="background: ' + statusColor + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + sample.status + '</span>';
+                html += '</div>';
+            });
+
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.style.display = 'block';
+        }
+
+        function selectSuggestion(sampleId) {
+            document.getElementById('searchInput').value = sampleId;
+            hideSuggestions();
+            filterSamples();
+
+            // Scroll to the sample if in list view
+            setTimeout(function() {
+                var sampleItems = document.querySelectorAll('.sample-item');
+                for (var i = 0; i < sampleItems.length; i++) {
+                    if (sampleItems[i].querySelector('strong').textContent.trim() === sampleId) {
+                        sampleItems[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        sampleItems[i].style.background = '#fff9c4';
+                        setTimeout(function() {
+                            sampleItems[i].style.background = '';
+                        }, 2000);
+                        break;
+                    }
+                }
+            }, 100);
+        }
+
+        function hideSuggestions() {
+            document.getElementById('searchSuggestions').style.display = 'none';
+        }
+
+        function getStatusColor(status) {
+            var colors = {
+                'Received': '#6c757d',
+                'BAP In Progress': '#ffc107',
+                'BAP Complete': '#28a745',
+                'TSB In Progress': '#fd7e14',
+                'TSB Complete': '#ffc107',
+                'Extraction Complete': '#9c27b0',
+                'Clean Extraction Complete': '#4caf50',
+                'Clean Extraction Qubit Complete': '#17a2b8',
+                'Indexing Complete': '#007bff',
+                'Qubit Complete': '#10b981'
+            };
+            return colors[status] || '#6c757d';
+        }
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(event) {
+            var searchInput = document.getElementById('searchInput');
+            var suggestionsDiv = document.getElementById('searchSuggestions');
+            if (searchInput && suggestionsDiv && !searchInput.contains(event.target) && !suggestionsDiv.contains(event.target)) {
+                hideSuggestions();
+            }
+        });
 
         function filterSamples() {
             var searchText = document.getElementById('searchInput').value.toLowerCase();
