@@ -7654,37 +7654,63 @@ html += '</div>';
                 return false;
             }
 
-            // Show confirmation dialog
-            var statusName = targetStatus;
-            var confirmMsg = 'Move sample ' + sample.id + ' to stage: ' + statusName + '?';
+            // Map status to batch type for stages that need data entry
+            var stageRequiresDataEntry = {
+                'BAP Complete': 'BAP',
+                'TSB Complete': 'TSB',
+                'Extraction Complete': 'Extraction',
+                'Clean Extraction Complete': 'Clean Extraction',
+                'Clean Extraction Qubit Complete': 'Clean Extraction Qubit',
+                'Indexing Complete': 'Indexing',
+                'Qubit Complete': 'Final Qubit'
+            };
 
-            if (confirm(confirmMsg)) {
-                // Update the sample status
-                sample.status = targetStatus;
+            var batchType = stageRequiresDataEntry[targetStatus];
 
-                // Save and re-render
-                saveData();
-                renderSamples();
-
-                // Show success message
-                var successDiv = document.createElement('div');
-                successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; font-weight: 600; animation: slideInRight 0.3s ease-out;';
-                successDiv.innerHTML = '✓ Moved ' + sample.id + ' to ' + statusName;
-                document.body.appendChild(successDiv);
-
-                setTimeout(function() {
-                    successDiv.style.animation = 'slideOutRight 0.3s ease-in';
-                    setTimeout(function() {
-                        document.body.removeChild(successDiv);
-                    }, 300);
-                }, 2000);
+            if (batchType) {
+                // This stage requires detailed data entry - open batch modal
+                draggedSampleId = null; // Clear before opening modal
+                openBatchModal([sample.id], batchType);
             } else {
-                // User canceled - just re-render to restore original position
-                renderSamples();
+                // Simple status change (like "Received" or intermediate stages)
+                var statusName = targetStatus;
+                var confirmMsg = 'Move sample ' + sample.id + ' to stage: ' + statusName + '?';
+
+                if (confirm(confirmMsg)) {
+                    // Update the sample status
+                    sample.status = targetStatus;
+
+                    // Save and re-render
+                    saveData();
+                    renderSamples();
+
+                    // Show success message
+                    showSuccessNotification('✓ Moved ' + sample.id + ' to ' + statusName);
+                } else {
+                    // User canceled - just re-render to restore original position
+                    renderSamples();
+                }
             }
 
             draggedSampleId = null;
             return false;
+        }
+
+        // Helper function for success notifications
+        function showSuccessNotification(message) {
+            var successDiv = document.createElement('div');
+            successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; font-weight: 600; animation: slideInRight 0.3s ease-out;';
+            successDiv.innerHTML = message;
+            document.body.appendChild(successDiv);
+
+            setTimeout(function() {
+                successDiv.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(function() {
+                    if (successDiv.parentNode) {
+                        document.body.removeChild(successDiv);
+                    }
+                }, 300);
+            }, 2000);
         }
 
         // Table View Rendering
