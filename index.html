@@ -584,6 +584,81 @@
             margin-right: 10px;
         }
 
+        /* Kanban Pipeline View Styles */
+        .kanban-column {
+            min-width: 280px;
+            max-width: 320px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s;
+        }
+
+        .kanban-column:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .kanban-header {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kanban-count {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .kanban-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .kanban-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .kanban-card-header {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kanban-card-meta {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .kanban-card-meta span {
+            background: #f1f3f5;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
         /* Plate Map Styles */
         .plate-map {
             display: inline-block;
@@ -1085,6 +1160,20 @@
                 </button>
             </div>
 
+            <!-- View Mode Toggle -->
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #dee2e6;">
+                <label style="font-weight: 600; margin-right: 15px; color: #495057;">📊 View Mode:</label>
+                <button onclick="switchView('kanban')" id="viewKanban" style="padding: 8px 16px; background: #6366f1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-right: 8px; transition: all 0.3s;">
+                    🎯 Pipeline
+                </button>
+                <button onclick="switchView('list')" id="viewList" style="padding: 8px 16px; background: white; color: #6366f1; border: 2px solid #6366f1; border-radius: 6px; cursor: pointer; font-weight: 600; margin-right: 8px; transition: all 0.3s;">
+                    📋 List
+                </button>
+                <button onclick="switchView('table')" id="viewTable" style="padding: 8px 16px; background: white; color: #6366f1; border: 2px solid #6366f1; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                    📊 Table
+                </button>
+            </div>
+
             <div style="margin-top: 10px;">
                 <label style="margin-right: 15px;">
                     <input type="radio" name="statusFilter" value="all" checked onchange="filterSamples()"> All
@@ -1164,8 +1253,25 @@
             <button class="btn-batch" id="batchBtn" disabled onclick="startBatchProcess()">Start Batch</button>
             <button onclick="clearSelection()">Clear Selection</button>
         </div>
-        
-        <div id="sampleContainer"></div>
+
+        <!-- Kanban Pipeline View -->
+        <div id="kanbanView" style="display: block;">
+            <div id="kanbanContainer" style="display: flex; gap: 20px; overflow-x: auto; padding: 20px 0;">
+                <!-- Kanban columns will be rendered here -->
+            </div>
+        </div>
+
+        <!-- List View (Original) -->
+        <div id="listView" style="display: none;">
+            <div id="sampleContainer"></div>
+        </div>
+
+        <!-- Table View -->
+        <div id="tableView" style="display: none;">
+            <div id="tableContainer" style="overflow-x: auto;">
+                <!-- Table will be rendered here -->
+            </div>
+        </div>
     </div>
 
     <!-- Batch Modal -->
@@ -7122,13 +7228,222 @@ html += '</div>';
             return (completed / total) * 100;
         }
 
+        // View Mode Management
+        var currentView = 'kanban'; // default view
+
+        function switchView(viewMode) {
+            currentView = viewMode;
+
+            // Hide all views
+            document.getElementById('kanbanView').style.display = 'none';
+            document.getElementById('listView').style.display = 'none';
+            document.getElementById('tableView').style.display = 'none';
+
+            // Update button styles
+            var kanbanBtn = document.getElementById('viewKanban');
+            var listBtn = document.getElementById('viewList');
+            var tableBtn = document.getElementById('viewTable');
+
+            // Reset all buttons
+            kanbanBtn.style.background = 'white';
+            kanbanBtn.style.color = '#6366f1';
+            kanbanBtn.style.border = '2px solid #6366f1';
+            listBtn.style.background = 'white';
+            listBtn.style.color = '#6366f1';
+            listBtn.style.border = '2px solid #6366f1';
+            tableBtn.style.background = 'white';
+            tableBtn.style.color = '#6366f1';
+            tableBtn.style.border = '2px solid #6366f1';
+
+            // Show selected view and update button
+            if (viewMode === 'kanban') {
+                document.getElementById('kanbanView').style.display = 'block';
+                kanbanBtn.style.background = '#6366f1';
+                kanbanBtn.style.color = 'white';
+                kanbanBtn.style.border = 'none';
+            } else if (viewMode === 'list') {
+                document.getElementById('listView').style.display = 'block';
+                listBtn.style.background = '#6366f1';
+                listBtn.style.color = 'white';
+                listBtn.style.border = 'none';
+            } else if (viewMode === 'table') {
+                document.getElementById('tableView').style.display = 'block';
+                tableBtn.style.background = '#6366f1';
+                tableBtn.style.color = 'white';
+                tableBtn.style.border = 'none';
+            }
+
+            // Re-render in the new view
+            renderSamples();
+        }
+
         function renderSamples() {
+            // Route to appropriate render function based on current view
+            if (currentView === 'kanban') {
+                renderKanbanView();
+            } else if (currentView === 'table') {
+                renderTableView();
+            } else {
+                renderListView();
+            }
+
+            updateQuickStats();
+            updateDashboard();
+        }
+
+        // Kanban Pipeline View Rendering
+        function renderKanbanView() {
+            var container = document.getElementById('kanbanContainer');
+
+            if (samples.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #999; width: 100%;">No samples yet. Add one above to see the pipeline!</div>';
+                return;
+            }
+
+            // Define pipeline stages
+            var stages = [
+                {name: 'Received', emoji: '📥', color: '#6c757d', statuses: ['Received']},
+                {name: 'BAP', emoji: '🧫', color: '#28a745', statuses: ['BAP In Progress', 'BAP Complete']},
+                {name: 'TSB', emoji: '🧪', color: '#ffc107', statuses: ['TSB In Progress', 'TSB Complete']},
+                {name: 'Extraction', emoji: '🔬', color: '#9c27b0', statuses: ['Extraction Complete']},
+                {name: 'Clean Extraction', emoji: '✨', color: '#4caf50', statuses: ['Clean Extraction Complete']},
+                {name: 'CE Qubit', emoji: '📊', color: '#17a2b8', statuses: ['Clean Extraction Qubit Complete']},
+                {name: 'Indexing', emoji: '🏷️', color: '#007bff', statuses: ['Indexing Complete']},
+                {name: 'Complete', emoji: '✅', color: '#10b981', statuses: ['Qubit Complete']}
+            ];
+
+            var html = '';
+
+            stages.forEach(function(stage) {
+                // Filter samples for this stage
+                var stageSamples = samples.filter(function(s) {
+                    return stage.statuses.indexOf(s.status) !== -1;
+                });
+
+                html += '<div class="kanban-column">';
+                html += '<div class="kanban-header" style="background: ' + stage.color + '; color: white;">';
+                html += '<span>' + stage.emoji + ' ' + stage.name + '</span>';
+                html += '<span class="kanban-count">' + stageSamples.length + '</span>';
+                html += '</div>';
+
+                if (stageSamples.length === 0) {
+                    html += '<div style="padding: 20px; text-align: center; color: #adb5bd; font-size: 12px;">No samples</div>';
+                } else {
+                    stageSamples.forEach(function(sample) {
+                        var progress = getSampleProgress(sample);
+                        var borderColor = sample.flag === 'Rush' ? '#dc3545' : sample.flag === 'Hold' ? '#ffc107' : sample.flag === 'Review' ? '#fd7e14' : '#e9ecef';
+
+                        html += '<div class="kanban-card" style="border-left-color: ' + borderColor + ';" onclick="viewSample(\'' + sample.id.replace(/'/g, "\\'") + '\')">';
+                        html += '<div class="kanban-card-header">';
+                        html += '<span>' + sample.id + '</span>';
+                        if (sample.flag && sample.flag !== 'None') {
+                            var flagIcon = sample.flag === 'Rush' ? '🔴' : sample.flag === 'Hold' ? '⏸️' : '⚠️';
+                            html += '<span>' + flagIcon + '</span>';
+                        }
+                        html += '</div>';
+
+                        // Progress bar
+                        var progressColor = progress.percentage === 100 ? '#10b981' : progress.percentage >= 75 ? '#17a2b8' : progress.percentage >= 50 ? '#ffc107' : '#fd7e14';
+                        html += '<div style="background: #e9ecef; border-radius: 4px; height: 6px; margin: 8px 0; overflow: hidden;">';
+                        html += '<div style="background: ' + progressColor + '; height: 100%; width: ' + progress.percentage + '%;"></div>';
+                        html += '</div>';
+
+                        html += '<div class="kanban-card-meta">';
+                        html += '<span>📅 ' + sample.dateAdded + '</span>';
+                        html += '<span>👤 ' + sample.initials + '</span>';
+                        html += '<span>' + progress.completed + '/' + progress.total + '</span>';
+                        html += '</div>';
+
+                        html += '</div>';
+                    });
+                }
+
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Table View Rendering
+        function renderTableView() {
+            var container = document.getElementById('tableContainer');
+
+            if (samples.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #999;">No samples yet. Add one above!</div>';
+                return;
+            }
+
+            var html = '<table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">';
+            html += '<thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">';
+            html += '<tr>';
+            html += '<th style="padding: 16px; text-align: left; font-weight: 600;">Sample ID</th>';
+            html += '<th style="padding: 16px; text-align: left; font-weight: 600;">Status</th>';
+            html += '<th style="padding: 16px; text-align: left; font-weight: 600;">Progress</th>';
+            html += '<th style="padding: 16px; text-align: left; font-weight: 600;">Date Added</th>';
+            html += '<th style="padding: 16px; text-align: left; font-weight: 600;">Technician</th>';
+            html += '<th style="padding: 16px; text-align: center; font-weight: 600;">Actions</th>';
+            html += '</tr>';
+            html += '</thead>';
+            html += '<tbody>';
+
+            samples.forEach(function(sample, index) {
+                var progress = getSampleProgress(sample);
+                var bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+
+                html += '<tr style="background: ' + bgColor + '; border-bottom: 1px solid #e9ecef; transition: background 0.2s;" onmouseover="this.style.background=\'#e3f2fd\'" onmouseout="this.style.background=\'' + bgColor + '\'">';
+
+                // Sample ID with flag
+                html += '<td style="padding: 16px; font-weight: 600;">';
+                html += sample.id;
+                if (sample.flag && sample.flag !== 'None') {
+                    var flagIcon = sample.flag === 'Rush' ? '🔴' : sample.flag === 'Hold' ? '⏸️' : '⚠️';
+                    html += ' ' + flagIcon;
+                }
+                html += '</td>';
+
+                // Status badge
+                html += '<td style="padding: 16px;">';
+                var statusColor = sample.status === 'Qubit Complete' ? '#10b981' : sample.status.includes('Complete') ? '#17a2b8' : '#6c757d';
+                html += '<span style="background: ' + statusColor + '; color: white; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">' + sample.status + '</span>';
+                html += '</td>';
+
+                // Progress bar
+                html += '<td style="padding: 16px;">';
+                var progressColor = progress.percentage === 100 ? '#10b981' : progress.percentage >= 75 ? '#17a2b8' : progress.percentage >= 50 ? '#ffc107' : '#fd7e14';
+                html += '<div style="display: flex; align-items: center; gap: 10px;">';
+                html += '<div style="flex: 1; background: #e9ecef; border-radius: 10px; height: 8px; overflow: hidden;">';
+                html += '<div style="background: ' + progressColor + '; height: 100%; width: ' + progress.percentage + '%;"></div>';
+                html += '</div>';
+                html += '<span style="font-size: 12px; font-weight: 600; color: ' + progressColor + '; min-width: 45px;">' + progress.percentage + '%</span>';
+                html += '</div>';
+                html += '</td>';
+
+                // Date and Technician
+                html += '<td style="padding: 16px; color: #6c757d;">' + sample.dateAdded + '</td>';
+                html += '<td style="padding: 16px; color: #6c757d;">' + sample.initials + '</td>';
+
+                // Actions
+                html += '<td style="padding: 16px; text-align: center;">';
+                html += '<button onclick="viewSample(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 4px; font-size: 12px;" title="View">👁</button>';
+                html += '<button onclick="editSample(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: #ffc107; color: #333; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 4px; font-size: 12px;" title="Edit">✏️</button>';
+                html += '<button onclick="deleteSample(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Delete">🗑</button>';
+                html += '</td>';
+
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            html += '</table>';
+
+            container.innerHTML = html;
+        }
+
+        // Original list view rendering
+        function renderListView() {
             var container = document.getElementById('sampleContainer');
 
             if (samples.length === 0) {
                 container.innerHTML = '<p>No samples yet. Add one above!</p>';
-                updateQuickStats();
-                updateDashboard();
                 return;
             }
 
