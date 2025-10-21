@@ -5211,6 +5211,7 @@ html += '</div>';
             html += '<button onclick="switchFoodTestingTab(\'samples\')" id="foodTabSamples" style="padding: 10px 20px; border: none; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Food Samples</button>';
             html += '<button onclick="switchFoodTestingTab(\'ecoli\')" id="foodTabEcoli" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🧫 E. coli Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'campylo\')" id="foodTabCampylo" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🦠 Campylobacter Testing</button>';
+            html += '<button onclick="switchFoodTestingTab(\'salmonella\')" id="foodTabSalmonella" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🔴 Salmonella Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'isolates\')" id="foodTabIsolates" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🧬 Isolates</button>';
             html += '</div>';
             html += '</div>';
@@ -5219,6 +5220,7 @@ html += '</div>';
             html += '<div id="foodTabContentSamples"></div>';
             html += '<div id="foodTabContentEcoli" style="display: none;"></div>';
             html += '<div id="foodTabContentCampylo" style="display: none;"></div>';
+            html += '<div id="foodTabContentSalmonella" style="display: none;"></div>';
             html += '<div id="foodTabContentIsolates" style="display: none;"></div>';
 
             foodUI.innerHTML = html;
@@ -5233,7 +5235,7 @@ html += '</div>';
             currentFoodTab = tab;
 
             // Update tab button styles
-            var tabs = ['samples', 'ecoli', 'campylo', 'isolates'];
+            var tabs = ['samples', 'ecoli', 'campylo', 'salmonella', 'isolates'];
             tabs.forEach(function(t) {
                 var btn = document.getElementById('foodTab' + t.charAt(0).toUpperCase() + t.slice(1));
                 var content = document.getElementById('foodTabContent' + t.charAt(0).toUpperCase() + t.slice(1));
@@ -5256,6 +5258,8 @@ html += '</div>';
                 renderEcoliTab();
             } else if (tab === 'campylo') {
                 renderCampyloTab();
+            } else if (tab === 'salmonella') {
+                renderSalmonellaTab();
             } else if (tab === 'isolates') {
                 renderIsolatesTab();
             }
@@ -5567,9 +5571,10 @@ html += '</div>';
                     createEcoliWorkflow(id, pathogenCode);
                 } else if (pathogenCode === 'C1') {
                     createCampyloWorkflow(id, pathogenCode);
+                } else if (pathogenCode === 'S1') {
+                    createSalmonellaWorkflow(id, pathogenCode);
                 }
                 // TODO: Add other pathogen workflows in future increments
-                // else if (pathogenCode === 'S1') { createSalmonellaWorkflow(id, pathogenCode); }
                 // else if (pathogenCode === 'E') { createEnterococcusWorkflow(id, pathogenCode); }
             });
 
@@ -5629,6 +5634,28 @@ html += '</div>';
                     day2_CCA: {completed: false},           // Day 2 - Campy-Cefex Agar
                     day3_BAP: {completed: false},           // Day 3 - BAP Confirmation
                     day4_MALDI: {completed: false}          // Day 4 - MALDI Identification
+                },
+                isolateGenerated: false,
+                isolateId: null
+            };
+
+            pathogenWorkflows.push(workflow);
+        }
+
+        // Create Salmonella workflow
+        function createSalmonellaWorkflow(foodSampleId, pathogenCode) {
+            var workflow = {
+                id: foodSampleId + '-WF-' + pathogenCode,
+                foodSampleId: foodSampleId,
+                pathogenCode: pathogenCode,
+                pathogenName: pathogens[pathogenCode].name,
+                dateCreated: new Date().toISOString().split('T')[0],
+                status: 'Day 1 - Pending', // BPW already done, waiting for Day 2
+                stages: {
+                    day1_BPWIncubation: {completed: false},    // Day 1 - BPW incubation (from Day 1A remaining)
+                    day2_RVR_LAMP: {completed: false},         // Day 2 - RVR + LAMP
+                    day3_XLT4: {completed: false},             // Day 3 - XLT4 Agar
+                    day4_MALDI: {completed: false}             // Day 4 - MALDI Identification
                 },
                 isolateGenerated: false,
                 isolateId: null
@@ -5779,6 +5806,81 @@ html += '</div>';
 
                         if (shouldShow) {
                             html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openCampyloWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                            html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
+                            html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
+                            html += '</div>';
+                        }
+                    });
+
+                    html += '</div>'; // End column
+                });
+
+                html += '</div>'; // End grid
+            }
+
+            html += '</div>'; // End container
+
+            container.innerHTML = html;
+        }
+
+        // Render Salmonella Tab
+        function renderSalmonellaTab() {
+            var container = document.getElementById('foodTabContentSalmonella');
+            var html = '';
+
+            // Filter Salmonella workflows
+            var salmonellaWorkflows = pathogenWorkflows.filter(function(wf) {
+                return wf.pathogenCode === 'S1';
+            });
+
+            html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<h3 style="margin-top: 0;">🔴 Salmonella Testing Workflows (' + salmonellaWorkflows.length + ')</h3>';
+
+            if (salmonellaWorkflows.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">🔴</div>';
+                html += '<div style="font-size: 16px;">No Salmonella workflows yet</div>';
+                html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples with Salmonella testing to create workflows</div>';
+                html += '</div>';
+            } else {
+                // Kanban board for Salmonella workflows - 4 STAGES
+                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; overflow-x: auto;">';
+
+                var stages = [
+                    {name: 'Day 1 - BPW Incubation', key: 'day1_BPWIncubation', emoji: '💧', color: '#00bcd4'},
+                    {name: 'Day 2 - RVR + LAMP', key: 'day2_RVR_LAMP', emoji: '🔬', color: '#f44336'},
+                    {name: 'Day 3 - XLT4 Agar', key: 'day3_XLT4', emoji: '🧫', color: '#e91e63'},
+                    {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '✅', color: '#4caf50'}
+                ];
+
+                stages.forEach(function(stage) {
+                    html += '<div style="background: ' + stage.color + '15; border: 2px solid ' + stage.color + '; border-radius: 8px; padding: 15px; min-height: 300px;">';
+                    html += '<div style="font-weight: 700; font-size: 14px; margin-bottom: 10px; color: ' + stage.color + ';">';
+                    html += stage.emoji + ' ' + stage.name;
+                    html += '</div>';
+
+                    // Count workflows in this stage
+                    var count = 0;
+                    salmonellaWorkflows.forEach(function(wf) {
+                        if (!wf.stages.day1_BPWIncubation.completed && stage.key === 'day1_BPWIncubation') count++;
+                        else if (wf.stages.day1_BPWIncubation.completed && !wf.stages.day2_RVR_LAMP.completed && stage.key === 'day2_RVR_LAMP') count++;
+                        else if (wf.stages.day2_RVR_LAMP.completed && !wf.stages.day3_XLT4.completed && stage.key === 'day3_XLT4') count++;
+                        else if (wf.stages.day3_XLT4.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') count++;
+                    });
+
+                    html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
+
+                    // Render workflow cards in this stage
+                    salmonellaWorkflows.forEach(function(wf) {
+                        var shouldShow = false;
+
+                        if (!wf.stages.day1_BPWIncubation.completed && stage.key === 'day1_BPWIncubation') shouldShow = true;
+                        else if (wf.stages.day1_BPWIncubation.completed && !wf.stages.day2_RVR_LAMP.completed && stage.key === 'day2_RVR_LAMP') shouldShow = true;
+                        else if (wf.stages.day2_RVR_LAMP.completed && !wf.stages.day3_XLT4.completed && stage.key === 'day3_XLT4') shouldShow = true;
+                        else if (wf.stages.day3_XLT4.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
+
+                        if (shouldShow) {
+                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openSalmonellaWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
                             html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
                             html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
                             html += '</div>';
@@ -6516,6 +6618,266 @@ html += '</div>';
 
             // Refresh view
             renderCampyloTab();
+        }
+
+        // ========== SALMONELLA WORKFLOW FUNCTIONS ==========
+
+        var currentSalmonellaWorkflow = null;
+        var currentSalmonellaStage = null;
+
+        function openSalmonellaWorkflowModal(workflowId, stageKey) {
+            var workflow = pathogenWorkflows.find(function(wf) {
+                return wf.id === workflowId;
+            });
+
+            if (!workflow) {
+                alert('Workflow not found');
+                return;
+            }
+
+            currentSalmonellaWorkflow = workflow;
+            currentSalmonellaStage = stageKey;
+
+            var modal = document.getElementById('salmonellaWorkflowModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'salmonellaWorkflowModal';
+                modal.className = 'modal';
+                document.body.appendChild(modal);
+            }
+
+            var html = '';
+            html += '<div class="modal-content" style="max-width: 600px;">';
+            html += '<span class="close-btn" onclick="closeSalmonellaWorkflowModal()">&times;</span>';
+
+            var stageTitle = '';
+            if (stageKey === 'day1_BPWIncubation') stageTitle = '💧 Day 1 - BPW Incubation';
+            else if (stageKey === 'day2_RVR_LAMP') stageTitle = '🔬 Day 2 - RVR + LAMP Screening';
+            else if (stageKey === 'day3_XLT4') stageTitle = '🧫 Day 3 - XLT4 Agar';
+            else if (stageKey === 'day4_MALDI') stageTitle = '✅ Day 4 - MALDI Identification';
+
+            html += '<h3 style="margin-top: 0;">' + stageTitle + '</h3>';
+            html += '<p>Sample: <strong>' + workflow.foodSampleId + '</strong></p>';
+
+            if (stageKey === 'day1_BPWIncubation') {
+                html += '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Note:</strong> This is the remaining BPW from Day 1A sample prep, now incubated for Salmonella.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>BPW was incubated?:</label>';
+                html += '<select id="salm_bpwIncubated">';
+                html += '<option value="Yes">Yes - Incubated 35°C for 24h</option>';
+                html += '<option value="No">No - Not incubated</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="salm_temperature">';
+                html += '<option value="35">35°C</option>';
+                html += '<option value="37">37°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="salm_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="salm_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day2_RVR_LAMP') {
+                html += '<div class="form-group">';
+                html += '<label>RVR Lot #:</label>';
+                html += '<input type="text" id="salm_rvrLot" placeholder="LOT-RVR-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>LAMP Result:</label>';
+                html += '<select id="salm_lampResult">';
+                html += '<option value="Positive">Positive - Presumptive Salmonella</option>';
+                html += '<option value="Negative">Negative - No Salmonella</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="salm_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="salm_temperature">';
+                html += '<option value="42">42°C</option>';
+                html += '<option value="37">37°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="salm_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="salm_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="salm_timeOut" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day3_XLT4') {
+                html += '<div class="form-group">';
+                html += '<label>XLT4 Plate Lot #:</label>';
+                html += '<input type="text" id="salm_xlt4Lot" placeholder="LOT-XLT4-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Typical Colonies Present?</label>';
+                html += '<select id="salm_typicalColonies">';
+                html += '<option value="Yes">Yes - Black centers</option>';
+                html += '<option value="No">No - Negative</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="salm_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="salm_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="salm_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="salm_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="salm_timeOut" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day4_MALDI') {
+                html += '<div class="form-group">';
+                html += '<label>MALDI Species ID:</label>';
+                html += '<input type="text" id="salm_maldiSpecies" placeholder="e.g., Salmonella enterica" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confidence Score:</label>';
+                html += '<input type="text" id="salm_maldiConfidence" placeholder="e.g., 2.3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confirmed as Salmonella?</label>';
+                html += '<select id="salm_confirmed">';
+                html += '<option value="Yes">Yes - Generate Isolate</option>';
+                html += '<option value="No">No - Not Salmonella</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="salm_techInitials" maxlength="3" />';
+                html += '</div>';
+            }
+
+            html += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            html += '<button onclick="completeSalmonellaStage()" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Complete Stage</button>';
+            html += '<button onclick="closeSalmonellaWorkflowModal()" style="background: #6c757d; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>';
+            html += '</div>';
+
+            html += '</div>';
+
+            modal.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function closeSalmonellaWorkflowModal() {
+            var modal = document.getElementById('salmonellaWorkflowModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            currentSalmonellaWorkflow = null;
+            currentSalmonellaStage = null;
+        }
+
+        function completeSalmonellaStage() {
+            if (!currentSalmonellaWorkflow || !currentSalmonellaStage) {
+                alert('No workflow selected');
+                return;
+            }
+
+            var stageData = {};
+            var techInitials = document.getElementById('salm_techInitials');
+            if (techInitials) stageData.techInitials = techInitials.value;
+
+            if (currentSalmonellaStage === 'day1_BPWIncubation') {
+                stageData.bpwIncubated = document.getElementById('salm_bpwIncubated').value;
+                stageData.temperature = document.getElementById('salm_temperature').value;
+                stageData.incubator = document.getElementById('salm_incubator').value;
+            } else if (currentSalmonellaStage === 'day2_RVR_LAMP') {
+                stageData.rvrLot = document.getElementById('salm_rvrLot').value;
+                stageData.lampResult = document.getElementById('salm_lampResult').value;
+                stageData.temperature = document.getElementById('salm_temperature').value;
+                stageData.incubator = document.getElementById('salm_incubator').value;
+                stageData.timeIn = document.getElementById('salm_timeIn').value;
+                stageData.timeOut = document.getElementById('salm_timeOut').value;
+            } else if (currentSalmonellaStage === 'day3_XLT4') {
+                stageData.xlt4Lot = document.getElementById('salm_xlt4Lot').value;
+                stageData.typicalColonies = document.getElementById('salm_typicalColonies').value;
+                stageData.temperature = document.getElementById('salm_temperature').value;
+                stageData.incubator = document.getElementById('salm_incubator').value;
+                stageData.timeIn = document.getElementById('salm_timeIn').value;
+                stageData.timeOut = document.getElementById('salm_timeOut').value;
+            } else if (currentSalmonellaStage === 'day4_MALDI') {
+                stageData.maldiSpecies = document.getElementById('salm_maldiSpecies').value;
+                stageData.maldiConfidence = document.getElementById('salm_maldiConfidence').value;
+                stageData.confirmed = document.getElementById('salm_confirmed').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            currentSalmonellaWorkflow.stages[currentSalmonellaStage] = stageData;
+
+            if (currentSalmonellaStage === 'day4_MALDI' && stageData.confirmed === 'Yes') {
+                generateIsolate(currentSalmonellaWorkflow, stageData.maldiSpecies);
+            }
+
+            saveData();
+            closeSalmonellaWorkflowModal();
+            showSuccessNotification('Salmonella stage completed!');
+            renderSalmonellaTab();
         }
 
         // Generate Isolate and send to sequencing
