@@ -5214,6 +5214,7 @@ html += '</div>';
             html += '<button onclick="switchFoodTestingTab(\'salmonella\')" id="foodTabSalmonella" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🔴 Salmonella Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'enterococcus\')" id="foodTabEnterococcus" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🟠 Enterococcus Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'aeromonas\')" id="foodTabAeromonas" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🐟 Aeromonas Testing</button>';
+            html += '<button onclick="switchFoodTestingTab(\'vibrioV1\')" id="foodTabVibrioV1" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🌊 Vibrio Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'isolates\')" id="foodTabIsolates" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🧬 Isolates</button>';
             html += '</div>';
             html += '</div>';
@@ -5225,6 +5226,7 @@ html += '</div>';
             html += '<div id="foodTabContentSalmonella" style="display: none;"></div>';
             html += '<div id="foodTabContentEnterococcus" style="display: none;"></div>';
             html += '<div id="foodTabContentAeromonas" style="display: none;"></div>';
+            html += '<div id="foodTabContentVibrioV1" style="display: none;"></div>';
             html += '<div id="foodTabContentIsolates" style="display: none;"></div>';
 
             foodUI.innerHTML = html;
@@ -5239,7 +5241,7 @@ html += '</div>';
             currentFoodTab = tab;
 
             // Update tab button styles
-            var tabs = ['samples', 'ecoli', 'campylo', 'salmonella', 'enterococcus', 'aeromonas', 'isolates'];
+            var tabs = ['samples', 'ecoli', 'campylo', 'salmonella', 'enterococcus', 'aeromonas', 'vibrioV1', 'isolates'];
             tabs.forEach(function(t) {
                 var btn = document.getElementById('foodTab' + t.charAt(0).toUpperCase() + t.slice(1));
                 var content = document.getElementById('foodTabContent' + t.charAt(0).toUpperCase() + t.slice(1));
@@ -5268,6 +5270,8 @@ html += '</div>';
                 renderEnterococcusTab();
             } else if (tab === 'aeromonas') {
                 renderAeromonasTab();
+            } else if (tab === 'vibrioV1') {
+                renderVibrioV1Tab();
             } else if (tab === 'isolates') {
                 renderIsolatesTab();
             }
@@ -6226,6 +6230,133 @@ html += '</div>';
                 });
 
                 html += '</div>'; // End grid
+            }
+
+            html += '</div>'; // End container
+
+            container.innerHTML = html;
+        }
+
+        // Render Vibrio Tab (shows both V1 and V2)
+        function renderVibrioV1Tab() {
+            var container = document.getElementById('foodTabContentVibrioV1');
+            var html = '';
+
+            // Filter Vibrio workflows (both V1 and V2)
+            var vibrioV1Workflows = pathogenWorkflows.filter(function(wf) {
+                return wf.pathogenCode === 'V1';
+            });
+            var vibrioV2Workflows = pathogenWorkflows.filter(function(wf) {
+                return wf.pathogenCode === 'V2';
+            });
+
+            var totalVibrio = vibrioV1Workflows.length + vibrioV2Workflows.length;
+
+            html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<h3 style="margin-top: 0;">🌊 Vibrio Testing Workflows (' + totalVibrio + ')</h3>';
+
+            if (totalVibrio === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">🌊</div>';
+                html += '<div style="font-size: 16px;">No Vibrio workflows yet</div>';
+                html += '<div style="font-size: 14px; margin-top: 5px;">Add seafood samples with Vibrio testing to create workflows</div>';
+                html += '</div>';
+            } else {
+                // V1 WORKFLOWS
+                if (vibrioV1Workflows.length > 0) {
+                    html += '<div style="margin-bottom: 30px;">';
+                    html += '<h4 style="color: #00bcd4; margin-bottom: 15px;">Vibrio V1 (' + vibrioV1Workflows.length + ')</h4>';
+                    html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; overflow-x: auto;">';
+
+                    var v1Stages = [
+                        {name: 'Day 1 - APW', key: 'day1_APW', emoji: '💧', color: '#00bcd4'},
+                        {name: 'Day 2 - TCBS', key: 'day2_TCBS', emoji: '🟢', color: '#4caf50'},
+                        {name: 'Day 3 - BAP', key: 'day3_BAP', emoji: '🧫', color: '#3f51b5'},
+                        {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '✅', color: '#2196f3'}
+                    ];
+
+                    v1Stages.forEach(function(stage) {
+                        html += '<div style="background: ' + stage.color + '15; border: 2px solid ' + stage.color + '; border-radius: 8px; padding: 15px; min-height: 250px;">';
+                        html += '<div style="font-weight: 700; font-size: 13px; margin-bottom: 10px; color: ' + stage.color + ';">' + stage.emoji + ' ' + stage.name + '</div>';
+
+                        var count = 0;
+                        vibrioV1Workflows.forEach(function(wf) {
+                            if (!wf.stages.day1_APW.completed && stage.key === 'day1_APW') count++;
+                            else if (wf.stages.day1_APW.completed && !wf.stages.day2_TCBS.completed && stage.key === 'day2_TCBS') count++;
+                            else if (wf.stages.day2_TCBS.completed && !wf.stages.day3_BAP.completed && stage.key === 'day3_BAP') count++;
+                            else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') count++;
+                        });
+
+                        html += '<div style="font-size: 11px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
+
+                        vibrioV1Workflows.forEach(function(wf) {
+                            var shouldShow = false;
+                            if (!wf.stages.day1_APW.completed && stage.key === 'day1_APW') shouldShow = true;
+                            else if (wf.stages.day1_APW.completed && !wf.stages.day2_TCBS.completed && stage.key === 'day2_TCBS') shouldShow = true;
+                            else if (wf.stages.day2_TCBS.completed && !wf.stages.day3_BAP.completed && stage.key === 'day3_BAP') shouldShow = true;
+                            else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
+
+                            if (shouldShow) {
+                                html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 8px; margin-bottom: 6px; cursor: pointer;" onclick="openVibrioV1WorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                                html += '<div style="font-weight: 600; font-size: 12px; margin-bottom: 3px;">' + wf.foodSampleId + '</div>';
+                                html += '<div style="font-size: 10px; color: #666;">Click to process →</div>';
+                                html += '</div>';
+                            }
+                        });
+
+                        html += '</div>';
+                    });
+
+                    html += '</div></div>';
+                }
+
+                // V2 WORKFLOWS
+                if (vibrioV2Workflows.length > 0) {
+                    html += '<div>';
+                    html += '<h4 style="color: #9c27b0; margin-bottom: 15px;">Vibrio parahaemolyticus V2 (' + vibrioV2Workflows.length + ')</h4>';
+                    html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; overflow-x: auto;">';
+
+                    var v2Stages = [
+                        {name: 'Day 1 - APW', key: 'day1_APW', emoji: '💧', color: '#00bcd4'},
+                        {name: 'Day 2 - CHROMagar', key: 'day2_CHROMagar', emoji: '🟣', color: '#9c27b0'},
+                        {name: 'Day 3 - BAP', key: 'day3_BAP', emoji: '🧫', color: '#3f51b5'},
+                        {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '✅', color: '#2196f3'}
+                    ];
+
+                    v2Stages.forEach(function(stage) {
+                        html += '<div style="background: ' + stage.color + '15; border: 2px solid ' + stage.color + '; border-radius: 8px; padding: 15px; min-height: 250px;">';
+                        html += '<div style="font-weight: 700; font-size: 13px; margin-bottom: 10px; color: ' + stage.color + ';">' + stage.emoji + ' ' + stage.name + '</div>';
+
+                        var count = 0;
+                        vibrioV2Workflows.forEach(function(wf) {
+                            if (!wf.stages.day1_APW.completed && stage.key === 'day1_APW') count++;
+                            else if (wf.stages.day1_APW.completed && !wf.stages.day2_CHROMagar.completed && stage.key === 'day2_CHROMagar') count++;
+                            else if (wf.stages.day2_CHROMagar.completed && !wf.stages.day3_BAP.completed && stage.key === 'day3_BAP') count++;
+                            else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') count++;
+                        });
+
+                        html += '<div style="font-size: 11px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
+
+                        vibrioV2Workflows.forEach(function(wf) {
+                            var shouldShow = false;
+                            if (!wf.stages.day1_APW.completed && stage.key === 'day1_APW') shouldShow = true;
+                            else if (wf.stages.day1_APW.completed && !wf.stages.day2_CHROMagar.completed && stage.key === 'day2_CHROMagar') shouldShow = true;
+                            else if (wf.stages.day2_CHROMagar.completed && !wf.stages.day3_BAP.completed && stage.key === 'day3_BAP') shouldShow = true;
+                            else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
+
+                            if (shouldShow) {
+                                html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 8px; margin-bottom: 6px; cursor: pointer;" onclick="openVibrioV2WorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                                html += '<div style="font-weight: 600; font-size: 12px; margin-bottom: 3px;">' + wf.foodSampleId + '</div>';
+                                html += '<div style="font-size: 10px; color: #666;">Click to process →</div>';
+                                html += '</div>';
+                            }
+                        });
+
+                        html += '</div>';
+                    });
+
+                    html += '</div></div>';
+                }
             }
 
             html += '</div>'; // End container
