@@ -6174,14 +6174,21 @@ html += '</div>';
 
             // Apply to all selected workflows
             var processedCount = 0;
+            console.log('🔄 Bulk processing', workflowIds.length, 'workflows for stage:', stageKey);
+            console.log('📋 Workflow IDs:', workflowIds);
+
             workflowIds.forEach(function(id) {
                 var workflow = pathogenWorkflows.find(function(wf) { return wf.id === id; });
                 if (workflow) {
+                    console.log('✅ Processing workflow:', workflow.foodSampleId, 'Stage:', stageKey);
                     workflow.stages[stageKey] = JSON.parse(JSON.stringify(stageData)); // Deep copy
                     processedCount++;
+                } else {
+                    console.warn('⚠️ Workflow not found:', id);
                 }
             });
 
+            console.log('✅ Bulk complete:', processedCount, 'samples processed');
             saveData();
             closeEcoliBulkModal();
             showSuccessNotification('✓ Processed ' + processedCount + ' samples!');
