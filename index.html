@@ -5212,6 +5212,7 @@ html += '</div>';
             html += '<button onclick="switchFoodTestingTab(\'ecoli\')" id="foodTabEcoli" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🧫 E. coli Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'campylo\')" id="foodTabCampylo" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🦠 Campylobacter Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'salmonella\')" id="foodTabSalmonella" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🔴 Salmonella Testing</button>';
+            html += '<button onclick="switchFoodTestingTab(\'enterococcus\')" id="foodTabEnterococcus" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🟠 Enterococcus Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'isolates\')" id="foodTabIsolates" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🧬 Isolates</button>';
             html += '</div>';
             html += '</div>';
@@ -5221,6 +5222,7 @@ html += '</div>';
             html += '<div id="foodTabContentEcoli" style="display: none;"></div>';
             html += '<div id="foodTabContentCampylo" style="display: none;"></div>';
             html += '<div id="foodTabContentSalmonella" style="display: none;"></div>';
+            html += '<div id="foodTabContentEnterococcus" style="display: none;"></div>';
             html += '<div id="foodTabContentIsolates" style="display: none;"></div>';
 
             foodUI.innerHTML = html;
@@ -5235,7 +5237,7 @@ html += '</div>';
             currentFoodTab = tab;
 
             // Update tab button styles
-            var tabs = ['samples', 'ecoli', 'campylo', 'salmonella', 'isolates'];
+            var tabs = ['samples', 'ecoli', 'campylo', 'salmonella', 'enterococcus', 'isolates'];
             tabs.forEach(function(t) {
                 var btn = document.getElementById('foodTab' + t.charAt(0).toUpperCase() + t.slice(1));
                 var content = document.getElementById('foodTabContent' + t.charAt(0).toUpperCase() + t.slice(1));
@@ -5260,6 +5262,8 @@ html += '</div>';
                 renderCampyloTab();
             } else if (tab === 'salmonella') {
                 renderSalmonellaTab();
+            } else if (tab === 'enterococcus') {
+                renderEnterococcusTab();
             } else if (tab === 'isolates') {
                 renderIsolatesTab();
             }
@@ -5573,9 +5577,10 @@ html += '</div>';
                     createCampyloWorkflow(id, pathogenCode);
                 } else if (pathogenCode === 'S1') {
                     createSalmonellaWorkflow(id, pathogenCode);
+                } else if (pathogenCode === 'E') {
+                    createEnterococcusWorkflow(id, pathogenCode);
                 }
-                // TODO: Add other pathogen workflows in future increments
-                // else if (pathogenCode === 'E') { createEnterococcusWorkflow(id, pathogenCode); }
+                // TODO: Add seafood pathogen workflows (V1, V2, A) in future phase
             });
 
             // Save and refresh
@@ -5655,6 +5660,28 @@ html += '</div>';
                     day1_BPWIncubation: {completed: false},    // Day 1 - BPW incubation (from Day 1A remaining)
                     day2_RVR_LAMP: {completed: false},         // Day 2 - RVR + LAMP
                     day3_XLT4: {completed: false},             // Day 3 - XLT4 Agar
+                    day4_MALDI: {completed: false}             // Day 4 - MALDI Identification
+                },
+                isolateGenerated: false,
+                isolateId: null
+            };
+
+            pathogenWorkflows.push(workflow);
+        }
+
+        // Create Enterococcus workflow
+        function createEnterococcusWorkflow(foodSampleId, pathogenCode) {
+            var workflow = {
+                id: foodSampleId + '-WF-' + pathogenCode,
+                foodSampleId: foodSampleId,
+                pathogenCode: pathogenCode,
+                pathogenName: pathogens[pathogenCode].name,
+                dateCreated: new Date().toISOString().split('T')[0],
+                status: 'Day 1A - Pending',
+                stages: {
+                    day1A_BPWPrep: {completed: false},         // Day 1A - BPW Sample Prep (shared)
+                    day2_Enterococcosel: {completed: false},   // Day 2 - Enterococcosel Agar
+                    day3_BHI: {completed: false},              // Day 3 - BHI Broth Confirmation
                     day4_MALDI: {completed: false}             // Day 4 - MALDI Identification
                 },
                 isolateGenerated: false,
@@ -5881,6 +5908,81 @@ html += '</div>';
 
                         if (shouldShow) {
                             html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openSalmonellaWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                            html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
+                            html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
+                            html += '</div>';
+                        }
+                    });
+
+                    html += '</div>'; // End column
+                });
+
+                html += '</div>'; // End grid
+            }
+
+            html += '</div>'; // End container
+
+            container.innerHTML = html;
+        }
+
+        // Render Enterococcus Tab
+        function renderEnterococcusTab() {
+            var container = document.getElementById('foodTabContentEnterococcus');
+            var html = '';
+
+            // Filter Enterococcus workflows
+            var enterococcusWorkflows = pathogenWorkflows.filter(function(wf) {
+                return wf.pathogenCode === 'E';
+            });
+
+            html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<h3 style="margin-top: 0;">🟠 Enterococcus Testing Workflows (' + enterococcusWorkflows.length + ')</h3>';
+
+            if (enterococcusWorkflows.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">🟠</div>';
+                html += '<div style="font-size: 16px;">No Enterococcus workflows yet</div>';
+                html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples with Enterococcus testing to create workflows</div>';
+                html += '</div>';
+            } else {
+                // Kanban board for Enterococcus workflows - 4 STAGES
+                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; overflow-x: auto;">';
+
+                var stages = [
+                    {name: 'Day 1A - BPW Prep', key: 'day1A_BPWPrep', emoji: '💧', color: '#00bcd4'},
+                    {name: 'Day 2 - Enterococcosel', key: 'day2_Enterococcosel', emoji: '🟠', color: '#ff9800'},
+                    {name: 'Day 3 - BHI Broth', key: 'day3_BHI', emoji: '🧪', color: '#f57c00'},
+                    {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '✅', color: '#4caf50'}
+                ];
+
+                stages.forEach(function(stage) {
+                    html += '<div style="background: ' + stage.color + '15; border: 2px solid ' + stage.color + '; border-radius: 8px; padding: 15px; min-height: 300px;">';
+                    html += '<div style="font-weight: 700; font-size: 14px; margin-bottom: 10px; color: ' + stage.color + ';">';
+                    html += stage.emoji + ' ' + stage.name;
+                    html += '</div>';
+
+                    // Count workflows in this stage
+                    var count = 0;
+                    enterococcusWorkflows.forEach(function(wf) {
+                        if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') count++;
+                        else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day2_Enterococcosel.completed && stage.key === 'day2_Enterococcosel') count++;
+                        else if (wf.stages.day2_Enterococcosel.completed && !wf.stages.day3_BHI.completed && stage.key === 'day3_BHI') count++;
+                        else if (wf.stages.day3_BHI.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') count++;
+                    });
+
+                    html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
+
+                    // Render workflow cards in this stage
+                    enterococcusWorkflows.forEach(function(wf) {
+                        var shouldShow = false;
+
+                        if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') shouldShow = true;
+                        else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day2_Enterococcosel.completed && stage.key === 'day2_Enterococcosel') shouldShow = true;
+                        else if (wf.stages.day2_Enterococcosel.completed && !wf.stages.day3_BHI.completed && stage.key === 'day3_BHI') shouldShow = true;
+                        else if (wf.stages.day3_BHI.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
+
+                        if (shouldShow) {
+                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openEnterococcusWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
                             html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
                             html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
                             html += '</div>';
@@ -6878,6 +6980,255 @@ html += '</div>';
             closeSalmonellaWorkflowModal();
             showSuccessNotification('Salmonella stage completed!');
             renderSalmonellaTab();
+        }
+
+        // Enterococcus Workflow Modal Functions
+        var currentEnterococcusWorkflow = null;
+        var currentEnterococcusStage = null;
+
+        function openEnterococcusWorkflowModal(workflowId, stageKey) {
+            var workflow = pathogenWorkflows.find(function(wf) {
+                return wf.id === workflowId;
+            });
+
+            if (!workflow) {
+                alert('Workflow not found');
+                return;
+            }
+
+            currentEnterococcusWorkflow = workflow;
+            currentEnterococcusStage = stageKey;
+
+            var modal = document.getElementById('enterococcusWorkflowModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'enterococcusWorkflowModal';
+                modal.className = 'modal';
+                document.body.appendChild(modal);
+            }
+
+            var html = '';
+            html += '<div class="modal-content" style="max-width: 600px;">';
+            html += '<span class="close-btn" onclick="closeEnterococcusWorkflowModal()">&times;</span>';
+
+            var stageTitle = '';
+            if (stageKey === 'day1A_BPWPrep') stageTitle = '💧 Day 1A - BPW Sample Prep';
+            else if (stageKey === 'day2_Enterococcosel') stageTitle = '🟠 Day 2 - Enterococcosel Agar';
+            else if (stageKey === 'day3_BHI') stageTitle = '🧪 Day 3 - BHI Broth Confirmation';
+            else if (stageKey === 'day4_MALDI') stageTitle = '✅ Day 4 - MALDI Identification';
+
+            html += '<h3 style="margin-top: 0;">' + stageTitle + '</h3>';
+            html += '<p>Sample: <strong>' + workflow.foodSampleId + '</strong></p>';
+
+            if (stageKey === 'day1A_BPWPrep') {
+                html += '<div class="form-group">';
+                html += '<label>BPW Lot #:</label>';
+                html += '<input type="text" id="entero_bpwLot" placeholder="LOT-BPW-2025-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Sample Weight (g):</label>';
+                html += '<input type="number" id="entero_sampleWeight" value="50" step="0.1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>BPW Volume (ml):</label>';
+                html += '<input type="number" id="entero_bpwVolume" value="250" step="1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Stomach Time (min):</label>';
+                html += '<input type="number" id="entero_stomachTime" value="2" step="0.5" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Volume Pulled for Enterococcus (ml):</label>';
+                html += '<input type="number" id="entero_volumePulled" value="50" step="1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="entero_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day2_Enterococcosel') {
+                html += '<div class="form-group">';
+                html += '<label>Enterococcosel Plate Lot #:</label>';
+                html += '<input type="text" id="entero_plateLot" placeholder="LOT-ENT-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Typical Colonies Present?</label>';
+                html += '<select id="entero_typicalColonies">';
+                html += '<option value="Yes">Yes - Dark red/maroon colonies</option>';
+                html += '<option value="No">No - Negative</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="entero_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="entero_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="entero_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="entero_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="entero_timeOut" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day3_BHI') {
+                html += '<div class="form-group">';
+                html += '<label>BHI Broth Lot #:</label>';
+                html += '<input type="text" id="entero_bhiLot" placeholder="LOT-BHI-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Growth in BHI?</label>';
+                html += '<select id="entero_bhiGrowth">';
+                html += '<option value="Yes">Yes - Turbid growth</option>';
+                html += '<option value="No">No - No growth</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="entero_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="entero_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="entero_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+            } else if (stageKey === 'day4_MALDI') {
+                html += '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Note:</strong> Enterococcus isolates are report-only and will NOT be automatically sent to sequencing.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>MALDI Species ID:</label>';
+                html += '<input type="text" id="entero_maldiSpecies" placeholder="e.g., Enterococcus faecalis" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confidence Score:</label>';
+                html += '<input type="text" id="entero_maldiConfidence" placeholder="e.g., 2.3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confirmed as Enterococcus?</label>';
+                html += '<select id="entero_confirmed">';
+                html += '<option value="Yes">Yes - Generate Isolate (Report Only)</option>';
+                html += '<option value="No">No - Not Enterococcus</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="entero_techInitials" maxlength="3" />';
+                html += '</div>';
+            }
+
+            html += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            html += '<button onclick="completeEnterococcusStage()" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Complete Stage</button>';
+            html += '<button onclick="closeEnterococcusWorkflowModal()" style="background: #6c757d; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>';
+            html += '</div>';
+
+            html += '</div>';
+
+            modal.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function closeEnterococcusWorkflowModal() {
+            var modal = document.getElementById('enterococcusWorkflowModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function completeEnterococcusStage() {
+            if (!currentEnterococcusWorkflow || !currentEnterococcusStage) {
+                alert('No workflow selected');
+                return;
+            }
+
+            var stageData = {};
+            var techInitials = document.getElementById('entero_techInitials');
+            if (techInitials) stageData.techInitials = techInitials.value;
+
+            if (currentEnterococcusStage === 'day1A_BPWPrep') {
+                stageData.bpwLot = document.getElementById('entero_bpwLot').value;
+                stageData.sampleWeight = document.getElementById('entero_sampleWeight').value;
+                stageData.bpwVolume = document.getElementById('entero_bpwVolume').value;
+                stageData.stomachTime = document.getElementById('entero_stomachTime').value;
+                stageData.volumePulled = document.getElementById('entero_volumePulled').value;
+            } else if (currentEnterococcusStage === 'day2_Enterococcosel') {
+                stageData.plateLot = document.getElementById('entero_plateLot').value;
+                stageData.typicalColonies = document.getElementById('entero_typicalColonies').value;
+                stageData.temperature = document.getElementById('entero_temperature').value;
+                stageData.incubator = document.getElementById('entero_incubator').value;
+                stageData.timeIn = document.getElementById('entero_timeIn').value;
+                stageData.timeOut = document.getElementById('entero_timeOut').value;
+            } else if (currentEnterococcusStage === 'day3_BHI') {
+                stageData.bhiLot = document.getElementById('entero_bhiLot').value;
+                stageData.bhiGrowth = document.getElementById('entero_bhiGrowth').value;
+                stageData.temperature = document.getElementById('entero_temperature').value;
+                stageData.incubator = document.getElementById('entero_incubator').value;
+            } else if (currentEnterococcusStage === 'day4_MALDI') {
+                stageData.maldiSpecies = document.getElementById('entero_maldiSpecies').value;
+                stageData.maldiConfidence = document.getElementById('entero_maldiConfidence').value;
+                stageData.confirmed = document.getElementById('entero_confirmed').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            currentEnterococcusWorkflow.stages[currentEnterococcusStage] = stageData;
+
+            // Generate isolate if confirmed (but don't auto-send to sequencing)
+            if (currentEnterococcusStage === 'day4_MALDI' && stageData.confirmed === 'Yes') {
+                generateIsolate(currentEnterococcusWorkflow, stageData.maldiSpecies);
+                showSuccessNotification('Enterococcus isolate generated! (Report only - not sent to sequencing)');
+            }
+
+            saveData();
+            closeEnterococcusWorkflowModal();
+            showSuccessNotification('Enterococcus stage completed!');
+            renderEnterococcusTab();
         }
 
         // Generate Isolate and send to sequencing
