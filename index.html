@@ -8123,6 +8123,559 @@ html += '</div>';
             renderAeromonasTab();
         }
 
+        // ========== VIBRIO V1 WORKFLOW MODAL FUNCTIONS ==========
+        var currentVibrioV1Workflow = null;
+        var currentVibrioV1Stage = null;
+
+        function openVibrioV1WorkflowModal(workflowId, stageKey) {
+            var workflow = pathogenWorkflows.find(function(wf) {
+                return wf.id === workflowId;
+            });
+
+            if (!workflow) {
+                alert('Workflow not found');
+                return;
+            }
+
+            currentVibrioV1Workflow = workflow;
+            currentVibrioV1Stage = stageKey;
+
+            var modal = document.getElementById('vibrioV1WorkflowModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'vibrioV1WorkflowModal';
+                modal.style.cssText = 'display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);';
+                document.body.appendChild(modal);
+            }
+
+            var foodSample = foodSamples.find(function(fs) {
+                return fs.id === workflow.foodSampleId;
+            });
+            var sampleName = foodSample ? foodSample.sampleId : workflow.foodSampleId;
+
+            var html = '';
+            html += '<div style="background: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">';
+            html += '<h3 style="margin-top: 0; color: #00bcd4; border-bottom: 3px solid #00bcd4; padding-bottom: 10px;">Vibrio V1 - ' + sampleName + '</h3>';
+
+            var stageTitle = '';
+            if (stageKey === 'day1_APW') stageTitle = 'Day 1 - APW Incubation';
+            else if (stageKey === 'day2_TCBS') stageTitle = 'Day 2 - TCBS Agar';
+            else if (stageKey === 'day3_BAP') stageTitle = 'Day 3 - BAP Confirmation';
+            else if (stageKey === 'day4_MALDI') stageTitle = 'Day 4 - MALDI Identification';
+
+            html += '<h4 style="color: #555; margin-bottom: 20px;">' + stageTitle + '</h4>';
+
+            if (stageKey === 'day1_APW') {
+                html += '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Seafood Protocol:</strong> 25g sample + 225ml APW (Alkaline Peptone Water)<br>';
+                html += '<strong>⏱️ Incubation:</strong> 37°C for 6-8 hours (shorter than BPW!)';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>APW Lot #:</label>';
+                html += '<input type="text" id="v1_apwLot" placeholder="LOT-APW-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Sample Weight (g):</label>';
+                html += '<input type="text" id="v1_sampleWeight" value="25" placeholder="25g" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>APW Volume (ml):</label>';
+                html += '<input type="text" id="v1_apwVolume" value="225" placeholder="225ml" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="v1_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="v1_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="v1_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day2_TCBS') {
+                html += '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>⚠️ Protocol:</strong> Pull loopful directly from APW bag and streak onto TCBS (Thiosulfate-citrate-bile salts-sucrose) agar<br>';
+                html += '<strong>🟢 Look for:</strong> Yellow or green colonies';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>TCBS Plate Lot #:</label>';
+                html += '<input type="text" id="v1_plateLot" placeholder="LOT-TCBS-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Typical Colonies (Yellow/Green)?</label>';
+                html += '<select id="v1_typicalColonies">';
+                html += '<option value="Yes">Yes - Yellow or green colonies present</option>';
+                html += '<option value="No">No - No typical colonies</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="v1_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="v1_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="v1_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="v1_timeOut" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="v1_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day3_BAP') {
+                html += '<div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Protocol:</strong> Pick colonies from TCBS and confirm on BAP (Blood Agar Plate)<br>';
+                html += '<strong>Note:</strong> If different color colonies observed (yellow vs. green), pick both types';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>BAP Plate Lot #:</label>';
+                html += '<input type="text" id="v1_bapLot" placeholder="LOT-BAP-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Typical Growth?</label>';
+                html += '<select id="v1_typicalGrowth">';
+                html += '<option value="Yes">Yes - Typical growth</option>';
+                html += '<option value="No">No - No growth</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="v1_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="v1_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="v1_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+            } else if (stageKey === 'day4_MALDI') {
+                html += '<div style="background: #e1f5fe; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>✅ Auto-Sequencing:</strong> Vibrio V1 isolates will be automatically sent to sequencing upon confirmation.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>MALDI Species ID:</label>';
+                html += '<input type="text" id="v1_maldiSpecies" placeholder="e.g., Vibrio parahaemolyticus" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confidence Score:</label>';
+                html += '<input type="text" id="v1_maldiConfidence" placeholder="e.g., 2.3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confirmed as Vibrio?</label>';
+                html += '<select id="v1_confirmed">';
+                html += '<option value="Yes">Yes - Generate Isolate & Send to Sequencing</option>';
+                html += '<option value="No">No - Not Vibrio</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="v1_techInitials" maxlength="3" />';
+                html += '</div>';
+            }
+
+            html += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            html += '<button onclick="completeVibrioV1Stage()" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Complete Stage</button>';
+            html += '<button onclick="closeVibrioV1WorkflowModal()" style="background: #6c757d; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>';
+            html += '</div>';
+
+            html += '</div>';
+
+            modal.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function closeVibrioV1WorkflowModal() {
+            var modal = document.getElementById('vibrioV1WorkflowModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function completeVibrioV1Stage() {
+            if (!currentVibrioV1Workflow || !currentVibrioV1Stage) {
+                alert('No workflow selected');
+                return;
+            }
+
+            var stageData = {};
+            var techInitials = document.getElementById('v1_techInitials');
+            if (techInitials) stageData.techInitials = techInitials.value;
+
+            if (currentVibrioV1Stage === 'day1_APW') {
+                stageData.apwLot = document.getElementById('v1_apwLot').value;
+                stageData.sampleWeight = document.getElementById('v1_sampleWeight').value;
+                stageData.apwVolume = document.getElementById('v1_apwVolume').value;
+                stageData.temperature = document.getElementById('v1_temperature').value;
+                stageData.incubator = document.getElementById('v1_incubator').value;
+            } else if (currentVibrioV1Stage === 'day2_TCBS') {
+                stageData.plateLot = document.getElementById('v1_plateLot').value;
+                stageData.typicalColonies = document.getElementById('v1_typicalColonies').value;
+                stageData.temperature = document.getElementById('v1_temperature').value;
+                stageData.incubator = document.getElementById('v1_incubator').value;
+                stageData.timeIn = document.getElementById('v1_timeIn').value;
+                stageData.timeOut = document.getElementById('v1_timeOut').value;
+            } else if (currentVibrioV1Stage === 'day3_BAP') {
+                stageData.bapLot = document.getElementById('v1_bapLot').value;
+                stageData.typicalGrowth = document.getElementById('v1_typicalGrowth').value;
+                stageData.temperature = document.getElementById('v1_temperature').value;
+                stageData.incubator = document.getElementById('v1_incubator').value;
+            } else if (currentVibrioV1Stage === 'day4_MALDI') {
+                stageData.maldiSpecies = document.getElementById('v1_maldiSpecies').value;
+                stageData.maldiConfidence = document.getElementById('v1_maldiConfidence').value;
+                stageData.confirmed = document.getElementById('v1_confirmed').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            currentVibrioV1Workflow.stages[currentVibrioV1Stage] = stageData;
+
+            // Generate isolate if confirmed AND auto-send to sequencing
+            if (currentVibrioV1Stage === 'day4_MALDI' && stageData.confirmed === 'Yes') {
+                generateIsolate(currentVibrioV1Workflow, stageData.maldiSpecies);
+                // V1 auto-sequences (unlike Aeromonas)
+                autoSendToSequencing(currentVibrioV1Workflow.foodSampleId + '-V1');
+                showSuccessNotification('Vibrio V1 isolate generated and sent to sequencing!');
+            }
+
+            saveData();
+            closeVibrioV1WorkflowModal();
+            showSuccessNotification('Vibrio V1 stage completed!');
+            renderVibrioV1Tab();
+        }
+
+        // ========== VIBRIO V2 WORKFLOW MODAL FUNCTIONS ==========
+        var currentVibrioV2Workflow = null;
+        var currentVibrioV2Stage = null;
+
+        function openVibrioV2WorkflowModal(workflowId, stageKey) {
+            var workflow = pathogenWorkflows.find(function(wf) {
+                return wf.id === workflowId;
+            });
+
+            if (!workflow) {
+                alert('Workflow not found');
+                return;
+            }
+
+            currentVibrioV2Workflow = workflow;
+            currentVibrioV2Stage = stageKey;
+
+            var modal = document.getElementById('vibrioV2WorkflowModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'vibrioV2WorkflowModal';
+                modal.style.cssText = 'display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);';
+                document.body.appendChild(modal);
+            }
+
+            var foodSample = foodSamples.find(function(fs) {
+                return fs.id === workflow.foodSampleId;
+            });
+            var sampleName = foodSample ? foodSample.sampleId : workflow.foodSampleId;
+
+            var html = '';
+            html += '<div style="background: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">';
+            html += '<h3 style="margin-top: 0; color: #9c27b0; border-bottom: 3px solid #9c27b0; padding-bottom: 10px;">Vibrio parahaemolyticus V2 - ' + sampleName + '</h3>';
+
+            var stageTitle = '';
+            if (stageKey === 'day1_APW') stageTitle = 'Day 1 - APW Incubation';
+            else if (stageKey === 'day2_CHROMagar') stageTitle = 'Day 2 - CHROMagar';
+            else if (stageKey === 'day3_BAP') stageTitle = 'Day 3 - BAP Confirmation';
+            else if (stageKey === 'day4_MALDI') stageTitle = 'Day 4 - MALDI Identification';
+
+            html += '<h4 style="color: #555; margin-bottom: 20px;">' + stageTitle + '</h4>';
+
+            if (stageKey === 'day1_APW') {
+                html += '<div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Seafood Protocol:</strong> 25g sample + 225ml APW (Alkaline Peptone Water)<br>';
+                html += '<strong>⏱️ Incubation:</strong> 37°C for 6-8 hours (shorter than BPW!)';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>APW Lot #:</label>';
+                html += '<input type="text" id="v2_apwLot" placeholder="LOT-APW-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Sample Weight (g):</label>';
+                html += '<input type="text" id="v2_sampleWeight" value="25" placeholder="25g" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>APW Volume (ml):</label>';
+                html += '<input type="text" id="v2_apwVolume" value="225" placeholder="225ml" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="v2_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="v2_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="v2_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day2_CHROMagar') {
+                html += '<div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>⚠️ Protocol:</strong> Pull loopful directly from APW bag and streak onto CHROMagar Vibrio<br>';
+                html += '<strong>🟣 Look for:</strong> Mauve (purple) colonies characteristic of V. parahaemolyticus';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>CHROMagar Plate Lot #:</label>';
+                html += '<input type="text" id="v2_plateLot" placeholder="LOT-CHR-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Typical Colonies (Mauve)?</label>';
+                html += '<select id="v2_typicalColonies">';
+                html += '<option value="Yes">Yes - Mauve colonies present</option>';
+                html += '<option value="No">No - No typical colonies</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="v2_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="v2_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="v2_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="v2_timeOut" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="v2_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day3_BAP') {
+                html += '<div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Protocol:</strong> Pick mauve colonies from CHROMagar and confirm on BAP (Blood Agar Plate)';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>BAP Plate Lot #:</label>';
+                html += '<input type="text" id="v2_bapLot" placeholder="LOT-BAP-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Typical Growth?</label>';
+                html += '<select id="v2_typicalGrowth">';
+                html += '<option value="Yes">Yes - Typical growth</option>';
+                html += '<option value="No">No - No growth</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="v2_techInitials" maxlength="3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="v2_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="v2_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+            } else if (stageKey === 'day4_MALDI') {
+                html += '<div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>✅ Auto-Sequencing:</strong> Vibrio V2 isolates will be automatically sent to sequencing upon confirmation.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>MALDI Species ID:</label>';
+                html += '<input type="text" id="v2_maldiSpecies" placeholder="e.g., Vibrio parahaemolyticus" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confidence Score:</label>';
+                html += '<input type="text" id="v2_maldiConfidence" placeholder="e.g., 2.3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Confirmed as Vibrio parahaemolyticus?</label>';
+                html += '<select id="v2_confirmed">';
+                html += '<option value="Yes">Yes - Generate Isolate & Send to Sequencing</option>';
+                html += '<option value="No">No - Not V. parahaemolyticus</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="v2_techInitials" maxlength="3" />';
+                html += '</div>';
+            }
+
+            html += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            html += '<button onclick="completeVibrioV2Stage()" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Complete Stage</button>';
+            html += '<button onclick="closeVibrioV2WorkflowModal()" style="background: #6c757d; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>';
+            html += '</div>';
+
+            html += '</div>';
+
+            modal.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function closeVibrioV2WorkflowModal() {
+            var modal = document.getElementById('vibrioV2WorkflowModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function completeVibrioV2Stage() {
+            if (!currentVibrioV2Workflow || !currentVibrioV2Stage) {
+                alert('No workflow selected');
+                return;
+            }
+
+            var stageData = {};
+            var techInitials = document.getElementById('v2_techInitials');
+            if (techInitials) stageData.techInitials = techInitials.value;
+
+            if (currentVibrioV2Stage === 'day1_APW') {
+                stageData.apwLot = document.getElementById('v2_apwLot').value;
+                stageData.sampleWeight = document.getElementById('v2_sampleWeight').value;
+                stageData.apwVolume = document.getElementById('v2_apwVolume').value;
+                stageData.temperature = document.getElementById('v2_temperature').value;
+                stageData.incubator = document.getElementById('v2_incubator').value;
+            } else if (currentVibrioV2Stage === 'day2_CHROMagar') {
+                stageData.plateLot = document.getElementById('v2_plateLot').value;
+                stageData.typicalColonies = document.getElementById('v2_typicalColonies').value;
+                stageData.temperature = document.getElementById('v2_temperature').value;
+                stageData.incubator = document.getElementById('v2_incubator').value;
+                stageData.timeIn = document.getElementById('v2_timeIn').value;
+                stageData.timeOut = document.getElementById('v2_timeOut').value;
+            } else if (currentVibrioV2Stage === 'day3_BAP') {
+                stageData.bapLot = document.getElementById('v2_bapLot').value;
+                stageData.typicalGrowth = document.getElementById('v2_typicalGrowth').value;
+                stageData.temperature = document.getElementById('v2_temperature').value;
+                stageData.incubator = document.getElementById('v2_incubator').value;
+            } else if (currentVibrioV2Stage === 'day4_MALDI') {
+                stageData.maldiSpecies = document.getElementById('v2_maldiSpecies').value;
+                stageData.maldiConfidence = document.getElementById('v2_maldiConfidence').value;
+                stageData.confirmed = document.getElementById('v2_confirmed').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            currentVibrioV2Workflow.stages[currentVibrioV2Stage] = stageData;
+
+            // Generate isolate if confirmed AND auto-send to sequencing
+            if (currentVibrioV2Stage === 'day4_MALDI' && stageData.confirmed === 'Yes') {
+                generateIsolate(currentVibrioV2Workflow, stageData.maldiSpecies);
+                // V2 auto-sequences (unlike Aeromonas)
+                autoSendToSequencing(currentVibrioV2Workflow.foodSampleId + '-V2');
+                showSuccessNotification('Vibrio V2 isolate generated and sent to sequencing!');
+            }
+
+            saveData();
+            closeVibrioV2WorkflowModal();
+            showSuccessNotification('Vibrio V2 stage completed!');
+            renderVibrioV1Tab();
+        }
+
         // Generate Isolate and send to sequencing
         function generateIsolate(workflow, species) {
             var isolateId = workflow.foodSampleId + '-' + workflow.pathogenCode;
