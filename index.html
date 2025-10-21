@@ -5853,6 +5853,14 @@ html += '</div>';
 
                     html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
 
+                    // Bulk selection buttons
+                    if (count > 0) {
+                        html += '<div style="display: flex; gap: 5px; margin-bottom: 10px;">';
+                        html += '<button onclick="selectAllEcoliInStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Select All</button>';
+                        html += '<button onclick="processSelectedEcoli(\'' + stage.key + '\')" style="flex: 1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Process (<span id="selectedCount_' + stage.key + '">0</span>)</button>';
+                        html += '</div>';
+                    }
+
                     // Render workflow cards in this stage
                     ecoliWorkflows.forEach(function(wf) {
                         var shouldShow = false;
@@ -5865,9 +5873,12 @@ html += '</div>';
                         else if (wf.stages.day4_BAP.completed && !wf.stages.day5_MALDI.completed && stage.key === 'day5_MALDI') shouldShow = true;
 
                         if (shouldShow) {
-                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openEcoliWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; position: relative;">';
+                            html += '<input type="checkbox" class="ecoli-bulk-checkbox" data-workflow-id="' + wf.id + '" data-stage="' + stage.key + '" onchange="updateEcoliSelectedCount(\'' + stage.key + '\')" style="position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; cursor: pointer;" />';
+                            html += '<div style="cursor: pointer; padding-right: 25px;" onclick="openEcoliWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
                             html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
                             html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
+                            html += '</div>';
                             html += '</div>';
                         }
                     });
@@ -5881,6 +5892,300 @@ html += '</div>';
             html += '</div>'; // End container
 
             container.innerHTML = html;
+        }
+
+        // ========== E. COLI BULK SELECTION FUNCTIONS ==========
+
+        function updateEcoliSelectedCount(stageKey) {
+            var checkboxes = document.querySelectorAll('.ecoli-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
+            var countSpan = document.getElementById('selectedCount_' + stageKey);
+            if (countSpan) {
+                countSpan.textContent = checkboxes.length;
+            }
+        }
+
+        function selectAllEcoliInStage(stageKey) {
+            var checkboxes = document.querySelectorAll('.ecoli-bulk-checkbox[data-stage="' + stageKey + '"]');
+            var allChecked = true;
+
+            // Check if all are already checked
+            checkboxes.forEach(function(cb) {
+                if (!cb.checked) allChecked = false;
+            });
+
+            // Toggle: if all checked, uncheck all. Otherwise, check all.
+            checkboxes.forEach(function(cb) {
+                cb.checked = !allChecked;
+            });
+
+            updateEcoliSelectedCount(stageKey);
+        }
+
+        function processSelectedEcoli(stageKey) {
+            var checkboxes = document.querySelectorAll('.ecoli-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
+
+            if (checkboxes.length === 0) {
+                alert('No samples selected. Please select at least one sample.');
+                return;
+            }
+
+            var workflowIds = [];
+            checkboxes.forEach(function(cb) {
+                workflowIds.push(cb.getAttribute('data-workflow-id'));
+            });
+
+            openEcoliBulkProcessModal(workflowIds, stageKey);
+        }
+
+        function openEcoliBulkProcessModal(workflowIds, stageKey) {
+            var workflows = workflowIds.map(function(id) {
+                return pathogenWorkflows.find(function(wf) { return wf.id === id; });
+            }).filter(function(wf) { return wf != null; });
+
+            if (workflows.length === 0) {
+                alert('No valid workflows found');
+                return;
+            }
+
+            var modal = document.getElementById('ecoliBulkModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'ecoliBulkModal';
+                modal.style.cssText = 'display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);';
+                document.body.appendChild(modal);
+            }
+
+            var stageTitle = '';
+            if (stageKey === 'day1A_BPWPrep') stageTitle = 'Day 1A - BPW Prep';
+            else if (stageKey === 'day1B_MacBroth') stageTitle = 'Day 1B - MAC Broth';
+            else if (stageKey === 'day2_MacAgar') stageTitle = 'Day 2 - MAC Agar';
+            else if (stageKey === 'day3_PinkColonies') stageTitle = 'Day 3 - Pink Colonies';
+            else if (stageKey === 'day4_BAP') stageTitle = 'Day 4 - BAP';
+            else if (stageKey === 'day5_MALDI') stageTitle = 'Day 5 - MALDI';
+
+            var html = '';
+            html += '<div style="background: white; margin: 3% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 700px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto;">';
+            html += '<h3 style="margin-top: 0; color: #00bcd4; border-bottom: 3px solid #00bcd4; padding-bottom: 10px;">🧫 Bulk Process E. coli</h3>';
+            html += '<h4 style="color: #555; margin-bottom: 20px;">' + stageTitle + ' - ' + workflows.length + ' sample(s)</h4>';
+
+            // List of samples
+            html += '<div style="background: #f5f5f5; padding: 15px; border-radius: 6px; margin-bottom: 20px;">';
+            html += '<div style="font-weight: 600; margin-bottom: 10px;">Samples to process:</div>';
+            html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+            workflows.forEach(function(wf) {
+                html += '<span style="background: white; padding: 6px 12px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; font-weight: 600;">' + wf.foodSampleId + '</span>';
+            });
+            html += '</div>';
+            html += '</div>';
+
+            // Store workflow IDs and stage in hidden inputs
+            html += '<input type="hidden" id="bulk_workflowIds" value="' + workflowIds.join(',') + '" />';
+            html += '<input type="hidden" id="bulk_stageKey" value="' + stageKey + '" />';
+
+            // Stage-specific form fields (same for all samples)
+            if (stageKey === 'day1A_BPWPrep') {
+                html += '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Note:</strong> All samples will use the same lot numbers and settings below.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>BPW Lot #:</label>';
+                html += '<input type="text" id="bulk_bpwLot" placeholder="LOT-BPW-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="bulk_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day1B_MacBroth') {
+                html += '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Note:</strong> All samples will use the same lot numbers and settings below.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>MAC Broth Lot #:</label>';
+                html += '<input type="text" id="bulk_macBrothLot" placeholder="LOT-MAC-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="bulk_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="bulk_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="bulk_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day2_MacAgar') {
+                html += '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Note:</strong> All samples will use the same lot numbers and settings below.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>MAC Agar Plate Lot #:</label>';
+                html += '<input type="text" id="bulk_macAgarLot" placeholder="LOT-MAC-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="bulk_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="bulk_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="bulk_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day3_PinkColonies') {
+                html += '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>⚠️ Note:</strong> Only samples with pink colonies will be marked as completed.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Pink Colonies Present?</label>';
+                html += '<select id="bulk_pinkColonies">';
+                html += '<option value="Yes">Yes - Pink colonies present</option>';
+                html += '<option value="No">No - No pink colonies</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="bulk_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day4_BAP') {
+                html += '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>ℹ️ Note:</strong> All samples will use the same lot numbers and settings below.';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>BAP Plate Lot #:</label>';
+                html += '<input type="text" id="bulk_bapLot" placeholder="LOT-BAP-001" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Temperature:</label>';
+                html += '<select id="bulk_temperature">';
+                html += '<option value="37">37°C</option>';
+                html += '<option value="35">35°C</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Incubator:</label>';
+                html += '<select id="bulk_incubator">';
+                html += '<option value="INC-1">Incubator 1</option>';
+                html += '<option value="INC-2">Incubator 2</option>';
+                html += '<option value="INC-3">Incubator 3</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Technician Initials:</label>';
+                html += '<input type="text" id="bulk_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day5_MALDI') {
+                html += '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
+                html += '<strong>⚠️ Note:</strong> MALDI stage cannot be bulk processed. Please process samples individually to enter species ID for each.';
+                html += '</div>';
+                html += '<div style="text-align: center; padding: 20px;">';
+                html += '<button onclick="closeEcoliBulkModal()" style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Close</button>';
+                html += '</div>';
+                modal.innerHTML = html;
+                modal.style.display = 'block';
+                return;
+            }
+
+            html += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            html += '<button onclick="completeEcoliBulkStage()" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Process All ' + workflows.length + ' Samples</button>';
+            html += '<button onclick="closeEcoliBulkModal()" style="background: #6c757d; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>';
+            html += '</div>';
+
+            html += '</div>';
+
+            modal.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function closeEcoliBulkModal() {
+            var modal = document.getElementById('ecoliBulkModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function completeEcoliBulkStage() {
+            var workflowIds = document.getElementById('bulk_workflowIds').value.split(',');
+            var stageKey = document.getElementById('bulk_stageKey').value;
+
+            var stageData = {};
+            var techInitials = document.getElementById('bulk_techInitials');
+            if (techInitials) stageData.techInitials = techInitials.value;
+
+            // Collect common data based on stage
+            if (stageKey === 'day1A_BPWPrep') {
+                stageData.bpwLot = document.getElementById('bulk_bpwLot').value;
+            } else if (stageKey === 'day1B_MacBroth') {
+                stageData.macBrothLot = document.getElementById('bulk_macBrothLot').value;
+                stageData.temperature = document.getElementById('bulk_temperature').value;
+                stageData.incubator = document.getElementById('bulk_incubator').value;
+            } else if (stageKey === 'day2_MacAgar') {
+                stageData.macAgarLot = document.getElementById('bulk_macAgarLot').value;
+                stageData.temperature = document.getElementById('bulk_temperature').value;
+                stageData.incubator = document.getElementById('bulk_incubator').value;
+            } else if (stageKey === 'day3_PinkColonies') {
+                stageData.pinkColonies = document.getElementById('bulk_pinkColonies').value;
+            } else if (stageKey === 'day4_BAP') {
+                stageData.bapLot = document.getElementById('bulk_bapLot').value;
+                stageData.temperature = document.getElementById('bulk_temperature').value;
+                stageData.incubator = document.getElementById('bulk_incubator').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            // Apply to all selected workflows
+            var processedCount = 0;
+            workflowIds.forEach(function(id) {
+                var workflow = pathogenWorkflows.find(function(wf) { return wf.id === id; });
+                if (workflow) {
+                    workflow.stages[stageKey] = JSON.parse(JSON.stringify(stageData)); // Deep copy
+                    processedCount++;
+                }
+            });
+
+            saveData();
+            closeEcoliBulkModal();
+            showSuccessNotification('✓ Processed ' + processedCount + ' samples!');
+            renderEcoliTab();
         }
 
         // Render Campylobacter Tab
