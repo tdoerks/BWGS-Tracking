@@ -5925,6 +5925,8 @@ html += '</div>';
         function processSelectedEcoli(stageKey) {
             var checkboxes = document.querySelectorAll('.ecoli-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
 
+            console.log('🔍 Found', checkboxes.length, 'checked checkboxes for stage:', stageKey);
+
             if (checkboxes.length === 0) {
                 alert('No samples selected. Please select at least one sample.');
                 return;
@@ -5932,9 +5934,12 @@ html += '</div>';
 
             var workflowIds = [];
             checkboxes.forEach(function(cb) {
-                workflowIds.push(cb.getAttribute('data-workflow-id'));
+                var id = cb.getAttribute('data-workflow-id');
+                console.log('📌 Collecting workflow ID:', id);
+                workflowIds.push(id);
             });
 
+            console.log('📦 Total workflow IDs collected:', workflowIds);
             openEcoliBulkProcessModal(workflowIds, stageKey);
         }
 
