@@ -375,9 +375,10 @@
             margin-left: 260px;
             flex: 1;
             transition: margin-left 0.3s ease;
-            padding: 10px;
+            padding: 5px;
             min-height: 100vh;
             max-width: 100%;
+            width: 100%;
         }
 
         .main-content.expanded {
@@ -5813,7 +5814,7 @@ html += '</div>';
                 return wf.pathogenCode === 'EC';
             });
 
-            html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<div style="background: white; padding: 15px 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
             html += '<h3 style="margin-top: 0;">🧫 E. coli Testing Workflows (' + ecoliWorkflows.length + ')</h3>';
 
             if (ecoliWorkflows.length === 0) {
@@ -6250,6 +6251,14 @@ html += '</div>';
 
                     html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
 
+                    // Bulk selection buttons
+                    if (count > 0 && stage.key !== 'day4_MALDI') {
+                        html += '<div style="display: flex; gap: 5px; margin-bottom: 10px;">';
+                        html += '<button onclick="selectAllCampyloInStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Select All</button>';
+                        html += '<button onclick="processSelectedCampylo(\'' + stage.key + '\')" style="flex: 1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Process (<span id="selectedCountC1_' + stage.key + '">0</span>)</button>';
+                        html += '</div>';
+                    }
+
                     // Render workflow cards in this stage
                     campyloWorkflows.forEach(function(wf) {
                         var shouldShow = false;
@@ -6261,9 +6270,14 @@ html += '</div>';
                         else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
 
                         if (shouldShow) {
-                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openCampyloWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; position: relative;">';
+                            if (stage.key !== 'day4_MALDI') {
+                                html += '<input type="checkbox" class="campylo-bulk-checkbox" data-workflow-id="' + wf.id + '" data-stage="' + stage.key + '" onchange="updateCampyloSelectedCount(\'' + stage.key + '\')" style="position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; cursor: pointer;" />';
+                            }
+                            html += '<div style="cursor: pointer; padding-right: 25px;" onclick="openCampyloWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
                             html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
                             html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
+                            html += '</div>';
                             html += '</div>';
                         }
                     });
