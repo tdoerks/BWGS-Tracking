@@ -5856,9 +5856,9 @@ html += '</div>';
 
                     // Bulk selection buttons
                     if (count > 0) {
-                        html += '<div style="display: flex; gap: 5px; margin-bottom: 10px;">';
-                        html += '<button onclick="selectAllEcoliInStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Select All</button>';
-                        html += '<button onclick="processSelectedEcoli(\'' + stage.key + '\')" style="flex: 1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Process (<span id="selectedCount_' + stage.key + '">0</span>)</button>';
+                        html += '<div style="display: flex; gap: 6px; margin-bottom: 12px;">';
+                        html += '<button onclick="selectAllEcoliInStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 10px 8px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s;">☑️ Select All</button>';
+                        html += '<button onclick="processSelectedEcoli(\'' + stage.key + '\')" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 8px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 700; box-shadow: 0 2px 6px rgba(40,167,69,0.3);">✓ Process (<span id="selectedCount_' + stage.key + '">0</span>)</button>';
                         html += '</div>';
                     }
 
