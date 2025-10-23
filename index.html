@@ -7688,6 +7688,14 @@ html += '</div>';
 
                         html += '<div style="font-size: 11px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
 
+                        // Bulk selection buttons (exclude MALDI)
+                        if (count > 0 && stage.key !== 'day4_MALDI') {
+                            html += '<div style="display: flex; gap: 5px; margin-bottom: 10px;">';
+                            html += '<button onclick="selectAllVibrioV1InStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Select All</button>';
+                            html += '<button onclick="processSelectedVibrioV1(\'' + stage.key + '\')" style="flex: 1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Process (<span id="selectedCountV1_' + stage.key + '">0</span>)</button>';
+                            html += '</div>';
+                        }
+
                         vibrioV1Workflows.forEach(function(wf) {
                             var shouldShow = false;
                             if (!wf.stages.day1_APW.completed && stage.key === 'day1_APW') shouldShow = true;
@@ -7696,9 +7704,12 @@ html += '</div>';
                             else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
 
                             if (shouldShow) {
-                                html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 8px; margin-bottom: 6px; cursor: pointer;" onclick="openVibrioV1WorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                                html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 8px; margin-bottom: 6px; position: relative;">';
+                                html += '<input type="checkbox" class="vibrio-v1-bulk-checkbox" data-workflow-id="' + wf.id + '" data-stage="' + stage.key + '" onchange="updateVibrioV1SelectedCount(\'' + stage.key + '\')" style="position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; cursor: pointer;" />';
+                                html += '<div style="cursor: pointer; padding-right: 25px;" onclick="openVibrioV1WorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
                                 html += '<div style="font-weight: 600; font-size: 12px; margin-bottom: 3px;">' + wf.foodSampleId + '</div>';
                                 html += '<div style="font-size: 10px; color: #666;">Click to process →</div>';
+                                html += '</div>';
                                 html += '</div>';
                             }
                         });
@@ -7736,6 +7747,14 @@ html += '</div>';
 
                         html += '<div style="font-size: 11px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
 
+                        // Bulk selection buttons (exclude MALDI)
+                        if (count > 0 && stage.key !== 'day4_MALDI') {
+                            html += '<div style="display: flex; gap: 5px; margin-bottom: 10px;">';
+                            html += '<button onclick="selectAllVibrioV2InStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Select All</button>';
+                            html += '<button onclick="processSelectedVibrioV2(\'' + stage.key + '\')" style="flex: 1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Process (<span id="selectedCountV2_' + stage.key + '">0</span>)</button>';
+                            html += '</div>';
+                        }
+
                         vibrioV2Workflows.forEach(function(wf) {
                             var shouldShow = false;
                             if (!wf.stages.day1_APW.completed && stage.key === 'day1_APW') shouldShow = true;
@@ -7744,9 +7763,12 @@ html += '</div>';
                             else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
 
                             if (shouldShow) {
-                                html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 8px; margin-bottom: 6px; cursor: pointer;" onclick="openVibrioV2WorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                                html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 8px; margin-bottom: 6px; position: relative;">';
+                                html += '<input type="checkbox" class="vibrio-v2-bulk-checkbox" data-workflow-id="' + wf.id + '" data-stage="' + stage.key + '" onchange="updateVibrioV2SelectedCount(\'' + stage.key + '\')" style="position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; cursor: pointer;" />';
+                                html += '<div style="cursor: pointer; padding-right: 25px;" onclick="openVibrioV2WorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
                                 html += '<div style="font-weight: 600; font-size: 12px; margin-bottom: 3px;">' + wf.foodSampleId + '</div>';
                                 html += '<div style="font-size: 10px; color: #666;">Click to process →</div>';
+                                html += '</div>';
                                 html += '</div>';
                             }
                         });
@@ -7761,6 +7783,408 @@ html += '</div>';
             html += '</div>'; // End container
 
             container.innerHTML = html;
+        }
+
+        // ========== VIBRIO V1 BULK SELECTION FUNCTIONS ==========
+
+        function updateVibrioV1SelectedCount(stageKey) {
+            var checkboxes = document.querySelectorAll('.vibrio-v1-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
+            var countSpan = document.getElementById('selectedCountV1_' + stageKey);
+            if (countSpan) {
+                countSpan.textContent = checkboxes.length;
+            }
+        }
+
+        function selectAllVibrioV1InStage(stageKey) {
+            var checkboxes = document.querySelectorAll('.vibrio-v1-bulk-checkbox[data-stage="' + stageKey + '"]');
+            var allChecked = true;
+            checkboxes.forEach(function(cb) {
+                if (!cb.checked) allChecked = false;
+            });
+            checkboxes.forEach(function(cb) {
+                cb.checked = !allChecked;
+            });
+            updateVibrioV1SelectedCount(stageKey);
+        }
+
+        function processSelectedVibrioV1(stageKey) {
+            var checkboxes = document.querySelectorAll('.vibrio-v1-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
+            if (checkboxes.length === 0) {
+                alert('No samples selected.');
+                return;
+            }
+            var workflowIds = [];
+            checkboxes.forEach(function(cb) {
+                workflowIds.push(cb.getAttribute('data-workflow-id'));
+            });
+            openVibrioV1BulkModal(workflowIds, stageKey);
+        }
+
+        function openVibrioV1BulkModal(workflowIds, stageKey) {
+            var modalHtml = '<div id="vibrioV1BulkModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;">';
+            modalHtml += '<div style="background: white; padding: 25px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto;">';
+            modalHtml += '<h3 style="margin-top: 0; color: #00bcd4;">🌊 Bulk Process Vibrio V1 - ' + workflowIds.length + ' samples</h3>';
+
+            modalHtml += '<input type="hidden" id="bulk_v1_workflowIds" value="' + workflowIds.join(',') + '" />';
+            modalHtml += '<input type="hidden" id="bulk_v1_stageKey" value="' + stageKey + '" />';
+
+            // Stage-specific fields
+            if (stageKey === 'day1_APW') {
+                modalHtml += '<div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #2196f3;">';
+                modalHtml += '<strong>Day 1 - APW Incubation:</strong> 25g sample + 225ml APW (Alkaline Peptone Water - seafood).<br>';
+                modalHtml += 'Incubate at 37°C for 6-8 hours (shorter than BPW!).';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">APW Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_apw_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="37" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out (6-8h):</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+            } else if (stageKey === 'day2_TCBS') {
+                modalHtml += '<div style="background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #4caf50;">';
+                modalHtml += '<strong>Day 2 - TCBS Agar:</strong><br>';
+                modalHtml += 'Pull loopful directly from APW bag. Streak onto TCBS. Look for yellow or green colonies.';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">TCBS Plate Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_tcbs_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="37" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out:</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+            } else if (stageKey === 'day3_BAP') {
+                modalHtml += '<div style="background: #e8eaf6; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #3f51b5;">';
+                modalHtml += '<strong>Day 3 - BAP Confirmation:</strong><br>';
+                modalHtml += 'Pick colonies from TCBS onto Blood Agar Plate. Confirm typical growth.';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">BAP Plate Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_bap_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="37" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out:</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+            }
+
+            modalHtml += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            modalHtml += '<button onclick="completeVibrioV1BulkStage()" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✓ Complete All</button>';
+            modalHtml += '<button onclick="closeVibrioV1BulkModal()" style="flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>';
+            modalHtml += '</div>';
+
+            modalHtml += '</div>';
+            modalHtml += '</div>';
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeVibrioV1BulkModal() {
+            var modal = document.getElementById('vibrioV1BulkModal');
+            if (modal) modal.remove();
+        }
+
+        function completeVibrioV1BulkStage() {
+            var workflowIds = document.getElementById('bulk_v1_workflowIds').value.split(',');
+            var stageKey = document.getElementById('bulk_v1_stageKey').value;
+
+            var stageData = {};
+
+            if (stageKey === 'day1_APW') {
+                stageData.apw_lot = document.getElementById('bulk_apw_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            } else if (stageKey === 'day2_TCBS') {
+                stageData.tcbs_lot = document.getElementById('bulk_tcbs_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            } else if (stageKey === 'day3_BAP') {
+                stageData.bap_lot = document.getElementById('bulk_bap_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            var processedCount = 0;
+            workflowIds.forEach(function(id) {
+                var workflow = pathogenWorkflows.find(function(wf) { return wf.id === id; });
+                if (workflow) {
+                    workflow.stages[stageKey] = JSON.parse(JSON.stringify(stageData));
+                    processedCount++;
+                }
+            });
+
+            saveData();
+            closeVibrioV1BulkModal();
+            showSuccessNotification('✓ Processed ' + processedCount + ' Vibrio V1 samples!');
+            renderVibrioV1Tab();
+        }
+
+        // ========== VIBRIO V2 BULK SELECTION FUNCTIONS ==========
+
+        function updateVibrioV2SelectedCount(stageKey) {
+            var checkboxes = document.querySelectorAll('.vibrio-v2-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
+            var countSpan = document.getElementById('selectedCountV2_' + stageKey);
+            if (countSpan) {
+                countSpan.textContent = checkboxes.length;
+            }
+        }
+
+        function selectAllVibrioV2InStage(stageKey) {
+            var checkboxes = document.querySelectorAll('.vibrio-v2-bulk-checkbox[data-stage="' + stageKey + '"]');
+            var allChecked = true;
+            checkboxes.forEach(function(cb) {
+                if (!cb.checked) allChecked = false;
+            });
+            checkboxes.forEach(function(cb) {
+                cb.checked = !allChecked;
+            });
+            updateVibrioV2SelectedCount(stageKey);
+        }
+
+        function processSelectedVibrioV2(stageKey) {
+            var checkboxes = document.querySelectorAll('.vibrio-v2-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
+            if (checkboxes.length === 0) {
+                alert('No samples selected.');
+                return;
+            }
+            var workflowIds = [];
+            checkboxes.forEach(function(cb) {
+                workflowIds.push(cb.getAttribute('data-workflow-id'));
+            });
+            openVibrioV2BulkModal(workflowIds, stageKey);
+        }
+
+        function openVibrioV2BulkModal(workflowIds, stageKey) {
+            var modalHtml = '<div id="vibrioV2BulkModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;">';
+            modalHtml += '<div style="background: white; padding: 25px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto;">';
+            modalHtml += '<h3 style="margin-top: 0; color: #9c27b0;">🌊 Bulk Process Vibrio V2 - ' + workflowIds.length + ' samples</h3>';
+
+            modalHtml += '<input type="hidden" id="bulk_v2_workflowIds" value="' + workflowIds.join(',') + '" />';
+            modalHtml += '<input type="hidden" id="bulk_v2_stageKey" value="' + stageKey + '" />';
+
+            // Stage-specific fields
+            if (stageKey === 'day1_APW') {
+                modalHtml += '<div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #2196f3;">';
+                modalHtml += '<strong>Day 1 - APW Incubation:</strong> 25g sample + 225ml APW (Alkaline Peptone Water - seafood).<br>';
+                modalHtml += 'Incubate at 37°C for 6-8 hours (shorter than BPW!).';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">APW Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_apw_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="37" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out (6-8h):</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+            } else if (stageKey === 'day2_CHROMagar') {
+                modalHtml += '<div style="background: #f3e5f5; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #9c27b0;">';
+                modalHtml += '<strong>Day 2 - CHROMagar Vibrio:</strong><br>';
+                modalHtml += 'Pull loopful directly from APW bag. Streak onto CHROMagar. Look for mauve (purple) colonies.';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">CHROMagar Plate Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_chromagar_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="37" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out:</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+            } else if (stageKey === 'day3_BAP') {
+                modalHtml += '<div style="background: #e8eaf6; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #3f51b5;">';
+                modalHtml += '<strong>Day 3 - BAP Confirmation:</strong><br>';
+                modalHtml += 'Pick colonies from CHROMagar onto Blood Agar Plate. Confirm typical growth.';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">BAP Plate Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_bap_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="37" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out:</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+            }
+
+            modalHtml += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            modalHtml += '<button onclick="completeVibrioV2BulkStage()" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✓ Complete All</button>';
+            modalHtml += '<button onclick="closeVibrioV2BulkModal()" style="flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>';
+            modalHtml += '</div>';
+
+            modalHtml += '</div>';
+            modalHtml += '</div>';
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeVibrioV2BulkModal() {
+            var modal = document.getElementById('vibrioV2BulkModal');
+            if (modal) modal.remove();
+        }
+
+        function completeVibrioV2BulkStage() {
+            var workflowIds = document.getElementById('bulk_v2_workflowIds').value.split(',');
+            var stageKey = document.getElementById('bulk_v2_stageKey').value;
+
+            var stageData = {};
+
+            if (stageKey === 'day1_APW') {
+                stageData.apw_lot = document.getElementById('bulk_apw_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            } else if (stageKey === 'day2_CHROMagar') {
+                stageData.chromagar_lot = document.getElementById('bulk_chromagar_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            } else if (stageKey === 'day3_BAP') {
+                stageData.bap_lot = document.getElementById('bulk_bap_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            var processedCount = 0;
+            workflowIds.forEach(function(id) {
+                var workflow = pathogenWorkflows.find(function(wf) { return wf.id === id; });
+                if (workflow) {
+                    workflow.stages[stageKey] = JSON.parse(JSON.stringify(stageData));
+                    processedCount++;
+                }
+            });
+
+            saveData();
+            closeVibrioV2BulkModal();
+            showSuccessNotification('✓ Processed ' + processedCount + ' Vibrio V2 samples!');
+            renderVibrioV1Tab();
         }
 
         // Render Isolates Tab
