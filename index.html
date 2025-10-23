@@ -7386,6 +7386,14 @@ html += '</div>';
 
                     html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
 
+                    // Bulk selection buttons (exclude MALDI)
+                    if (count > 0 && stage.key !== 'day4_MALDI') {
+                        html += '<div style="display: flex; gap: 5px; margin-bottom: 10px;">';
+                        html += '<button onclick="selectAllAeromonasInStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Select All</button>';
+                        html += '<button onclick="processSelectedAeromonas(\'' + stage.key + '\')" style="flex: 1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Process (<span id="selectedCountA_' + stage.key + '">0</span>)</button>';
+                        html += '</div>';
+                    }
+
                     // Render workflow cards in this stage
                     aeromonasWorkflows.forEach(function(wf) {
                         var shouldShow = false;
@@ -7396,9 +7404,12 @@ html += '</div>';
                         else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
 
                         if (shouldShow) {
-                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer;" onclick="openAeromonasWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
+                            html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; position: relative;">';
+                            html += '<input type="checkbox" class="aeromonas-bulk-checkbox" data-workflow-id="' + wf.id + '" data-stage="' + stage.key + '" onchange="updateAeromonasSelectedCount(\'' + stage.key + '\')" style="position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; cursor: pointer;" />';
+                            html += '<div style="cursor: pointer; padding-right: 25px;" onclick="openAeromonasWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
                             html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
                             html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
+                            html += '</div>';
                             html += '</div>';
                         }
                     });
@@ -7412,6 +7423,217 @@ html += '</div>';
             html += '</div>'; // End container
 
             container.innerHTML = html;
+        }
+
+        // ========== AEROMONAS BULK SELECTION FUNCTIONS ==========
+
+        function updateAeromonasSelectedCount(stageKey) {
+            var checkboxes = document.querySelectorAll('.aeromonas-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
+            var countSpan = document.getElementById('selectedCountA_' + stageKey);
+            if (countSpan) {
+                countSpan.textContent = checkboxes.length;
+            }
+        }
+
+        function selectAllAeromonasInStage(stageKey) {
+            var checkboxes = document.querySelectorAll('.aeromonas-bulk-checkbox[data-stage="' + stageKey + '"]');
+            var allChecked = true;
+            checkboxes.forEach(function(cb) {
+                if (!cb.checked) allChecked = false;
+            });
+            checkboxes.forEach(function(cb) {
+                cb.checked = !allChecked;
+            });
+            updateAeromonasSelectedCount(stageKey);
+        }
+
+        function processSelectedAeromonas(stageKey) {
+            var checkboxes = document.querySelectorAll('.aeromonas-bulk-checkbox[data-stage="' + stageKey + '"]:checked');
+            if (checkboxes.length === 0) {
+                alert('No samples selected.');
+                return;
+            }
+            var workflowIds = [];
+            checkboxes.forEach(function(cb) {
+                workflowIds.push(cb.getAttribute('data-workflow-id'));
+            });
+            openAeromonasBulkModal(workflowIds, stageKey);
+        }
+
+        function openAeromonasBulkModal(workflowIds, stageKey) {
+            var modalHtml = '<div id="aeromonasBulkModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;">';
+            modalHtml += '<div style="background: white; padding: 25px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto;">';
+            modalHtml += '<h3 style="margin-top: 0; color: #ffc107;">🐟 Bulk Process Aeromonas - ' + workflowIds.length + ' samples</h3>';
+
+            modalHtml += '<input type="hidden" id="bulk_a_workflowIds" value="' + workflowIds.join(',') + '" />';
+            modalHtml += '<input type="hidden" id="bulk_a_stageKey" value="' + stageKey + '" />';
+
+            // Stage-specific fields
+            if (stageKey === 'day1_BPWIncubation') {
+                modalHtml += '<div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #2196f3;">';
+                modalHtml += '<strong>Day 1 - BPW Incubation:</strong> 25g sample + 225ml BPW (seafood sizing).<br>';
+                modalHtml += 'Incubate at 37°C for 24 hours.';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">BPW Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_bpw_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="37" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Incubator:</label>';
+                modalHtml += '<select id="bulk_incubator" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">';
+                modalHtml += '<option value="INC-1">INC-1</option>';
+                modalHtml += '<option value="INC-2">INC-2</option>';
+                modalHtml += '<option value="INC-3">INC-3</option>';
+                modalHtml += '</select>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out:</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+            } else if (stageKey === 'day2_AeromonasMedium') {
+                modalHtml += '<div style="background: #fff3e0; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #ff9800;">';
+                modalHtml += '<strong>Day 2 - Aeromonas Medium:</strong><br>';
+                modalHtml += 'Pull loopful directly from BPW bag. Streak onto Aeromonas Medium. Look for yellow colonies.';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Plate Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_plate_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="30" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out:</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+            } else if (stageKey === 'day3_BAP') {
+                modalHtml += '<div style="background: #e8eaf6; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #3f51b5;">';
+                modalHtml += '<strong>Day 3 - BAP Confirmation:</strong><br>';
+                modalHtml += 'Pick colonies from Aeromonas Medium onto Blood Agar Plate. Confirm typical growth.';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">BAP Plate Lot #:</label>';
+                modalHtml += '<input type="text" id="bulk_bap_lot" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Temperature (°C):</label>';
+                modalHtml += '<input type="number" id="bulk_temp" value="30" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time In:</label>';
+                modalHtml += '<input type="time" id="bulk_time_in" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '<div>';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Time Out:</label>';
+                modalHtml += '<input type="time" id="bulk_time_out" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+                modalHtml += '</div>';
+
+                modalHtml += '<div style="margin-bottom: 15px;">';
+                modalHtml += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Technician Initials:</label>';
+                modalHtml += '<input type="text" id="bulk_tech_initials" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />';
+                modalHtml += '</div>';
+            }
+
+            modalHtml += '<div style="display: flex; gap: 10px; margin-top: 20px;">';
+            modalHtml += '<button onclick="completeAeromonasBulkStage()" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">✓ Complete All</button>';
+            modalHtml += '<button onclick="closeAeromonasBulkModal()" style="flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>';
+            modalHtml += '</div>';
+
+            modalHtml += '</div>';
+            modalHtml += '</div>';
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeAeromonasBulkModal() {
+            var modal = document.getElementById('aeromonasBulkModal');
+            if (modal) modal.remove();
+        }
+
+        function completeAeromonasBulkStage() {
+            var workflowIds = document.getElementById('bulk_a_workflowIds').value.split(',');
+            var stageKey = document.getElementById('bulk_a_stageKey').value;
+
+            var stageData = {};
+
+            if (stageKey === 'day1_BPWIncubation') {
+                stageData.bpw_lot = document.getElementById('bulk_bpw_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.incubator = document.getElementById('bulk_incubator').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            } else if (stageKey === 'day2_AeromonasMedium') {
+                stageData.plate_lot = document.getElementById('bulk_plate_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            } else if (stageKey === 'day3_BAP') {
+                stageData.bap_lot = document.getElementById('bulk_bap_lot').value;
+                stageData.temperature = document.getElementById('bulk_temp').value;
+                stageData.time_in = document.getElementById('bulk_time_in').value;
+                stageData.time_out = document.getElementById('bulk_time_out').value;
+                stageData.tech_initials = document.getElementById('bulk_tech_initials').value;
+            }
+
+            stageData.completedDate = new Date().toISOString().split('T')[0];
+            stageData.completed = true;
+
+            var processedCount = 0;
+            workflowIds.forEach(function(id) {
+                var workflow = pathogenWorkflows.find(function(wf) { return wf.id === id; });
+                if (workflow) {
+                    workflow.stages[stageKey] = JSON.parse(JSON.stringify(stageData));
+                    processedCount++;
+                }
+            });
+
+            saveData();
+            closeAeromonasBulkModal();
+            showSuccessNotification('✓ Processed ' + processedCount + ' Aeromonas samples!');
+            renderAeromonasTab();
         }
 
         // Render Vibrio Tab (shows both V1 and V2)
