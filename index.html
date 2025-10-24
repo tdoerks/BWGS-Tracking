@@ -5518,29 +5518,14 @@ html += '</div>';
             // Sample ID
             html += '<div>';
             html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Sample ID *</label>';
-            html += '<input type="text" id="foodSampleId" placeholder="25KS01CB01" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
-            html += '<div style="font-size: 11px; color: #666; margin-top: 3px;">Format: YYSSTNN... (e.g., 25KS01CB01)</div>';
+            html += '<input type="text" id="foodSampleId" placeholder="25KS01CB01" oninput="autoDetectSampleType()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '<div style="font-size: 11px; color: #666; margin-top: 3px;">Format: YYSSTNN[TYPE]## (e.g., 25KS01CB01) - Type auto-detected from ID</div>';
             html += '</div>';
 
-            // Sample Type
+            // Detected Sample Type (read-only display)
             html += '<div>';
-            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Sample Type *</label>';
-            html += '<select id="foodSampleType" onchange="updateFoodSampleFields()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
-            html += '<option value="">-- Select Type --</option>';
-            html += '<optgroup label="Meat">';
-            html += '<option value="CB">CB - Chicken Breast</option>';
-            html += '<option value="GT">GT - Ground Turkey</option>';
-            html += '<option value="GB">GB - Ground Beef</option>';
-            html += '<option value="CL">CL - Chicken Liver</option>';
-            html += '<option value="CG">CG - Chicken Gizzard</option>';
-            html += '<option value="CH">CH - Chicken Heart</option>';
-            html += '</optgroup>';
-            html += '<optgroup label="Seafood">';
-            html += '<option value="SA">SA - Salmon</option>';
-            html += '<option value="SH">SH - Shrimp</option>';
-            html += '<option value="TI">TI - Tilapia</option>';
-            html += '</optgroup>';
-            html += '</select>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Detected Type</label>';
+            html += '<div id="detectedSampleType" style="padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; color: #666; font-style: italic;">Enter Sample ID to detect type...</div>';
             html += '</div>';
 
             // Store Name with autocomplete
@@ -5925,9 +5910,53 @@ html += '</div>';
             pathogenCheckboxes.innerHTML = pathogenHTML;
         }
 
-        // Update form fields based on sample type (meat vs seafood)
-        function updateFoodSampleFields() {
-            var sampleTypeCode = document.getElementById('foodSampleType').value;
+        // Auto-detect sample type from Sample ID
+        function autoDetectSampleType() {
+            var sampleId = document.getElementById('foodSampleId').value.trim().toUpperCase();
+            var detectedTypeDiv = document.getElementById('detectedSampleType');
+
+            if (!detectedTypeDiv) return;
+
+            // Extract sample type code from ID (e.g., "25KS01CB01" -> "CB")
+            // Pattern: after state code (2 letters) and month (2 digits), extract 2-letter type code
+            var match = sampleId.match(/^\d{2}[A-Z]{2}\d{2}([A-Z]{2})\d+$/);
+
+            if (match) {
+                var typeCode = match[1]; // Extract CB, GT, GB, SA, SH, TI, etc.
+                var sampleType = sampleTypes[typeCode];
+
+                if (sampleType) {
+                    // Valid sample type detected
+                    detectedTypeDiv.innerHTML = '<span style="color: #28a745; font-weight: 600;">✓ ' + typeCode + ' - ' + sampleType.name + '</span>';
+                    detectedTypeDiv.style.background = '#d4edda';
+                    detectedTypeDiv.style.borderColor = '#c3e6cb';
+
+                    // Update form fields based on detected type
+                    updateFoodSampleFieldsByType(typeCode);
+                } else {
+                    // Unknown type code
+                    detectedTypeDiv.innerHTML = '<span style="color: #dc3545;">✗ Unknown type code: ' + typeCode + '</span>';
+                    detectedTypeDiv.style.background = '#f8d7da';
+                    detectedTypeDiv.style.borderColor = '#f5c6cb';
+
+                    // Clear form fields
+                    var container = document.getElementById('sampleTypeSpecificFields');
+                    if (container) container.innerHTML = '';
+                }
+            } else {
+                // Invalid ID format
+                detectedTypeDiv.innerHTML = '<span style="color: #666; font-style: italic;">Enter Sample ID to detect type...</span>';
+                detectedTypeDiv.style.background = '#f8f9fa';
+                detectedTypeDiv.style.borderColor = '#ddd';
+
+                // Clear form fields
+                var container = document.getElementById('sampleTypeSpecificFields');
+                if (container) container.innerHTML = '';
+            }
+        }
+
+        // Update form fields based on sample type code
+        function updateFoodSampleFieldsByType(sampleTypeCode) {
             var sampleType = sampleTypes[sampleTypeCode];
             var container = document.getElementById('sampleTypeSpecificFields');
 
@@ -5951,17 +5980,33 @@ html += '</div>';
             }
         }
 
+        // Legacy function - kept for compatibility
+        function updateFoodSampleFields() {
+            autoDetectSampleType();
+        }
+
         // Add Food Sample
         function addFoodSample() {
             // Get common form values
-            var id = document.getElementById('foodSampleId').value.trim();
-            var sampleTypeCode = document.getElementById('foodSampleType').value;
+            var id = document.getElementById('foodSampleId').value.trim().toUpperCase();
             var storeNum = document.getElementById('foodStoreNum').value.trim();
             var dateReceived = document.getElementById('foodDateReceived').value;
 
+            // Extract sample type code from Sample ID
+            var match = id.match(/^\d{2}[A-Z]{2}\d{2}([A-Z]{2})\d+$/);
+            if (!match) {
+                alert('Invalid Sample ID format. Expected format: YYSSTNN[TYPE]## (e.g., 25KS01CB01)');
+                return;
+            }
+            var sampleTypeCode = match[1];
+
             // Determine sample category (meat or seafood)
             var sampleType = sampleTypes[sampleTypeCode];
-            var isSeafood = sampleType && sampleType.category === 'seafood';
+            if (!sampleType) {
+                alert('Unknown sample type code: ' + sampleTypeCode);
+                return;
+            }
+            var isSeafood = sampleType.category === 'seafood';
 
             // Get category-specific form values
             var brand, sellByDate, producedBy, country;
@@ -6002,17 +6047,9 @@ html += '</div>';
                 fatPercent = document.getElementById('foodFatPercent') ? document.getElementById('foodFatPercent').value.trim() : '';
             }
 
-            // Validation
-            if (!id) {
-                alert('Please enter Sample ID');
-                return;
-            }
-            if (!sampleTypeCode) {
-                alert('Please select Sample Type');
-                return;
-            }
+            // Validation (sample type already validated above)
             if (!storeNum) {
-                alert('Please enter Store #');
+                alert('Please enter Store Name');
                 return;
             }
             if (!dateReceived) {
@@ -6118,11 +6155,18 @@ html += '</div>';
 
             // Clear form
             document.getElementById('foodSampleId').value = '';
-            document.getElementById('foodSampleType').value = '';
             document.getElementById('foodStoreNum').value = '';
             document.getElementById('foodDateReceived').value = '';
             document.getElementById('sampleTypeSpecificFields').innerHTML = '';
             document.getElementById('pathogenCheckboxes').innerHTML = '';
+
+            // Reset detected type display
+            var detectedTypeDiv = document.getElementById('detectedSampleType');
+            if (detectedTypeDiv) {
+                detectedTypeDiv.innerHTML = '<span style="color: #666; font-style: italic;">Enter Sample ID to detect type...</span>';
+                detectedTypeDiv.style.background = '#f8f9fa';
+                detectedTypeDiv.style.borderColor = '#ddd';
+            }
 
             // Re-render
             renderFoodSamplesTab();
