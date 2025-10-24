@@ -2242,6 +2242,14 @@
                     isolates = data.isolates || [];
                     currentModule = data.currentModule || 'food-testing';
                     storeNames = data.storeNames || [];
+                    brandNames = data.brandNames || [];
+                    brandCodeMap = data.brandCodeMap || {};
+                    packingTypes = data.packingTypes || [];
+                    producedByNames = data.producedByNames || [];
+                    countryNames = data.countryNames || [];
+                    raisingClaims = data.raisingClaims || [];
+                    meatTypes = data.meatTypes || [];
+                    fatPercentages = data.fatPercentages || [];
 
                     // DATA MIGRATION: Add day1BPW stage to existing E. coli workflows
                     migrateEcoliWorkflows();
@@ -2327,6 +2335,14 @@
                 isolates: isolates,
                 currentModule: currentModule,
                 storeNames: storeNames,
+                brandNames: brandNames,
+                brandCodeMap: brandCodeMap,
+                packingTypes: packingTypes,
+                producedByNames: producedByNames,
+                countryNames: countryNames,
+                raisingClaims: raisingClaims,
+                meatTypes: meatTypes,
+                fatPercentages: fatPercentages,
                 lastSaved: now.toISOString()
             };
             localStorage.setItem('bwgsTrackerData', JSON.stringify(data));
@@ -2392,6 +2408,14 @@
         // FOOD TESTING MODULE - Data Structures
         var foodSamples = []; // Food samples (meat/seafood)
         var storeNames = []; // Autocomplete store names history
+        var brandNames = []; // Autocomplete brand names history
+        var brandCodeMap = {}; // Map of brand names to brand codes
+        var packingTypes = []; // Autocomplete packing types history
+        var producedByNames = []; // Autocomplete produced by history
+        var countryNames = []; // Autocomplete country history
+        var raisingClaims = []; // Autocomplete raising claims history
+        var meatTypes = []; // Autocomplete meat types history
+        var fatPercentages = []; // Autocomplete fat % history
         var pathogenWorkflows = []; // E. coli, Campylobacter, Salmonella, etc.
         var isolates = []; // Generated isolates that go to sequencing
         var currentModule = 'food-testing'; // 'sequencing' or 'food-testing'
