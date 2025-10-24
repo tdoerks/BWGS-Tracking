@@ -13646,6 +13646,7 @@ if (sample.qubitDetails) {
                 sessionStorage.setItem('bwgsAuthenticated', 'true');
                 loadData();
                 renderSamples();
+                switchModule(currentModule);
             } else {
                 document.getElementById('passwordError').style.display = 'block';
                 document.getElementById('passwordInput').value = '';
@@ -13864,6 +13865,7 @@ if (sample.qubitDetails) {
         if (sessionStorage.getItem('bwgsAuthenticated') === 'true') {
             loadData();
             renderSamples();
+            switchModule(currentModule);
         }
         console.log('Lab Workflow Tracker loaded successfully!');
         console.log('Keyboard shortcuts: Ctrl+F (search), Ctrl+E (export), Ctrl+N (new sample), Esc (close), 1-5 (filters)');
