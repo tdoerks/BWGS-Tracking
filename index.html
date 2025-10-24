@@ -1985,6 +1985,16 @@
             <h3>📝 Bulk Edit Food Samples</h3>
             <p style="color: #666; margin-bottom: 20px;">Edit multiple samples at once. Fill in the details for each sample and click Save All.</p>
 
+            <!-- Tabs for RM and SF -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
+                <button id="bulkTabRM" onclick="switchBulkEditorTab('meat')" style="padding: 12px 24px; border: none; border-bottom: 3px solid #667eea; background: transparent; cursor: pointer; font-weight: 600; color: #667eea;">
+                    🥩 Retail Meat (<span id="rmCount">0</span>)
+                </button>
+                <button id="bulkTabSF" onclick="switchBulkEditorTab('seafood')" style="padding: 12px 24px; border: none; border-bottom: 3px solid transparent; background: transparent; cursor: pointer; font-weight: 600; color: #666;">
+                    🐟 Seafood (<span id="sfCount">0</span>)
+                </button>
+            </div>
+
             <div id="bulkEditorContent" style="overflow-x: auto;">
                 <!-- Table will be rendered here -->
             </div>
@@ -6263,6 +6273,9 @@ html += '</div>';
             renderFoodSamplesTab();
         }
 
+        // Track current bulk editor tab
+        var currentBulkTab = 'meat';
+
         // Open Bulk Editor Modal
         function openBulkEditorModal() {
             // Find all food samples that have minimal data (need editing)
@@ -6276,8 +6289,47 @@ html += '</div>';
                 return;
             }
 
-            renderBulkEditor(samplesToEdit);
+            // Separate by category
+            var meatSamples = samplesToEdit.filter(function(s) {
+                return s.category === 'meat' || (!s.category && sampleTypes[s.sampleTypeCode] && sampleTypes[s.sampleTypeCode].category === 'meat');
+            });
+            var seafoodSamples = samplesToEdit.filter(function(s) {
+                return s.category === 'seafood' || (!s.category && sampleTypes[s.sampleTypeCode] && sampleTypes[s.sampleTypeCode].category === 'seafood');
+            });
+
+            // Update counts
+            document.getElementById('rmCount').textContent = meatSamples.length;
+            document.getElementById('sfCount').textContent = seafoodSamples.length;
+
+            // Start with meat tab if there are meat samples, otherwise seafood
+            currentBulkTab = meatSamples.length > 0 ? 'meat' : 'seafood';
+            switchBulkEditorTab(currentBulkTab);
+
             document.getElementById('bulkEditorModal').style.display = 'block';
+        }
+
+        // Switch between bulk editor tabs
+        function switchBulkEditorTab(category) {
+            currentBulkTab = category;
+
+            // Update tab styling
+            var rmTab = document.getElementById('bulkTabRM');
+            var sfTab = document.getElementById('bulkTabSF');
+
+            if (category === 'meat') {
+                rmTab.style.borderBottom = '3px solid #667eea';
+                rmTab.style.color = '#667eea';
+                sfTab.style.borderBottom = '3px solid transparent';
+                sfTab.style.color = '#666';
+            } else {
+                sfTab.style.borderBottom = '3px solid #667eea';
+                sfTab.style.color = '#667eea';
+                rmTab.style.borderBottom = '3px solid transparent';
+                rmTab.style.color = '#666';
+            }
+
+            // Render the appropriate table
+            renderBulkEditor(category);
         }
 
         // Close Bulk Editor Modal
