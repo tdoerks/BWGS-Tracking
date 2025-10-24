@@ -2273,6 +2273,70 @@
                     reagentLotHistory = {};
                 }
             }
+
+            // Initialize common brand codes if map is empty
+            initializeCommonBrandCodes();
+        }
+
+        // Initialize commonly used brand codes
+        function initializeCommonBrandCodes() {
+            // Only add if not already in the map (don't overwrite user's data)
+            var commonBrands = {
+                'El Mercado Fresco': 'BGH',
+                'Festive': 'BP',
+                'Pine Manor': 'TD',
+                'Bichelmeyer Meats': 'BFP',
+                'Yoder Meats': 'BFO',
+                'Afghan Halal Market': 'BFN',
+                'Asian Groceries': 'BFM',
+                "Sprouts Farmers Market": 'UM',
+                'Sterling Silver': 'TR',
+                "Kier's Thriftway": 'AEX',
+                'Perdue Reserve': 'BBF',
+                'Apple Market': 'IN',
+                'El Torito': 'AMD',
+                "Dillon's": 'VJ',
+                "Britt's Farm": 'BBU',
+                'Animal Sciences and Industry': 'AYY',
+                'Aldi': 'NG',
+                'Marketside Butcher': 'ADT',
+                'Farm to Family': 'ACZ',
+                'Sun Fresh': 'AWQ',
+                'Good and Gather': 'AOZ',
+                "Laura's Lean Beef": 'DA',
+                "Ray's Apple Market": 'AUJ',
+                'Simply Nature': 'AVF',
+                'Heritage Farm': 'YK',
+                'Private Selection': 'NQ',
+                'Simple Truth': 'YB',
+                'Hy-Vee': 'WM',
+                'Just Bare': 'XK',
+                'Asian Market of Manhattan KS': 'AYX',
+                'Kroger': 'CZ',
+                'Jennie-O': 'CR',
+                'Kirkwood': 'VH',
+                'The Best Dressed Chicken': 'AXI',
+                'Hormel': 'CL',
+                "Mary's Organic": 'SO',
+                'Whole Foods': 'GD',
+                'Walmart': 'IR',
+                'Honest Turkey': 'AGP',
+                'Honeysuckle White': 'CK',
+                'Perdue Harvestland': 'DU',
+                'Hen House': 'ADU',
+                'Prairie Fresh': 'DZ',
+                'Tyson': 'FS',
+                'Sanderson Farms': 'EP',
+                'Butterball': 'AQ',
+                'Price Chopper': 'ARD',
+                'Smart Chicken': 'GR'
+            };
+
+            for (var brand in commonBrands) {
+                if (!brandCodeMap[brand]) {
+                    brandCodeMap[brand] = commonBrands[brand];
+                }
+            }
         }
 
         function initializeDefaults() {
