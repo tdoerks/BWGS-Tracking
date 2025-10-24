@@ -5530,10 +5530,17 @@ html += '</div>';
             // Row 2
             html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
 
-            // Brand
-            html += '<div>';
+            // Brand with autocomplete
+            html += '<div style="position: relative;">';
             html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Brand</label>';
-            html += '<input type="text" id="foodBrand" placeholder="e.g., Tyson, Perdue" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '<input type="text" id="foodBrand" placeholder="e.g., Tyson, Perdue" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showBrandAutocomplete(); autofillBrandCode();" onfocus="showBrandAutocomplete()" onblur="setTimeout(function(){ hideBrandAutocomplete(); }, 200)" />';
+            html += '<div id="brandAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            // Brand Code (auto-fills based on brand)
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Brand Code</label>';
+            html += '<input type="text" id="foodBrandCode" placeholder="Auto-fills or enter manually" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
             html += '</div>';
 
             // Sell-By Date
@@ -5542,13 +5549,94 @@ html += '</div>';
             html += '<input type="date" id="foodSellByDate" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
             html += '</div>';
 
-            // Date Received
-            html += '<div>';
-            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Date Received *</label>';
-            html += '<input type="date" id="foodDateReceived" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>'; // End grid row 2
+
+            // Row 3 - New tracking fields
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Packing Type with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Packing Type</label>';
+            html += '<input type="text" id="foodPackingType" placeholder="e.g., Tray, Vacuum" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showPackingTypeAutocomplete()" onfocus="showPackingTypeAutocomplete()" onblur="setTimeout(function(){ hidePackingTypeAutocomplete(); }, 200)" />';
+            html += '<div id="packingTypeAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
             html += '</div>';
 
-            html += '</div>'; // End grid row 2
+            // Packed in Store dropdown
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Packed in Store?</label>';
+            html += '<select id="foodPackedInStore" onchange="togglePackedInStoreOther()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+            html += '<option value="">-- Select --</option>';
+            html += '<option value="Yes">Yes</option>';
+            html += '<option value="No">No</option>';
+            html += '<option value="Unsure">Unsure</option>';
+            html += '<option value="Other">Other</option>';
+            html += '</select>';
+            html += '</div>';
+
+            // Packed in Store Other (hidden by default)
+            html += '<div id="packedInStoreOtherContainer" style="display: none;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Specify Other</label>';
+            html += '<input type="text" id="foodPackedInStoreOther" placeholder="Specify..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
+
+            html += '</div>'; // End grid row 3
+
+            // Row 4
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Est. ID
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Est. ID</label>';
+            html += '<input type="text" id="foodEstId" placeholder="Establishment ID" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
+
+            // Produced By with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Produced By</label>';
+            html += '<input type="text" id="foodProducedBy" placeholder="Producer name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showProducedByAutocomplete()" onfocus="showProducedByAutocomplete()" onblur="setTimeout(function(){ hideProducedByAutocomplete(); }, 200)" />';
+            html += '<div id="producedByAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            // Country with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Country</label>';
+            html += '<input type="text" id="foodCountry" placeholder="e.g., USA, Canada" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showCountryAutocomplete()" onfocus="showCountryAutocomplete()" onblur="setTimeout(function(){ hideCountryAutocomplete(); }, 200)" />';
+            html += '<div id="countryAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            html += '</div>'; // End grid row 4
+
+            // Row 5
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Raising Claims with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Raising Claims</label>';
+            html += '<input type="text" id="foodRaisingClaims" placeholder="e.g., Organic, No Antibiotics" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showRaisingClaimsAutocomplete()" onfocus="showRaisingClaimsAutocomplete()" onblur="setTimeout(function(){ hideRaisingClaimsAutocomplete(); }, 200)" />';
+            html += '<div id="raisingClaimsAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            // Meat Type with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Meat Type</label>';
+            html += '<input type="text" id="foodMeatTypeDetail" placeholder="e.g., Breast, Thigh" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showMeatTypeAutocomplete()" onfocus="showMeatTypeAutocomplete()" onblur="setTimeout(function(){ hideMeatTypeAutocomplete(); }, 200)" />';
+            html += '<div id="meatTypeAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            // Fat % with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Fat %</label>';
+            html += '<input type="text" id="foodFatPercent" placeholder="e.g., 80/20, 93/7" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showFatPercentAutocomplete()" onfocus="showFatPercentAutocomplete()" onblur="setTimeout(function(){ hideFatPercentAutocomplete(); }, 200)" />';
+            html += '<div id="fatPercentAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            html += '</div>'; // End grid row 5
+
+            // Date Received (moved here)
+            html += '<div style="margin-bottom: 15px;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Date Received *</label>';
+            html += '<input type="date" id="foodDateReceived" style="width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
 
             // Category-specific fields container
             html += '<div id="categorySpecificFields" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;"></div>';
@@ -5710,7 +5798,17 @@ html += '</div>';
             var sampleTypeCode = document.getElementById('foodSampleType').value;
             var storeNum = document.getElementById('foodStoreNum').value.trim();
             var brand = document.getElementById('foodBrand').value.trim();
+            var brandCode = document.getElementById('foodBrandCode').value.trim();
             var sellByDate = document.getElementById('foodSellByDate').value;
+            var packingType = document.getElementById('foodPackingType').value.trim();
+            var packedInStore = document.getElementById('foodPackedInStore').value;
+            var packedInStoreOther = document.getElementById('foodPackedInStoreOther').value.trim();
+            var estId = document.getElementById('foodEstId').value.trim();
+            var producedBy = document.getElementById('foodProducedBy').value.trim();
+            var country = document.getElementById('foodCountry').value.trim();
+            var raisingClaims = document.getElementById('foodRaisingClaims').value.trim();
+            var meatTypeDetail = document.getElementById('foodMeatTypeDetail').value.trim();
+            var fatPercent = document.getElementById('foodFatPercent').value.trim();
             var dateReceived = document.getElementById('foodDateReceived').value;
 
             // Validation
@@ -5771,7 +5869,16 @@ html += '</div>';
                 sampleTypeCode: sampleTypeCode,
                 storeNum: storeNum,
                 brand: brand,
+                brandCode: brandCode,
                 sellByDate: sellByDate,
+                packingType: packingType,
+                packedInStore: packedInStore === 'Other' ? packedInStoreOther : packedInStore,
+                estId: estId,
+                producedBy: producedBy,
+                country: country,
+                raisingClaims: raisingClaims,
+                meatTypeDetail: meatTypeDetail,
+                fatPercent: fatPercent,
                 dateReceived: dateReceived,
                 dateAdded: new Date().toISOString().split('T')[0],
                 pathogensToTest: pathogensToTest,
@@ -5780,8 +5887,16 @@ html += '</div>';
 
             foodSamples.push(foodSample);
 
-            // Add store to autocomplete history
+            // Add values to autocomplete history
             addStoreToHistory(storeNum);
+            addBrandToHistory(brand);
+            if (brand && brandCode) saveBrandCodeMapping(brand, brandCode);
+            addPackingTypeToHistory(packingType);
+            addProducedByToHistory(producedBy);
+            addCountryToHistory(country);
+            addRaisingClaimToHistory(raisingClaims);
+            addMeatTypeToHistory(meatTypeDetail);
+            addFatPercentToHistory(fatPercent);
 
             // Auto-create pathogen workflow entries
             pathogensToTest.forEach(function(pathogenCode) {
@@ -5816,7 +5931,17 @@ html += '</div>';
             document.getElementById('foodSampleType').value = '';
             document.getElementById('foodStoreNum').value = '';
             document.getElementById('foodBrand').value = '';
+            document.getElementById('foodBrandCode').value = '';
             document.getElementById('foodSellByDate').value = '';
+            document.getElementById('foodPackingType').value = '';
+            document.getElementById('foodPackedInStore').value = '';
+            document.getElementById('foodPackedInStoreOther').value = '';
+            document.getElementById('foodEstId').value = '';
+            document.getElementById('foodProducedBy').value = '';
+            document.getElementById('foodCountry').value = '';
+            document.getElementById('foodRaisingClaims').value = '';
+            document.getElementById('foodMeatTypeDetail').value = '';
+            document.getElementById('foodFatPercent').value = '';
             document.getElementById('categorySpecificFields').innerHTML = '';
             document.getElementById('pathogenCheckboxes').innerHTML = '';
 
@@ -5949,7 +6074,16 @@ html += '</div>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Type</th>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Store Name</th>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Brand</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Brand Code</th>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Sell-By Date</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Packing Type</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Packed in Store</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Est. ID</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Produced By</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Country</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Raising Claims</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Meat Type</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Fat %</th>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600;">Pathogens</th>';
             html += '</tr>';
             html += '</thead>';
@@ -5987,14 +6121,72 @@ html += '</div>';
                 html += '<div id="storeAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
                 html += '</td>';
 
-                // Brand
+                // Brand with autocomplete
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; position: relative;">';
+                html += '<input type="text" id="bulkBrand_' + index + '" value="' + (sample.brand || '') + '" placeholder="Brand name" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" oninput="showBrandAutocompleteBulk(' + index + '); autofillBrandCodeBulk(' + index + ')" onfocus="showBrandAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideBrandAutocompleteBulk(' + index + '); }, 200)" />';
+                html += '<div id="brandAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
+                html += '</td>';
+
+                // Brand Code
                 html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
-                html += '<input type="text" id="bulkBrand_' + index + '" value="' + (sample.brand || '') + '" placeholder="Brand name" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '<input type="text" id="bulkBrandCode_' + index + '" value="' + (sample.brandCode || '') + '" placeholder="Code" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
                 html += '</td>';
 
                 // Sell-By Date
                 html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
                 html += '<input type="date" id="bulkSellBy_' + index + '" value="' + (sample.sellByDate || '') + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Packing Type with autocomplete
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; position: relative;">';
+                html += '<input type="text" id="bulkPackingType_' + index + '" value="' + (sample.packingType || '') + '" placeholder="e.g., Tray" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" oninput="showPackingTypeAutocompleteBulk(' + index + ')" onfocus="showPackingTypeAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hidePackingTypeAutocompleteBulk(' + index + '); }, 200)" />';
+                html += '<div id="packingTypeAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
+                html += '</td>';
+
+                // Packed in Store dropdown
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<select id="bulkPackedInStore_' + index + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">';
+                html += '<option value="">--</option>';
+                html += '<option value="Yes"' + (sample.packedInStore === 'Yes' ? ' selected' : '') + '>Yes</option>';
+                html += '<option value="No"' + (sample.packedInStore === 'No' ? ' selected' : '') + '>No</option>';
+                html += '<option value="Unsure"' + (sample.packedInStore === 'Unsure' ? ' selected' : '') + '>Unsure</option>';
+                html += '<option value="Other"' + (sample.packedInStore && sample.packedInStore !== 'Yes' && sample.packedInStore !== 'No' && sample.packedInStore !== 'Unsure' ? ' selected' : '') + '>Other</option>';
+                html += '</select>';
+                html += '</td>';
+
+                // Est. ID
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkEstId_' + index + '" value="' + (sample.estId || '') + '" placeholder="Est. ID" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Produced By with autocomplete
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; position: relative;">';
+                html += '<input type="text" id="bulkProducedBy_' + index + '" value="' + (sample.producedBy || '') + '" placeholder="Producer" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" oninput="showProducedByAutocompleteBulk(' + index + ')" onfocus="showProducedByAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideProducedByAutocompleteBulk(' + index + '); }, 200)" />';
+                html += '<div id="producedByAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
+                html += '</td>';
+
+                // Country with autocomplete
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; position: relative;">';
+                html += '<input type="text" id="bulkCountry_' + index + '" value="' + (sample.country || '') + '" placeholder="Country" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" oninput="showCountryAutocompleteBulk(' + index + ')" onfocus="showCountryAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideCountryAutocompleteBulk(' + index + '); }, 200)" />';
+                html += '<div id="countryAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
+                html += '</td>';
+
+                // Raising Claims with autocomplete
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; position: relative;">';
+                html += '<input type="text" id="bulkRaisingClaims_' + index + '" value="' + (sample.raisingClaims || '') + '" placeholder="Claims" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" oninput="showRaisingClaimsAutocompleteBulk(' + index + ')" onfocus="showRaisingClaimsAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideRaisingClaimsAutocompleteBulk(' + index + '); }, 200)" />';
+                html += '<div id="raisingClaimsAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
+                html += '</td>';
+
+                // Meat Type with autocomplete
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; position: relative;">';
+                html += '<input type="text" id="bulkMeatType_' + index + '" value="' + (sample.meatTypeDetail || '') + '" placeholder="Type" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" oninput="showMeatTypeAutocompleteBulk(' + index + ')" onfocus="showMeatTypeAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideMeatTypeAutocompleteBulk(' + index + '); }, 200)" />';
+                html += '<div id="meatTypeAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
+                html += '</td>';
+
+                // Fat % with autocomplete
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; position: relative;">';
+                html += '<input type="text" id="bulkFatPercent_' + index + '" value="' + (sample.fatPercent || '') + '" placeholder="%" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" oninput="showFatPercentAutocompleteBulk(' + index + ')" onfocus="showFatPercentAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideFatPercentAutocompleteBulk(' + index + '); }, 200)" />';
+                html += '<div id="fatPercentAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
                 html += '</td>';
 
                 // Pathogens (checkboxes)
@@ -6045,7 +6237,16 @@ html += '</div>';
                 var typeCode = document.getElementById('bulkType_' + index).value;
                 var storeNum = document.getElementById('bulkStore_' + index).value.trim();
                 var brand = document.getElementById('bulkBrand_' + index).value.trim();
+                var brandCode = document.getElementById('bulkBrandCode_' + index).value.trim();
                 var sellByDate = document.getElementById('bulkSellBy_' + index).value;
+                var packingType = document.getElementById('bulkPackingType_' + index).value.trim();
+                var packedInStore = document.getElementById('bulkPackedInStore_' + index).value;
+                var estId = document.getElementById('bulkEstId_' + index).value.trim();
+                var producedBy = document.getElementById('bulkProducedBy_' + index).value.trim();
+                var country = document.getElementById('bulkCountry_' + index).value.trim();
+                var raisingClaims = document.getElementById('bulkRaisingClaims_' + index).value.trim();
+                var meatTypeDetail = document.getElementById('bulkMeatType_' + index).value.trim();
+                var fatPercent = document.getElementById('bulkFatPercent_' + index).value.trim();
 
                 // Get selected pathogens
                 var pathogenCheckboxes = document.querySelectorAll('.bulkPathogen_' + index + ':checked');
@@ -6054,14 +6255,31 @@ html += '</div>';
                     pathogensToTest.push(cb.value);
                 });
 
-                // Add store to autocomplete history
+                // Add values to autocomplete history
                 addStoreToHistory(storeNum);
+                addBrandToHistory(brand);
+                if (brand && brandCode) saveBrandCodeMapping(brand, brandCode);
+                addPackingTypeToHistory(packingType);
+                addProducedByToHistory(producedBy);
+                addCountryToHistory(country);
+                addRaisingClaimToHistory(raisingClaims);
+                addMeatTypeToHistory(meatTypeDetail);
+                addFatPercentToHistory(fatPercent);
 
                 // Update sample
                 sample.sampleTypeCode = typeCode;
                 sample.storeNum = storeNum;
                 sample.brand = brand;
+                sample.brandCode = brandCode;
                 sample.sellByDate = sellByDate;
+                sample.packingType = packingType;
+                sample.packedInStore = packedInStore;
+                sample.estId = estId;
+                sample.producedBy = producedBy;
+                sample.country = country;
+                sample.raisingClaims = raisingClaims;
+                sample.meatTypeDetail = meatTypeDetail;
+                sample.fatPercent = fatPercent;
 
                 // Only update pathogens if changed
                 var oldPathogens = sample.pathogensToTest || [];
@@ -6167,6 +6385,235 @@ html += '</div>';
             }
         }
 
+        // Bulk Editor Autocomplete Functions for New Fields
+
+        // Brand autocomplete for bulk editor
+        function showBrandAutocompleteBulk(index) {
+            var input = document.getElementById('bulkBrand_' + index);
+            var dropdown = document.getElementById('brandAutocomplete_' + index);
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = brandNames.filter(function(brand) {
+                return brand.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayBrands = value === '' ? brandNames : matches;
+                displayBrands.slice(0, 10).forEach(function(brand) {
+                    html += '<div onclick="selectBrandBulk(' + index + ', \'' + brand.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + brand + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideBrandAutocompleteBulk(index) {
+            var dropdown = document.getElementById('brandAutocomplete_' + index);
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectBrandBulk(index, brandName) {
+            var input = document.getElementById('bulkBrand_' + index);
+            if (input) input.value = brandName;
+            hideBrandAutocompleteBulk(index);
+            autofillBrandCodeBulk(index);
+        }
+        function autofillBrandCodeBulk(index) {
+            var brandInput = document.getElementById('bulkBrand_' + index);
+            var codeInput = document.getElementById('bulkBrandCode_' + index);
+            if (!brandInput || !codeInput) return;
+            var brandName = brandInput.value.trim();
+            if (brandCodeMap[brandName]) {
+                codeInput.value = brandCodeMap[brandName];
+            }
+        }
+
+        // Packing Type autocomplete for bulk editor
+        function showPackingTypeAutocompleteBulk(index) {
+            var input = document.getElementById('bulkPackingType_' + index);
+            var dropdown = document.getElementById('packingTypeAutocomplete_' + index);
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = packingTypes.filter(function(type) {
+                return type.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayTypes = value === '' ? packingTypes : matches;
+                displayTypes.slice(0, 10).forEach(function(type) {
+                    html += '<div onclick="selectPackingTypeBulk(' + index + ', \'' + type.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + type + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hidePackingTypeAutocompleteBulk(index) {
+            var dropdown = document.getElementById('packingTypeAutocomplete_' + index);
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectPackingTypeBulk(index, typeName) {
+            var input = document.getElementById('bulkPackingType_' + index);
+            if (input) input.value = typeName;
+            hidePackingTypeAutocompleteBulk(index);
+        }
+
+        // Produced By autocomplete for bulk editor
+        function showProducedByAutocompleteBulk(index) {
+            var input = document.getElementById('bulkProducedBy_' + index);
+            var dropdown = document.getElementById('producedByAutocomplete_' + index);
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = producedByNames.filter(function(name) {
+                return name.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayNames = value === '' ? producedByNames : matches;
+                displayNames.slice(0, 10).forEach(function(name) {
+                    html += '<div onclick="selectProducedByBulk(' + index + ', \'' + name.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + name + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideProducedByAutocompleteBulk(index) {
+            var dropdown = document.getElementById('producedByAutocomplete_' + index);
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectProducedByBulk(index, name) {
+            var input = document.getElementById('bulkProducedBy_' + index);
+            if (input) input.value = name;
+            hideProducedByAutocompleteBulk(index);
+        }
+
+        // Country autocomplete for bulk editor
+        function showCountryAutocompleteBulk(index) {
+            var input = document.getElementById('bulkCountry_' + index);
+            var dropdown = document.getElementById('countryAutocomplete_' + index);
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = countryNames.filter(function(country) {
+                return country.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayCountries = value === '' ? countryNames : matches;
+                displayCountries.slice(0, 10).forEach(function(country) {
+                    html += '<div onclick="selectCountryBulk(' + index + ', \'' + country.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + country + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideCountryAutocompleteBulk(index) {
+            var dropdown = document.getElementById('countryAutocomplete_' + index);
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectCountryBulk(index, country) {
+            var input = document.getElementById('bulkCountry_' + index);
+            if (input) input.value = country;
+            hideCountryAutocompleteBulk(index);
+        }
+
+        // Raising Claims autocomplete for bulk editor
+        function showRaisingClaimsAutocompleteBulk(index) {
+            var input = document.getElementById('bulkRaisingClaims_' + index);
+            var dropdown = document.getElementById('raisingClaimsAutocomplete_' + index);
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = raisingClaims.filter(function(claim) {
+                return claim.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayClaims = value === '' ? raisingClaims : matches;
+                displayClaims.slice(0, 10).forEach(function(claim) {
+                    html += '<div onclick="selectRaisingClaimBulk(' + index + ', \'' + claim.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + claim + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideRaisingClaimsAutocompleteBulk(index) {
+            var dropdown = document.getElementById('raisingClaimsAutocomplete_' + index);
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectRaisingClaimBulk(index, claim) {
+            var input = document.getElementById('bulkRaisingClaims_' + index);
+            if (input) input.value = claim;
+            hideRaisingClaimsAutocompleteBulk(index);
+        }
+
+        // Meat Type autocomplete for bulk editor
+        function showMeatTypeAutocompleteBulk(index) {
+            var input = document.getElementById('bulkMeatType_' + index);
+            var dropdown = document.getElementById('meatTypeAutocomplete_' + index);
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = meatTypes.filter(function(type) {
+                return type.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayTypes = value === '' ? meatTypes : matches;
+                displayTypes.slice(0, 10).forEach(function(type) {
+                    html += '<div onclick="selectMeatTypeBulk(' + index + ', \'' + type.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + type + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideMeatTypeAutocompleteBulk(index) {
+            var dropdown = document.getElementById('meatTypeAutocomplete_' + index);
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectMeatTypeBulk(index, type) {
+            var input = document.getElementById('bulkMeatType_' + index);
+            if (input) input.value = type;
+            hideMeatTypeAutocompleteBulk(index);
+        }
+
+        // Fat % autocomplete for bulk editor
+        function showFatPercentAutocompleteBulk(index) {
+            var input = document.getElementById('bulkFatPercent_' + index);
+            var dropdown = document.getElementById('fatPercentAutocomplete_' + index);
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = fatPercentages.filter(function(pct) {
+                return pct.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayPcts = value === '' ? fatPercentages : matches;
+                displayPcts.slice(0, 10).forEach(function(pct) {
+                    html += '<div onclick="selectFatPercentBulk(' + index + ', \'' + pct.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + pct + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideFatPercentAutocompleteBulk(index) {
+            var dropdown = document.getElementById('fatPercentAutocomplete_' + index);
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectFatPercentBulk(index, pct) {
+            var input = document.getElementById('bulkFatPercent_' + index);
+            if (input) input.value = pct;
+            hideFatPercentAutocompleteBulk(index);
+        }
+
         // Single Sample Form Autocomplete Functions
         function showStoreAutocompleteSingle() {
             var input = document.getElementById('foodStoreNum');
@@ -6211,6 +6658,347 @@ html += '</div>';
                 input.value = storeName;
             }
             hideStoreAutocompleteSingle();
+        }
+
+        // Brand Autocomplete and Brand Code Auto-fill
+        function showBrandAutocomplete() {
+            var input = document.getElementById('foodBrand');
+            var dropdown = document.getElementById('brandAutocomplete');
+            if (!input || !dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+            var matches = brandNames.filter(function(brand) {
+                return brand.toLowerCase().indexOf(value) !== -1;
+            });
+
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayBrands = value === '' ? brandNames : matches;
+                displayBrands.slice(0, 10).forEach(function(brand) {
+                    html += '<div onclick="selectBrand(\'' + brand.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + brand + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hideBrandAutocomplete() {
+            var dropdown = document.getElementById('brandAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        function selectBrand(brandName) {
+            var input = document.getElementById('foodBrand');
+            if (input) {
+                input.value = brandName;
+                autofillBrandCode();
+            }
+            hideBrandAutocomplete();
+        }
+
+        function autofillBrandCode() {
+            var brandInput = document.getElementById('foodBrand');
+            var codeInput = document.getElementById('foodBrandCode');
+            if (!brandInput || !codeInput) return;
+
+            var brandName = brandInput.value.trim();
+            if (brandCodeMap[brandName]) {
+                codeInput.value = brandCodeMap[brandName];
+            }
+        }
+
+        function addBrandToHistory(brandName) {
+            if (!brandName || brandName.trim() === '') return;
+            var trimmedName = brandName.trim();
+            if (!brandNames.some(function(b) { return b.toLowerCase() === trimmedName.toLowerCase(); })) {
+                brandNames.push(trimmedName);
+                brandNames.sort();
+            }
+        }
+
+        function saveBrandCodeMapping(brandName, code) {
+            if (brandName && code) {
+                brandCodeMap[brandName.trim()] = code.trim();
+            }
+        }
+
+        // Packing Type Autocomplete
+        function showPackingTypeAutocomplete() {
+            var input = document.getElementById('foodPackingType');
+            var dropdown = document.getElementById('packingTypeAutocomplete');
+            if (!input || !dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+            var matches = packingTypes.filter(function(type) {
+                return type.toLowerCase().indexOf(value) !== -1;
+            });
+
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? packingTypes : matches;
+                display.slice(0, 10).forEach(function(type) {
+                    html += '<div onclick="selectPackingType(\'' + type.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + type + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hidePackingTypeAutocomplete() {
+            var dropdown = document.getElementById('packingTypeAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        function selectPackingType(type) {
+            var input = document.getElementById('foodPackingType');
+            if (input) input.value = type;
+            hidePackingTypeAutocomplete();
+        }
+
+        function addPackingTypeToHistory(type) {
+            if (!type || type.trim() === '') return;
+            var trimmed = type.trim();
+            if (!packingTypes.some(function(t) { return t.toLowerCase() === trimmed.toLowerCase(); })) {
+                packingTypes.push(trimmed);
+                packingTypes.sort();
+            }
+        }
+
+        // Produced By Autocomplete
+        function showProducedByAutocomplete() {
+            var input = document.getElementById('foodProducedBy');
+            var dropdown = document.getElementById('producedByAutocomplete');
+            if (!input || !dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+            var matches = producedByNames.filter(function(name) {
+                return name.toLowerCase().indexOf(value) !== -1;
+            });
+
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? producedByNames : matches;
+                display.slice(0, 10).forEach(function(name) {
+                    html += '<div onclick="selectProducedBy(\'' + name.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + name + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hideProducedByAutocomplete() {
+            var dropdown = document.getElementById('producedByAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        function selectProducedBy(name) {
+            var input = document.getElementById('foodProducedBy');
+            if (input) input.value = name;
+            hideProducedByAutocomplete();
+        }
+
+        function addProducedByToHistory(name) {
+            if (!name || name.trim() === '') return;
+            var trimmed = name.trim();
+            if (!producedByNames.some(function(n) { return n.toLowerCase() === trimmed.toLowerCase(); })) {
+                producedByNames.push(trimmed);
+                producedByNames.sort();
+            }
+        }
+
+        // Country Autocomplete
+        function showCountryAutocomplete() {
+            var input = document.getElementById('foodCountry');
+            var dropdown = document.getElementById('countryAutocomplete');
+            if (!input || !dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+            var matches = countryNames.filter(function(country) {
+                return country.toLowerCase().indexOf(value) !== -1;
+            });
+
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? countryNames : matches;
+                display.slice(0, 10).forEach(function(country) {
+                    html += '<div onclick="selectCountry(\'' + country.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + country + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hideCountryAutocomplete() {
+            var dropdown = document.getElementById('countryAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        function selectCountry(country) {
+            var input = document.getElementById('foodCountry');
+            if (input) input.value = country;
+            hideCountryAutocomplete();
+        }
+
+        function addCountryToHistory(country) {
+            if (!country || country.trim() === '') return;
+            var trimmed = country.trim();
+            if (!countryNames.some(function(c) { return c.toLowerCase() === trimmed.toLowerCase(); })) {
+                countryNames.push(trimmed);
+                countryNames.sort();
+            }
+        }
+
+        // Raising Claims Autocomplete
+        function showRaisingClaimsAutocomplete() {
+            var input = document.getElementById('foodRaisingClaims');
+            var dropdown = document.getElementById('raisingClaimsAutocomplete');
+            if (!input || !dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+            var matches = raisingClaims.filter(function(claim) {
+                return claim.toLowerCase().indexOf(value) !== -1;
+            });
+
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? raisingClaims : matches;
+                display.slice(0, 10).forEach(function(claim) {
+                    html += '<div onclick="selectRaisingClaim(\'' + claim.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + claim + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hideRaisingClaimsAutocomplete() {
+            var dropdown = document.getElementById('raisingClaimsAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        function selectRaisingClaim(claim) {
+            var input = document.getElementById('foodRaisingClaims');
+            if (input) input.value = claim;
+            hideRaisingClaimsAutocomplete();
+        }
+
+        function addRaisingClaimToHistory(claim) {
+            if (!claim || claim.trim() === '') return;
+            var trimmed = claim.trim();
+            if (!raisingClaims.some(function(c) { return c.toLowerCase() === trimmed.toLowerCase(); })) {
+                raisingClaims.push(trimmed);
+                raisingClaims.sort();
+            }
+        }
+
+        // Meat Type Autocomplete
+        function showMeatTypeAutocomplete() {
+            var input = document.getElementById('foodMeatTypeDetail');
+            var dropdown = document.getElementById('meatTypeAutocomplete');
+            if (!input || !dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+            var matches = meatTypes.filter(function(type) {
+                return type.toLowerCase().indexOf(value) !== -1;
+            });
+
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? meatTypes : matches;
+                display.slice(0, 10).forEach(function(type) {
+                    html += '<div onclick="selectMeatType(\'' + type.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + type + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hideMeatTypeAutocomplete() {
+            var dropdown = document.getElementById('meatTypeAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        function selectMeatType(type) {
+            var input = document.getElementById('foodMeatTypeDetail');
+            if (input) input.value = type;
+            hideMeatTypeAutocomplete();
+        }
+
+        function addMeatTypeToHistory(type) {
+            if (!type || type.trim() === '') return;
+            var trimmed = type.trim();
+            if (!meatTypes.some(function(t) { return t.toLowerCase() === trimmed.toLowerCase(); })) {
+                meatTypes.push(trimmed);
+                meatTypes.sort();
+            }
+        }
+
+        // Fat Percent Autocomplete
+        function showFatPercentAutocomplete() {
+            var input = document.getElementById('foodFatPercent');
+            var dropdown = document.getElementById('fatPercentAutocomplete');
+            if (!input || !dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+            var matches = fatPercentages.filter(function(percent) {
+                return percent.toLowerCase().indexOf(value) !== -1;
+            });
+
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? fatPercentages : matches;
+                display.slice(0, 10).forEach(function(percent) {
+                    html += '<div onclick="selectFatPercent(\'' + percent.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + percent + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hideFatPercentAutocomplete() {
+            var dropdown = document.getElementById('fatPercentAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        function selectFatPercent(percent) {
+            var input = document.getElementById('foodFatPercent');
+            if (input) input.value = percent;
+            hideFatPercentAutocomplete();
+        }
+
+        function addFatPercentToHistory(percent) {
+            if (!percent || percent.trim() === '') return;
+            var trimmed = percent.trim();
+            if (!fatPercentages.some(function(p) { return p.toLowerCase() === trimmed.toLowerCase(); })) {
+                fatPercentages.push(trimmed);
+                fatPercentages.sort();
+            }
+        }
+
+        // Toggle Packed in Store Other field
+        function togglePackedInStoreOther() {
+            var select = document.getElementById('foodPackedInStore');
+            var otherContainer = document.getElementById('packedInStoreOtherContainer');
+            if (select && otherContainer) {
+                if (select.value === 'Other') {
+                    otherContainer.style.display = 'block';
+                } else {
+                    otherContainer.style.display = 'none';
+                }
+            }
         }
 
         // Create E. coli workflow
