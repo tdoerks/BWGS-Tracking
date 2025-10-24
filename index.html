@@ -5953,23 +5953,54 @@ html += '</div>';
 
         // Add Food Sample
         function addFoodSample() {
-            // Get form values
+            // Get common form values
             var id = document.getElementById('foodSampleId').value.trim();
             var sampleTypeCode = document.getElementById('foodSampleType').value;
             var storeNum = document.getElementById('foodStoreNum').value.trim();
-            var brand = document.getElementById('foodBrand').value.trim();
-            var brandCode = document.getElementById('foodBrandCode').value.trim();
-            var sellByDate = document.getElementById('foodSellByDate').value;
-            var packingType = document.getElementById('foodPackingType').value.trim();
-            var packedInStore = document.getElementById('foodPackedInStore').value;
-            var packedInStoreOther = document.getElementById('foodPackedInStoreOther').value.trim();
-            var estId = document.getElementById('foodEstId').value.trim();
-            var producedBy = document.getElementById('foodProducedBy').value.trim();
-            var country = document.getElementById('foodCountry').value.trim();
-            var raisingClaims = document.getElementById('foodRaisingClaims').value.trim();
-            var meatTypeDetail = document.getElementById('foodMeatTypeDetail').value.trim();
-            var fatPercent = document.getElementById('foodFatPercent').value.trim();
             var dateReceived = document.getElementById('foodDateReceived').value;
+
+            // Determine sample category (meat or seafood)
+            var sampleType = sampleTypes[sampleTypeCode];
+            var isSeafood = sampleType && sampleType.category === 'seafood';
+
+            // Get category-specific form values
+            var brand, sellByDate, producedBy, country;
+            var brandCode, packingType, packedInStore, estId, raisingClaims, meatTypeDetail, fatPercent;
+            var frozenFresh, packagedFor, organicClaims, seafoodRaisingClaim, meatCut;
+
+            if (isSeafood) {
+                // Seafood fields
+                brand = document.getElementById('foodSeafoodBrand') ? document.getElementById('foodSeafoodBrand').value.trim() : '';
+                frozenFresh = document.getElementById('foodFrozenFresh') ? document.getElementById('foodFrozenFresh').value : '';
+                sellByDate = document.getElementById('foodSeafoodSellByDate') ? document.getElementById('foodSeafoodSellByDate').value : '';
+                producedBy = document.getElementById('foodSeafoodProducedBy') ? document.getElementById('foodSeafoodProducedBy').value.trim() : '';
+                packagedFor = document.getElementById('foodPackagedFor') ? document.getElementById('foodPackagedFor').value.trim() : '';
+                country = document.getElementById('foodSeafoodCountry') ? document.getElementById('foodSeafoodCountry').value.trim() : '';
+                organicClaims = document.getElementById('foodOrganicClaims') ? document.getElementById('foodOrganicClaims').value.trim() : '';
+                seafoodRaisingClaim = document.getElementById('foodSeafoodRaisingClaim') ? document.getElementById('foodSeafoodRaisingClaim').value : '';
+                var seafoodRaisingClaimOther = document.getElementById('foodSeafoodRaisingClaimOther') ? document.getElementById('foodSeafoodRaisingClaimOther').value.trim() : '';
+                if (seafoodRaisingClaim === 'Other') {
+                    seafoodRaisingClaim = seafoodRaisingClaimOther;
+                }
+                meatCut = document.getElementById('foodMeatCut') ? document.getElementById('foodMeatCut').value.trim() : '';
+            } else {
+                // Retail meat fields
+                brand = document.getElementById('foodBrand') ? document.getElementById('foodBrand').value.trim() : '';
+                brandCode = document.getElementById('foodBrandCode') ? document.getElementById('foodBrandCode').value.trim() : '';
+                sellByDate = document.getElementById('foodSellByDate') ? document.getElementById('foodSellByDate').value : '';
+                packingType = document.getElementById('foodPackingType') ? document.getElementById('foodPackingType').value.trim() : '';
+                packedInStore = document.getElementById('foodPackedInStore') ? document.getElementById('foodPackedInStore').value : '';
+                var packedInStoreOther = document.getElementById('foodPackedInStoreOther') ? document.getElementById('foodPackedInStoreOther').value.trim() : '';
+                if (packedInStore === 'Other') {
+                    packedInStore = packedInStoreOther;
+                }
+                estId = document.getElementById('foodEstId') ? document.getElementById('foodEstId').value.trim() : '';
+                producedBy = document.getElementById('foodProducedBy') ? document.getElementById('foodProducedBy').value.trim() : '';
+                country = document.getElementById('foodCountry') ? document.getElementById('foodCountry').value.trim() : '';
+                raisingClaims = document.getElementById('foodRaisingClaims') ? document.getElementById('foodRaisingClaims').value.trim() : '';
+                meatTypeDetail = document.getElementById('foodMeatTypeDetail') ? document.getElementById('foodMeatTypeDetail').value.trim() : '';
+                fatPercent = document.getElementById('foodFatPercent') ? document.getElementById('foodFatPercent').value.trim() : '';
+            }
 
             // Validation
             if (!id) {
@@ -6001,62 +6032,61 @@ html += '</div>';
                 pathogensToTest.push(cb.value);
             });
 
-            // Get category-specific fields
-            var sampleType = sampleTypes[sampleTypeCode];
-            var categoryData = {};
-
-            if (sampleType.category === 'meat') {
-                var meatTypeEl = document.getElementById('foodMeatType');
-                var organicClaimEl = document.getElementById('foodOrganicClaim');
-                var rwaClaimEl = document.getElementById('foodRWAClaim');
-
-                if (meatTypeEl) categoryData.meatType = meatTypeEl.value;
-                if (organicClaimEl) categoryData.organicClaim = organicClaimEl.value;
-                if (rwaClaimEl) categoryData.rwaClaim = rwaClaimEl.value.trim();
-            } else if (sampleType.category === 'seafood') {
-                var seafoodStateEl = document.getElementById('foodSeafoodState');
-                var raisingClaimEl = document.getElementById('foodRaisingClaim');
-                var countryOriginEl = document.getElementById('foodCountryOrigin');
-
-                if (seafoodStateEl) categoryData.seafoodState = seafoodStateEl.value;
-                if (raisingClaimEl) categoryData.raisingClaim = raisingClaimEl.value.trim();
-                if (countryOriginEl) categoryData.countryOrigin = countryOriginEl.value.trim();
-            }
-
             // Create food sample object
             var foodSample = {
                 id: id,
                 sampleTypeCode: sampleTypeCode,
+                category: isSeafood ? 'seafood' : 'meat',
                 storeNum: storeNum,
                 brand: brand,
-                brandCode: brandCode,
                 sellByDate: sellByDate,
-                packingType: packingType,
-                packedInStore: packedInStore === 'Other' ? packedInStoreOther : packedInStore,
-                estId: estId,
                 producedBy: producedBy,
                 country: country,
-                raisingClaims: raisingClaims,
-                meatTypeDetail: meatTypeDetail,
-                fatPercent: fatPercent,
                 dateReceived: dateReceived,
                 dateAdded: new Date().toISOString().split('T')[0],
-                pathogensToTest: pathogensToTest,
-                categoryData: categoryData
+                pathogensToTest: pathogensToTest
             };
+
+            // Add category-specific fields
+            if (isSeafood) {
+                foodSample.frozenFresh = frozenFresh;
+                foodSample.packagedFor = packagedFor;
+                foodSample.organicClaims = organicClaims;
+                foodSample.seafoodRaisingClaim = seafoodRaisingClaim;
+                foodSample.meatCut = meatCut;
+            } else {
+                foodSample.brandCode = brandCode;
+                foodSample.packingType = packingType;
+                foodSample.packedInStore = packedInStore;
+                foodSample.estId = estId;
+                foodSample.raisingClaims = raisingClaims;
+                foodSample.meatTypeDetail = meatTypeDetail;
+                foodSample.fatPercent = fatPercent;
+            }
 
             foodSamples.push(foodSample);
 
             // Add values to autocomplete history
             addStoreToHistory(storeNum);
-            addBrandToHistory(brand);
-            if (brand && brandCode) saveBrandCodeMapping(brand, brandCode);
-            addPackingTypeToHistory(packingType);
-            addProducedByToHistory(producedBy);
-            addCountryToHistory(country);
-            addRaisingClaimToHistory(raisingClaims);
-            addMeatTypeToHistory(meatTypeDetail);
-            addFatPercentToHistory(fatPercent);
+            if (isSeafood) {
+                // Seafood autocomplete history
+                addSeafoodBrandToHistory(brand);
+                addSeafoodProducedByToHistory(producedBy);
+                addPackagedForToHistory(packagedFor);
+                addSeafoodCountryToHistory(country);
+                addOrganicClaimToHistory(organicClaims);
+                addMeatCutToHistory(meatCut);
+            } else {
+                // Retail meat autocomplete history
+                addBrandToHistory(brand);
+                if (brand && brandCode) saveBrandCodeMapping(brand, brandCode);
+                addPackingTypeToHistory(packingType);
+                addProducedByToHistory(producedBy);
+                addCountryToHistory(country);
+                addRaisingClaimToHistory(raisingClaims);
+                addMeatTypeToHistory(meatTypeDetail);
+                addFatPercentToHistory(fatPercent);
+            }
 
             // Auto-create pathogen workflow entries
             pathogensToTest.forEach(function(pathogenCode) {
@@ -6090,19 +6120,8 @@ html += '</div>';
             document.getElementById('foodSampleId').value = '';
             document.getElementById('foodSampleType').value = '';
             document.getElementById('foodStoreNum').value = '';
-            document.getElementById('foodBrand').value = '';
-            document.getElementById('foodBrandCode').value = '';
-            document.getElementById('foodSellByDate').value = '';
-            document.getElementById('foodPackingType').value = '';
-            document.getElementById('foodPackedInStore').value = '';
-            document.getElementById('foodPackedInStoreOther').value = '';
-            document.getElementById('foodEstId').value = '';
-            document.getElementById('foodProducedBy').value = '';
-            document.getElementById('foodCountry').value = '';
-            document.getElementById('foodRaisingClaims').value = '';
-            document.getElementById('foodMeatTypeDetail').value = '';
-            document.getElementById('foodFatPercent').value = '';
-            document.getElementById('categorySpecificFields').innerHTML = '';
+            document.getElementById('foodDateReceived').value = '';
+            document.getElementById('sampleTypeSpecificFields').innerHTML = '';
             document.getElementById('pathogenCheckboxes').innerHTML = '';
 
             // Re-render
