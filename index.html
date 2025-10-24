@@ -1978,6 +1978,24 @@
         </div>
     </div>
 
+    <!-- Bulk Editor Modal -->
+    <div id="bulkEditorModal" class="modal">
+        <div class="modal-content" style="max-width: 95%; width: 1400px; max-height: 90vh; overflow-y: auto;">
+            <span class="close-btn" onclick="closeBulkEditorModal()">&times;</span>
+            <h3>📝 Bulk Edit Food Samples</h3>
+            <p style="color: #666; margin-bottom: 20px;">Edit multiple samples at once. Fill in the details for each sample and click Save All.</p>
+
+            <div id="bulkEditorContent" style="overflow-x: auto;">
+                <!-- Table will be rendered here -->
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                <button onclick="saveBulkEdits()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">💾 Save All Changes</button>
+                <button class="btn-cancel" onclick="closeBulkEditorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Export data as JSON file
         function exportData() {
@@ -5373,7 +5391,10 @@ html += '</div>';
             html += '<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
             html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
             html += '<h3 style="margin: 0;">📥 Add New Food Sample</h3>';
+            html += '<div style="display: flex; gap: 10px;">';
             html += '<button onclick="openMonthlyGeneratorModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(102,126,234,0.3);">📅 Generate Monthly Samples</button>';
+            html += '<button onclick="openBulkEditorModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(240,147,251,0.3);">📝 Bulk Edit Samples</button>';
+            html += '</div>';
             html += '</div>';
 
             html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
@@ -5796,6 +5817,190 @@ html += '</div>';
             showSuccessNotification(message);
 
             // Refresh the view
+            renderFoodSamplesTab();
+        }
+
+        // Open Bulk Editor Modal
+        function openBulkEditorModal() {
+            // Find all food samples that have minimal data (need editing)
+            var samplesToEdit = foodSamples.filter(function(s) {
+                // Include samples with empty store# or no pathogens selected
+                return !s.storeNum || s.pathogensToTest.length === 0;
+            });
+
+            if (samplesToEdit.length === 0) {
+                alert('No samples need editing. All samples have store numbers and pathogens assigned.');
+                return;
+            }
+
+            renderBulkEditor(samplesToEdit);
+            document.getElementById('bulkEditorModal').style.display = 'block';
+        }
+
+        // Close Bulk Editor Modal
+        function closeBulkEditorModal() {
+            document.getElementById('bulkEditorModal').style.display = 'none';
+        }
+
+        // Render Bulk Editor Table
+        function renderBulkEditor(samplesToEdit) {
+            var container = document.getElementById('bulkEditorContent');
+            var html = '';
+
+            html += '<table style="width: 100%; border-collapse: collapse; background: white; font-size: 13px;">';
+            html += '<thead>';
+            html += '<tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Sample ID</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Type</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Store #</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Brand</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Sell-By Date</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600;">Pathogens</th>';
+            html += '</tr>';
+            html += '</thead>';
+            html += '<tbody>';
+
+            samplesToEdit.forEach(function(sample, index) {
+                html += '<tr style="border-bottom: 1px solid #dee2e6;" data-sample-id="' + sample.id + '">';
+
+                // Sample ID (read-only)
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; font-weight: 600; color: #667eea;">' + sample.id + '</td>';
+
+                // Type (dropdown)
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<select id="bulkType_' + index + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">';
+                html += '<option value="">--</option>';
+                html += '<optgroup label="Meat">';
+                html += '<option value="CB"' + (sample.sampleTypeCode === 'CB' ? ' selected' : '') + '>CB - Chicken Breast</option>';
+                html += '<option value="GT"' + (sample.sampleTypeCode === 'GT' ? ' selected' : '') + '>GT - Ground Turkey</option>';
+                html += '<option value="GB"' + (sample.sampleTypeCode === 'GB' ? ' selected' : '') + '>GB - Ground Beef</option>';
+                html += '<option value="CL"' + (sample.sampleTypeCode === 'CL' ? ' selected' : '') + '>CL - Chicken Liver</option>';
+                html += '<option value="CG"' + (sample.sampleTypeCode === 'CG' ? ' selected' : '') + '>CG - Chicken Gizzard</option>';
+                html += '<option value="CH"' + (sample.sampleTypeCode === 'CH' ? ' selected' : '') + '>CH - Chicken Heart</option>';
+                html += '</optgroup>';
+                html += '<optgroup label="Seafood">';
+                html += '<option value="SA"' + (sample.sampleTypeCode === 'SA' ? ' selected' : '') + '>SA - Salmon</option>';
+                html += '<option value="SH"' + (sample.sampleTypeCode === 'SH' ? ' selected' : '') + '>SH - Shrimp</option>';
+                html += '<option value="TI"' + (sample.sampleTypeCode === 'TI' ? ' selected' : '') + '>TI - Tilapia</option>';
+                html += '</optgroup>';
+                html += '</select>';
+                html += '</td>';
+
+                // Store Number
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkStore_' + index + '" value="' + (sample.storeNum || '') + '" placeholder="12345" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Brand
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkBrand_' + index + '" value="' + (sample.brand || '') + '" placeholder="Brand name" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Sell-By Date
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="date" id="bulkSellBy_' + index + '" value="' + (sample.sellByDate || '') + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Pathogens (checkboxes)
+                html += '<td style="padding: 10px 8px;">';
+                html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+
+                var pathogensList = [
+                    {code: 'EC', name: 'E. coli'},
+                    {code: 'C1', name: 'Campylo'},
+                    {code: 'S1', name: 'Salmonella'},
+                    {code: 'E', name: 'Entero'},
+                    {code: 'A', name: 'Aero'},
+                    {code: 'V1', name: 'Vibrio'}
+                ];
+
+                pathogensList.forEach(function(p) {
+                    var checked = sample.pathogensToTest.indexOf(p.code) !== -1 ? ' checked' : '';
+                    html += '<label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">';
+                    html += '<input type="checkbox" class="bulkPathogen_' + index + '" value="' + p.code + '"' + checked + '>';
+                    html += p.name;
+                    html += '</label>';
+                });
+
+                html += '</div>';
+                html += '</td>';
+
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            html += '</table>';
+
+            container.innerHTML = html;
+        }
+
+        // Save Bulk Edits
+        function saveBulkEdits() {
+            var rows = document.querySelectorAll('#bulkEditorContent tbody tr');
+            var updatedCount = 0;
+
+            rows.forEach(function(row, index) {
+                var sampleId = row.getAttribute('data-sample-id');
+                var sample = foodSamples.find(function(s) { return s.id === sampleId; });
+
+                if (!sample) return;
+
+                // Get form values
+                var typeCode = document.getElementById('bulkType_' + index).value;
+                var storeNum = document.getElementById('bulkStore_' + index).value.trim();
+                var brand = document.getElementById('bulkBrand_' + index).value.trim();
+                var sellByDate = document.getElementById('bulkSellBy_' + index).value;
+
+                // Get selected pathogens
+                var pathogenCheckboxes = document.querySelectorAll('.bulkPathogen_' + index + ':checked');
+                var pathogensToTest = [];
+                pathogenCheckboxes.forEach(function(cb) {
+                    pathogensToTest.push(cb.value);
+                });
+
+                // Update sample
+                sample.sampleTypeCode = typeCode;
+                sample.storeNum = storeNum;
+                sample.brand = brand;
+                sample.sellByDate = sellByDate;
+
+                // Only update pathogens if changed
+                var oldPathogens = sample.pathogensToTest || [];
+                var newPathogens = pathogensToTest;
+
+                // Find newly added pathogens
+                newPathogens.forEach(function(pathogenCode) {
+                    if (oldPathogens.indexOf(pathogenCode) === -1) {
+                        // Create workflow for this pathogen
+                        if (pathogenCode === 'EC') {
+                            createEcoliWorkflow(sampleId, pathogenCode);
+                        } else if (pathogenCode === 'C1') {
+                            createCampyloWorkflow(sampleId, pathogenCode);
+                        } else if (pathogenCode === 'S1') {
+                            createSalmonellaWorkflow(sampleId, pathogenCode);
+                        } else if (pathogenCode === 'E') {
+                            var sampleType = sampleTypes[typeCode];
+                            if (sampleType && sampleType.category === 'seafood') {
+                                createEnterococcusSeafoodWorkflow(sampleId, pathogenCode);
+                            } else {
+                                createEnterococcusWorkflow(sampleId, pathogenCode);
+                            }
+                        } else if (pathogenCode === 'A') {
+                            createAeromonasWorkflow(sampleId, pathogenCode);
+                        } else if (pathogenCode === 'V1') {
+                            createVibrioV1Workflow(sampleId, pathogenCode);
+                        }
+                    }
+                });
+
+                sample.pathogensToTest = pathogensToTest;
+                updatedCount++;
+            });
+
+            // Save and close
+            saveData();
+            closeBulkEditorModal();
+            showSuccessNotification('Updated ' + updatedCount + ' sample(s)!');
             renderFoodSamplesTab();
         }
 
