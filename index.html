@@ -2250,6 +2250,13 @@
                     raisingClaims = data.raisingClaims || [];
                     meatTypes = data.meatTypes || [];
                     fatPercentages = data.fatPercentages || [];
+                    // Load seafood specific fields
+                    seafoodBrands = data.seafoodBrands || [];
+                    seafoodProducedBy = data.seafoodProducedBy || [];
+                    seafoodPackagedFor = data.seafoodPackagedFor || [];
+                    seafoodCountries = data.seafoodCountries || [];
+                    seafoodOrganicClaims = data.seafoodOrganicClaims || [];
+                    seafoodMeatCuts = data.seafoodMeatCuts || [];
 
                     // DATA MIGRATION: Add day1BPW stage to existing E. coli workflows
                     migrateEcoliWorkflows();
@@ -2407,6 +2414,13 @@
                 raisingClaims: raisingClaims,
                 meatTypes: meatTypes,
                 fatPercentages: fatPercentages,
+                // Seafood specific fields
+                seafoodBrands: seafoodBrands,
+                seafoodProducedBy: seafoodProducedBy,
+                seafoodPackagedFor: seafoodPackagedFor,
+                seafoodCountries: seafoodCountries,
+                seafoodOrganicClaims: seafoodOrganicClaims,
+                seafoodMeatCuts: seafoodMeatCuts,
                 lastSaved: now.toISOString()
             };
             localStorage.setItem('bwgsTrackerData', JSON.stringify(data));
@@ -2472,14 +2486,25 @@
         // FOOD TESTING MODULE - Data Structures
         var foodSamples = []; // Food samples (meat/seafood)
         var storeNames = []; // Autocomplete store names history
+
+        // Retail Meat specific fields
         var brandNames = []; // Autocomplete brand names history
         var brandCodeMap = {}; // Map of brand names to brand codes
-        var packingTypes = []; // Autocomplete packing types history
+        var packingTypes = []; // Autocomplete packing types history (retail meat)
         var producedByNames = []; // Autocomplete produced by history
         var countryNames = []; // Autocomplete country history
-        var raisingClaims = []; // Autocomplete raising claims history
+        var raisingClaims = []; // Autocomplete raising claims history (retail meat)
         var meatTypes = []; // Autocomplete meat types history
         var fatPercentages = []; // Autocomplete fat % history
+
+        // Seafood specific fields
+        var seafoodBrands = []; // Autocomplete brand names for seafood
+        var seafoodProducedBy = []; // Autocomplete produced by for seafood
+        var seafoodPackagedFor = []; // Autocomplete packaged for/distributed by
+        var seafoodCountries = []; // Autocomplete countries for seafood
+        var seafoodOrganicClaims = []; // Autocomplete organic/antibiotic claims for seafood
+        var seafoodMeatCuts = []; // Autocomplete meat cuts (fillet, steak, whole, etc.)
+
         var pathogenWorkflows = []; // E. coli, Campylobacter, Salmonella, etc.
         var isolates = []; // Generated isolates that go to sequencing
         var currentModule = 'food-testing'; // 'sequencing' or 'food-testing'
@@ -5527,6 +5552,12 @@ html += '</div>';
 
             html += '</div>'; // End grid row 1
 
+            // Dynamic fields container (will be populated based on sample type)
+            html += '<div id="sampleTypeSpecificFields"></div>';
+
+            // Retail Meat Fields Template (hidden, will be cloned)
+            html += '<div id="retailMeatFieldsTemplate" style="display: none;">';
+
             // Row 2
             html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
 
@@ -5632,7 +5663,110 @@ html += '</div>';
 
             html += '</div>'; // End grid row 5
 
-            // Date Received (moved here)
+            html += '</div>'; // End retail meat fields template
+
+            // Seafood Fields Template (hidden, will be cloned)
+            html += '<div id="seafoodFieldsTemplate" style="display: none;">';
+
+            // Row 2 - Seafood specific
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Brand with autocomplete (seafood)
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Brand</label>';
+            html += '<input type="text" id="foodSeafoodBrand" placeholder="e.g., Sea Best" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showSeafoodBrandAutocomplete()" onfocus="showSeafoodBrandAutocomplete()" onblur="setTimeout(function(){ hideSeafoodBrandAutocomplete(); }, 200)" />';
+            html += '<div id="seafoodBrandAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            // Frozen/Fresh dropdown
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Frozen/Fresh</label>';
+            html += '<select id="foodFrozenFresh" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+            html += '<option value="">-- Select --</option>';
+            html += '<option value="Frozen">Frozen</option>';
+            html += '<option value="Fresh">Fresh</option>';
+            html += '<option value="Other">Other</option>';
+            html += '</select>';
+            html += '</div>';
+
+            // Sell-By Date
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Sell-By Date</label>';
+            html += '<input type="date" id="foodSeafoodSellByDate" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
+
+            html += '</div>'; // End row 2
+
+            // Row 3 - Seafood specific
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Produced By with autocomplete (seafood)
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Produced By</label>';
+            html += '<input type="text" id="foodSeafoodProducedBy" placeholder="Producer name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showSeafoodProducedByAutocomplete()" onfocus="showSeafoodProducedByAutocomplete()" onblur="setTimeout(function(){ hideSeafoodProducedByAutocomplete(); }, 200)" />';
+            html += '<div id="seafoodProducedByAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            // Packaged For / Distributed By with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Packaged For / Distributed By</label>';
+            html += '<input type="text" id="foodPackagedFor" placeholder="Distributor name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showPackagedForAutocomplete()" onfocus="showPackagedForAutocomplete()" onblur="setTimeout(function(){ hidePackagedForAutocomplete(); }, 200)" />';
+            html += '<div id="packagedForAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            // Country with autocomplete (seafood)
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Country</label>';
+            html += '<input type="text" id="foodSeafoodCountry" placeholder="e.g., USA, Thailand" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showSeafoodCountryAutocomplete()" onfocus="showSeafoodCountryAutocomplete()" onblur="setTimeout(function(){ hideSeafoodCountryAutocomplete(); }, 200)" />';
+            html += '<div id="seafoodCountryAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            html += '</div>'; // End row 3
+
+            // Row 4 - Seafood specific
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Organic/Antibiotic Claims with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Organic / Antibiotic Claims</label>';
+            html += '<input type="text" id="foodOrganicClaims" placeholder="e.g., Organic, No Antibiotics" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showOrganicClaimsAutocomplete()" onfocus="showOrganicClaimsAutocomplete()" onblur="setTimeout(function(){ hideOrganicClaimsAutocomplete(); }, 200)" />';
+            html += '<div id="organicClaimsAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            // Raising Claims dropdown (Farm/Wild Caught)
+            html += '<div>';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Raising Claims</label>';
+            html += '<select id="foodSeafoodRaisingClaim" onchange="toggleSeafoodRaisingClaimOther()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+            html += '<option value="">-- Select --</option>';
+            html += '<option value="Farm">Farm</option>';
+            html += '<option value="Wild Caught">Wild Caught</option>';
+            html += '<option value="Other">Other</option>';
+            html += '</select>';
+            html += '</div>';
+
+            // Raising Claims Other (hidden by default)
+            html += '<div id="seafoodRaisingClaimOtherContainer" style="display: none;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Specify Other</label>';
+            html += '<input type="text" id="foodSeafoodRaisingClaimOther" placeholder="Specify..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
+
+            html += '</div>'; // End row 4
+
+            // Row 5 - Seafood specific
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+
+            // Meat Cut with autocomplete
+            html += '<div style="position: relative;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Meat Cut</label>';
+            html += '<input type="text" id="foodMeatCut" placeholder="e.g., Fillet, Steak, Whole" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" oninput="showMeatCutAutocomplete()" onfocus="showMeatCutAutocomplete()" onblur="setTimeout(function(){ hideMeatCutAutocomplete(); }, 200)" />';
+            html += '<div id="meatCutAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
+            html += '</div>';
+
+            html += '</div>'; // End row 5
+
+            html += '</div>'; // End seafood fields template
+
+            // Date Received (shared for both)
             html += '<div style="margin-bottom: 15px;">';
             html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Date Received *</label>';
             html += '<input type="date" id="foodDateReceived" style="width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
@@ -5789,6 +5923,32 @@ html += '</div>';
             });
 
             pathogenCheckboxes.innerHTML = pathogenHTML;
+        }
+
+        // Update form fields based on sample type (meat vs seafood)
+        function updateFoodSampleFields() {
+            var sampleTypeCode = document.getElementById('foodSampleType').value;
+            var sampleType = sampleTypes[sampleTypeCode];
+            var container = document.getElementById('sampleTypeSpecificFields');
+
+            if (!sampleType || !container) return;
+
+            // Clear existing fields
+            container.innerHTML = '';
+
+            if (sampleType.category === 'meat') {
+                // Clone retail meat fields template
+                var template = document.getElementById('retailMeatFieldsTemplate');
+                if (template) {
+                    container.innerHTML = template.innerHTML;
+                }
+            } else if (sampleType.category === 'seafood') {
+                // Clone seafood fields template
+                var template = document.getElementById('seafoodFieldsTemplate');
+                if (template) {
+                    container.innerHTML = template.innerHTML;
+                }
+            }
         }
 
         // Add Food Sample
@@ -6998,6 +7158,255 @@ html += '</div>';
                 } else {
                     otherContainer.style.display = 'none';
                 }
+            }
+        }
+
+        // Toggle Seafood Raising Claim Other field
+        function toggleSeafoodRaisingClaimOther() {
+            var select = document.getElementById('foodSeafoodRaisingClaim');
+            var otherContainer = document.getElementById('seafoodRaisingClaimOtherContainer');
+            if (select && otherContainer) {
+                if (select.value === 'Other') {
+                    otherContainer.style.display = 'block';
+                } else {
+                    otherContainer.style.display = 'none';
+                }
+            }
+        }
+
+        // SEAFOOD AUTOCOMPLETE FUNCTIONS
+
+        // Seafood Brand autocomplete
+        function showSeafoodBrandAutocomplete() {
+            var input = document.getElementById('foodSeafoodBrand');
+            var dropdown = document.getElementById('seafoodBrandAutocomplete');
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = seafoodBrands.filter(function(brand) {
+                return brand.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? seafoodBrands : matches;
+                display.slice(0, 10).forEach(function(brand) {
+                    html += '<div onclick="selectSeafoodBrand(\'' + brand.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + brand + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideSeafoodBrandAutocomplete() {
+            var dropdown = document.getElementById('seafoodBrandAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectSeafoodBrand(brand) {
+            var input = document.getElementById('foodSeafoodBrand');
+            if (input) input.value = brand;
+            hideSeafoodBrandAutocomplete();
+        }
+        function addSeafoodBrandToHistory(brand) {
+            if (!brand || brand.trim() === '') return;
+            var trimmed = brand.trim();
+            if (!seafoodBrands.some(function(b) { return b.toLowerCase() === trimmed.toLowerCase(); })) {
+                seafoodBrands.push(trimmed);
+                seafoodBrands.sort();
+            }
+        }
+
+        // Seafood Produced By autocomplete
+        function showSeafoodProducedByAutocomplete() {
+            var input = document.getElementById('foodSeafoodProducedBy');
+            var dropdown = document.getElementById('seafoodProducedByAutocomplete');
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = seafoodProducedBy.filter(function(name) {
+                return name.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? seafoodProducedBy : matches;
+                display.slice(0, 10).forEach(function(name) {
+                    html += '<div onclick="selectSeafoodProducedBy(\'' + name.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + name + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideSeafoodProducedByAutocomplete() {
+            var dropdown = document.getElementById('seafoodProducedByAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectSeafoodProducedBy(name) {
+            var input = document.getElementById('foodSeafoodProducedBy');
+            if (input) input.value = name;
+            hideSeafoodProducedByAutocomplete();
+        }
+        function addSeafoodProducedByToHistory(name) {
+            if (!name || name.trim() === '') return;
+            var trimmed = name.trim();
+            if (!seafoodProducedBy.some(function(n) { return n.toLowerCase() === trimmed.toLowerCase(); })) {
+                seafoodProducedBy.push(trimmed);
+                seafoodProducedBy.sort();
+            }
+        }
+
+        // Packaged For autocomplete
+        function showPackagedForAutocomplete() {
+            var input = document.getElementById('foodPackagedFor');
+            var dropdown = document.getElementById('packagedForAutocomplete');
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = seafoodPackagedFor.filter(function(name) {
+                return name.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? seafoodPackagedFor : matches;
+                display.slice(0, 10).forEach(function(name) {
+                    html += '<div onclick="selectPackagedFor(\'' + name.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + name + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hidePackagedForAutocomplete() {
+            var dropdown = document.getElementById('packagedForAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectPackagedFor(name) {
+            var input = document.getElementById('foodPackagedFor');
+            if (input) input.value = name;
+            hidePackagedForAutocomplete();
+        }
+        function addPackagedForToHistory(name) {
+            if (!name || name.trim() === '') return;
+            var trimmed = name.trim();
+            if (!seafoodPackagedFor.some(function(n) { return n.toLowerCase() === trimmed.toLowerCase(); })) {
+                seafoodPackagedFor.push(trimmed);
+                seafoodPackagedFor.sort();
+            }
+        }
+
+        // Seafood Country autocomplete
+        function showSeafoodCountryAutocomplete() {
+            var input = document.getElementById('foodSeafoodCountry');
+            var dropdown = document.getElementById('seafoodCountryAutocomplete');
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = seafoodCountries.filter(function(country) {
+                return country.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? seafoodCountries : matches;
+                display.slice(0, 10).forEach(function(country) {
+                    html += '<div onclick="selectSeafoodCountry(\'' + country.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + country + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideSeafoodCountryAutocomplete() {
+            var dropdown = document.getElementById('seafoodCountryAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectSeafoodCountry(country) {
+            var input = document.getElementById('foodSeafoodCountry');
+            if (input) input.value = country;
+            hideSeafoodCountryAutocomplete();
+        }
+        function addSeafoodCountryToHistory(country) {
+            if (!country || country.trim() === '') return;
+            var trimmed = country.trim();
+            if (!seafoodCountries.some(function(c) { return c.toLowerCase() === trimmed.toLowerCase(); })) {
+                seafoodCountries.push(trimmed);
+                seafoodCountries.sort();
+            }
+        }
+
+        // Organic Claims autocomplete
+        function showOrganicClaimsAutocomplete() {
+            var input = document.getElementById('foodOrganicClaims');
+            var dropdown = document.getElementById('organicClaimsAutocomplete');
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = seafoodOrganicClaims.filter(function(claim) {
+                return claim.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? seafoodOrganicClaims : matches;
+                display.slice(0, 10).forEach(function(claim) {
+                    html += '<div onclick="selectOrganicClaim(\'' + claim.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + claim + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideOrganicClaimsAutocomplete() {
+            var dropdown = document.getElementById('organicClaimsAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectOrganicClaim(claim) {
+            var input = document.getElementById('foodOrganicClaims');
+            if (input) input.value = claim;
+            hideOrganicClaimsAutocomplete();
+        }
+        function addOrganicClaimToHistory(claim) {
+            if (!claim || claim.trim() === '') return;
+            var trimmed = claim.trim();
+            if (!seafoodOrganicClaims.some(function(c) { return c.toLowerCase() === trimmed.toLowerCase(); })) {
+                seafoodOrganicClaims.push(trimmed);
+                seafoodOrganicClaims.sort();
+            }
+        }
+
+        // Meat Cut autocomplete
+        function showMeatCutAutocomplete() {
+            var input = document.getElementById('foodMeatCut');
+            var dropdown = document.getElementById('meatCutAutocomplete');
+            if (!input || !dropdown) return;
+            var value = input.value.toLowerCase().trim();
+            var matches = seafoodMeatCuts.filter(function(cut) {
+                return cut.toLowerCase().indexOf(value) !== -1;
+            });
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var display = value === '' ? seafoodMeatCuts : matches;
+                display.slice(0, 10).forEach(function(cut) {
+                    html += '<div onclick="selectMeatCut(\'' + cut.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + cut + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        function hideMeatCutAutocomplete() {
+            var dropdown = document.getElementById('meatCutAutocomplete');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+        function selectMeatCut(cut) {
+            var input = document.getElementById('foodMeatCut');
+            if (input) input.value = cut;
+            hideMeatCutAutocomplete();
+        }
+        function addMeatCutToHistory(cut) {
+            if (!cut || cut.trim() === '') return;
+            var trimmed = cut.trim();
+            if (!seafoodMeatCuts.some(function(c) { return c.toLowerCase() === trimmed.toLowerCase(); })) {
+                seafoodMeatCuts.push(trimmed);
+                seafoodMeatCuts.sort();
             }
         }
 
