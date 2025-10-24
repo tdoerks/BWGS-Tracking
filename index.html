@@ -1893,6 +1893,91 @@
         </div>
     </div>
 
+    <!-- Monthly Sample Generator Modal -->
+    <div id="monthlyGeneratorModal" class="modal">
+        <div class="modal-content" style="max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <span class="close-btn" onclick="closeMonthlyGeneratorModal()">&times;</span>
+            <h3>📅 Generate Monthly Samples</h3>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Select Month:</label>
+                <select id="generatorMonth" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    <option value="01">January</option>
+                    <option value="02">February</option>
+                    <option value="03">March</option>
+                    <option value="04">April</option>
+                    <option value="05">May</option>
+                    <option value="06">June</option>
+                    <option value="07">July</option>
+                    <option value="08">August</option>
+                    <option value="09">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px;">Select Samples to Generate:</h4>
+
+                <!-- Retail Meat -->
+                <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0;">🍗 Retail Meat</h5>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CB01" checked> CB01</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CB02" checked> CB02</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CB03" checked> CB03</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CB04" checked> CB04</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GT01" checked> GT01</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GT02" checked> GT02</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GT03" checked> GT03</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GT04" checked> GT04</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GT05" checked> GT05</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GT06" checked> GT06</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GB01" checked> GB01</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GB02" checked> GB02</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GB03" checked> GB03</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="GB04" checked> GB04</label>
+                    </div>
+                </div>
+
+                <!-- Giblets -->
+                <div style="background: #ffeaa7; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0;">🫀 Giblets (Default Set)</h5>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CL01" checked> CL01</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CG01" checked> CG01</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CH01" checked> CH01</label>
+                    </div>
+                    <h5 style="margin: 15px 0 10px 0; opacity: 0.7;">Backup Giblets (if needed)</h5>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CL02"> CL02</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CG02"> CG02</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="CH02"> CH02</label>
+                    </div>
+                </div>
+
+                <!-- Seafood -->
+                <div style="background: #d1ecf1; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0;">🐟 Seafood</h5>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="SA01" checked> SA01</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="SA02" checked> SA02</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="TI01" checked> TI01</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="TI02" checked> TI02</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="SH01" checked> SH01</label>
+                        <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="generator-checkbox" value="SH02" checked> SH02</label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="generateMonthlySamples()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✨ Generate Samples</button>
+                <button class="btn-cancel" onclick="closeMonthlyGeneratorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Export data as JSON file
         function exportData() {
@@ -5286,7 +5371,10 @@ html += '</div>';
 
             // Add Food Sample Form
             html += '<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-            html += '<h3 style="margin-top: 0;">📥 Add New Food Sample</h3>';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
+            html += '<h3 style="margin: 0;">📥 Add New Food Sample</h3>';
+            html += '<button onclick="openMonthlyGeneratorModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(102,126,234,0.3);">📅 Generate Monthly Samples</button>';
+            html += '</div>';
 
             html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
 
@@ -5617,6 +5705,97 @@ html += '</div>';
             document.getElementById('pathogenCheckboxes').innerHTML = '';
 
             // Re-render
+            renderFoodSamplesTab();
+        }
+
+        // Open Monthly Generator Modal
+        function openMonthlyGeneratorModal() {
+            // Set default month to current month
+            var currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('generatorMonth').value = currentMonth;
+
+            document.getElementById('monthlyGeneratorModal').style.display = 'block';
+        }
+
+        // Close Monthly Generator Modal
+        function closeMonthlyGeneratorModal() {
+            document.getElementById('monthlyGeneratorModal').style.display = 'none';
+        }
+
+        // Generate Monthly Samples
+        function generateMonthlySamples() {
+            var selectedMonth = document.getElementById('generatorMonth').value;
+            var currentYear = new Date().getFullYear().toString().slice(-2); // Get last 2 digits of year
+
+            // Get all checked checkboxes
+            var checkboxes = document.querySelectorAll('.generator-checkbox:checked');
+
+            if (checkboxes.length === 0) {
+                alert('Please select at least one sample to generate');
+                return;
+            }
+
+            // Sample type mapping
+            var sampleTypeMap = {
+                'CB': {code: 'CB', category: 'meat'},
+                'GT': {code: 'GT', category: 'meat'},
+                'GB': {code: 'GB', category: 'meat'},
+                'CL': {code: 'CL', category: 'meat'},
+                'CG': {code: 'CG', category: 'meat'},
+                'CH': {code: 'CH', category: 'meat'},
+                'SA': {code: 'SA', category: 'seafood'},
+                'TI': {code: 'TI', category: 'seafood'},
+                'SH': {code: 'SH', category: 'seafood'}
+            };
+
+            var generatedCount = 0;
+            var skippedCount = 0;
+            var today = new Date().toISOString().split('T')[0];
+
+            checkboxes.forEach(function(checkbox) {
+                var sampleCode = checkbox.value; // e.g., "CB01"
+                var typeCode = sampleCode.substring(0, 2); // e.g., "CB"
+
+                // Build Sample ID: YYKSMMCODE (e.g., 25KS05CB01)
+                var sampleId = currentYear + 'KS' + selectedMonth + sampleCode;
+
+                // Check if sample already exists
+                var exists = foodSamples.some(function(s) { return s.id === sampleId; });
+
+                if (exists) {
+                    skippedCount++;
+                    return;
+                }
+
+                // Create sample with minimal data - user will fill in details later
+                var foodSample = {
+                    id: sampleId,
+                    sampleTypeCode: typeCode,
+                    storeNum: '',
+                    brand: '',
+                    sellByDate: '',
+                    dateReceived: today,
+                    dateAdded: today,
+                    pathogensToTest: [],
+                    categoryData: {}
+                };
+
+                foodSamples.push(foodSample);
+                generatedCount++;
+            });
+
+            // Save and close
+            saveData();
+            closeMonthlyGeneratorModal();
+
+            // Show success message
+            var message = 'Generated ' + generatedCount + ' sample(s)';
+            if (skippedCount > 0) {
+                message += ' (' + skippedCount + ' already existed)';
+            }
+            showSuccessNotification(message);
+
+            // Refresh the view
             renderFoodSamplesTab();
         }
 
