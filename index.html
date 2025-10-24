@@ -2241,6 +2241,7 @@
                     pathogenWorkflows = data.pathogenWorkflows || [];
                     isolates = data.isolates || [];
                     currentModule = data.currentModule || 'food-testing';
+                    storeNames = data.storeNames || [];
 
                     // DATA MIGRATION: Add day1BPW stage to existing E. coli workflows
                     migrateEcoliWorkflows();
@@ -2325,6 +2326,7 @@
                 pathogenWorkflows: pathogenWorkflows,
                 isolates: isolates,
                 currentModule: currentModule,
+                storeNames: storeNames,
                 lastSaved: now.toISOString()
             };
             localStorage.setItem('bwgsTrackerData', JSON.stringify(data));
@@ -2389,6 +2391,7 @@
 
         // FOOD TESTING MODULE - Data Structures
         var foodSamples = []; // Food samples (meat/seafood)
+        var storeNames = []; // Autocomplete store names history
         var pathogenWorkflows = []; // E. coli, Campylobacter, Salmonella, etc.
         var isolates = []; // Generated isolates that go to sequencing
         var currentModule = 'food-testing'; // 'sequencing' or 'food-testing'
@@ -5688,6 +5691,9 @@ html += '</div>';
 
             foodSamples.push(foodSample);
 
+            // Add store to autocomplete history
+            addStoreToHistory(storeNum);
+
             // Auto-create pathogen workflow entries
             pathogensToTest.forEach(function(pathogenCode) {
                 if (pathogenCode === 'EC') {
@@ -5852,7 +5858,7 @@ html += '</div>';
             html += '<tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Sample ID</th>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Type</th>';
-            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Store #</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Store Name</th>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Brand</th>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Sell-By Date</th>';
             html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600;">Pathogens</th>';
@@ -5886,9 +5892,10 @@ html += '</div>';
                 html += '</select>';
                 html += '</td>';
 
-                // Store Number
-                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
-                html += '<input type="text" id="bulkStore_' + index + '" value="' + (sample.storeNum || '') + '" placeholder="12345" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                // Store Name with autocomplete
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; position: relative;">';
+                html += '<input type="text" id="bulkStore_' + index + '" value="' + (sample.storeNum || '') + '" placeholder="e.g., Walmart Topeka" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" oninput="showStoreAutocomplete(' + index + ')" onfocus="showStoreAutocomplete(' + index + ')" onblur="setTimeout(function(){ hideStoreAutocomplete(' + index + '); }, 200)" />';
+                html += '<div id="storeAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 8px; right: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>';
                 html += '</td>';
 
                 // Brand
@@ -5958,6 +5965,9 @@ html += '</div>';
                     pathogensToTest.push(cb.value);
                 });
 
+                // Add store to autocomplete history
+                addStoreToHistory(storeNum);
+
                 // Update sample
                 sample.sampleTypeCode = typeCode;
                 sample.storeNum = storeNum;
@@ -6002,6 +6012,70 @@ html += '</div>';
             closeBulkEditorModal();
             showSuccessNotification('Updated ' + updatedCount + ' sample(s)!');
             renderFoodSamplesTab();
+        }
+
+        // Store Autocomplete Functions
+        function showStoreAutocomplete(index) {
+            var input = document.getElementById('bulkStore_' + index);
+            var dropdown = document.getElementById('storeAutocomplete_' + index);
+
+            if (!input || !dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+
+            // Filter store names based on input
+            var matches = storeNames.filter(function(store) {
+                return store.toLowerCase().indexOf(value) !== -1;
+            });
+
+            // Show dropdown if there are matches or if input is empty (show all)
+            if (matches.length > 0 || value === '') {
+                var html = '';
+                var displayStores = value === '' ? storeNames : matches;
+
+                // Limit to 10 results
+                displayStores.slice(0, 10).forEach(function(store) {
+                    html += '<div onclick="selectStore(' + index + ', \'' + store.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + store + '</div>';
+                });
+
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hideStoreAutocomplete(index) {
+            var dropdown = document.getElementById('storeAutocomplete_' + index);
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function selectStore(index, storeName) {
+            var input = document.getElementById('bulkStore_' + index);
+            if (input) {
+                input.value = storeName;
+            }
+            hideStoreAutocomplete(index);
+        }
+
+        // Add store name to history if new
+        function addStoreToHistory(storeName) {
+            if (!storeName || storeName.trim() === '') return;
+
+            var trimmedName = storeName.trim();
+
+            // Check if store already exists (case-insensitive)
+            var exists = storeNames.some(function(s) {
+                return s.toLowerCase() === trimmedName.toLowerCase();
+            });
+
+            if (!exists) {
+                storeNames.push(trimmedName);
+                // Keep store names sorted for easier browsing
+                storeNames.sort();
+            }
         }
 
         // Create E. coli workflow
