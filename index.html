@@ -2137,7 +2137,7 @@
                     foodSamples = data.foodSamples || [];
                     pathogenWorkflows = data.pathogenWorkflows || [];
                     isolates = data.isolates || [];
-                    currentModule = data.currentModule || 'sequencing';
+                    currentModule = data.currentModule || 'food-testing';
 
                     // DATA MIGRATION: Add day1BPW stage to existing E. coli workflows
                     migrateEcoliWorkflows();
@@ -2288,7 +2288,7 @@
         var foodSamples = []; // Food samples (meat/seafood)
         var pathogenWorkflows = []; // E. coli, Campylobacter, Salmonella, etc.
         var isolates = []; // Generated isolates that go to sequencing
-        var currentModule = 'sequencing'; // 'sequencing' or 'food-testing'
+        var currentModule = 'food-testing'; // 'sequencing' or 'food-testing'
 
         // Sample type definitions
         var sampleTypes = {
