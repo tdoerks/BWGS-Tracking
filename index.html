@@ -6011,12 +6011,63 @@ html += '</div>';
                 if (template) {
                     container.innerHTML = template.innerHTML;
                 }
+
+                // Set default pathogen selections for retail meat after a brief delay to ensure checkboxes are rendered
+                setTimeout(function() {
+                    setDefaultPathogensForRM(sampleTypeCode);
+                }, 100);
             } else if (sampleType.category === 'seafood') {
                 // Clone seafood fields template
                 var template = document.getElementById('seafoodFieldsTemplate');
                 if (template) {
                     container.innerHTML = template.innerHTML;
                 }
+            }
+        }
+
+        // Set default pathogen selections for retail meat samples
+        function setDefaultPathogensForRM(sampleTypeCode) {
+            // Get the sample ID to check for specific numbers (CB01, CB02, etc.)
+            var sampleId = document.getElementById('foodSampleId') ? document.getElementById('foodSampleId').value.trim().toUpperCase() : '';
+
+            // Uncheck all pathogens first
+            var allCheckboxes = document.querySelectorAll('input[name="pathogenTest"]');
+            allCheckboxes.forEach(function(cb) {
+                cb.checked = false;
+            });
+
+            // Salmonella (S1): ALL RM samples
+            var s1Checkbox = document.querySelector('input[name="pathogenTest"][value="S1"]');
+            if (s1Checkbox) s1Checkbox.checked = true;
+
+            // E. coli (EC): ALL RM samples
+            var ecCheckbox = document.querySelector('input[name="pathogenTest"][value="EC"]');
+            if (ecCheckbox) ecCheckbox.checked = true;
+
+            // Campylo (C1): ALL RM samples EXCEPT Ground Turkey (GT)
+            if (sampleTypeCode !== 'GT') {
+                var c1Checkbox = document.querySelector('input[name="pathogenTest"][value="C1"]');
+                if (c1Checkbox) c1Checkbox.checked = true;
+            }
+
+            // Entero (E): ONLY CB01, CB02, GT01, GB01, and giblets (CL, CG, CH)
+            var giblets = ['CL', 'CG', 'CH'];
+            var checkEntero = false;
+
+            if (giblets.indexOf(sampleTypeCode) !== -1) {
+                // All giblets get Entero
+                checkEntero = true;
+            } else if (sampleId) {
+                // Check for specific sample numbers: CB01, CB02, GT01, GB01
+                if (sampleId.match(/CB01$/) || sampleId.match(/CB02$/) ||
+                    sampleId.match(/GT01$/) || sampleId.match(/GB01$/)) {
+                    checkEntero = true;
+                }
+            }
+
+            if (checkEntero) {
+                var eCheckbox = document.querySelector('input[name="pathogenTest"][value="E"]');
+                if (eCheckbox) eCheckbox.checked = true;
             }
         }
 
