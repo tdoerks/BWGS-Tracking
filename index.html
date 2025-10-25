@@ -5599,13 +5599,16 @@ html += '</div>';
             html += '</select>';
             html += '</div>';
 
-            // Packed in Store Other (hidden by default)
-            html += '<div id="packedInStoreOtherContainer" style="display: none;">';
-            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Specify Other</label>';
-            html += '<input type="text" id="foodPackedInStoreOther" placeholder="Specify..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
-            html += '</div>';
+            // Empty spacer for grid alignment
+            html += '<div></div>';
 
             html += '</div>'; // End grid row 3
+
+            // Packed in Store Other (separate row, shown conditionally)
+            html += '<div id="packedInStoreOtherContainer" style="display: none; margin-bottom: 15px;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Specify Other (Packed in Store)</label>';
+            html += '<input type="text" id="foodPackedInStoreOther" placeholder="Specify..." style="width: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
 
             // Row 4
             html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
@@ -5739,13 +5742,16 @@ html += '</div>';
             html += '</select>';
             html += '</div>';
 
-            // Raising Claims Other (hidden by default)
-            html += '<div id="seafoodRaisingClaimOtherContainer" style="display: none;">';
-            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Specify Other</label>';
-            html += '<input type="text" id="foodSeafoodRaisingClaimOther" placeholder="Specify..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
-            html += '</div>';
+            // Empty spacer for grid alignment
+            html += '<div></div>';
 
             html += '</div>'; // End row 4
+
+            // Raising Claims Other (separate row, shown conditionally)
+            html += '<div id="seafoodRaisingClaimOtherContainer" style="display: none; margin-bottom: 15px;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">Specify Other (Raising Claims)</label>';
+            html += '<input type="text" id="foodSeafoodRaisingClaimOther" placeholder="Specify..." style="width: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '</div>';
 
             // Row 5 - Seafood specific
             html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
