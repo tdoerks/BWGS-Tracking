@@ -7152,7 +7152,7 @@ html += '</div>';
             hideStoreAutocompleteSingle();
         }
 
-        // Sample ID Autocomplete
+        // Sample ID Autocomplete - Predictive (like Google)
         function showSampleIdAutocomplete() {
             var input = document.getElementById('foodSampleId');
             var dropdown = document.getElementById('sampleIdAutocomplete');
@@ -7161,24 +7161,64 @@ html += '</div>';
 
             var value = input.value.toUpperCase().trim();
 
+            if (value === '') {
+                dropdown.style.display = 'none';
+                return;
+            }
+
             // Get all existing food sample IDs
             var existingSampleIds = samples
                 .filter(function(s) { return s.sampleType === 'food'; })
-                .map(function(s) { return s.id; })
-                .sort();
+                .map(function(s) { return s.id; });
 
-            // Filter sample IDs based on input
+            // Find IDs that START with what the user has typed
             var matches = existingSampleIds.filter(function(id) {
-                return id.indexOf(value) !== -1;
+                return id.startsWith(value);
             });
 
-            // Show dropdown if there are matches
-            if (matches.length > 0 && value !== '') {
+            // Get unique suggestions by finding what comes next after the current input
+            var suggestions = [];
+            var seen = {};
+
+            matches.forEach(function(id) {
+                // Find the next character/segment after what user typed
+                if (id.length > value.length) {
+                    // Suggest next 1-2 characters intelligently
+                    var remaining = id.substring(value.length);
+                    var suggestion = '';
+
+                    // If next chars are letters, suggest up to 2 letters
+                    // If next chars are digits, suggest up to 2 digits
+                    if (/^[A-Z]/.test(remaining)) {
+                        suggestion = remaining.match(/^[A-Z]{1,2}/)[0];
+                    } else if (/^\d/.test(remaining)) {
+                        suggestion = remaining.match(/^\d{1,2}/)[0];
+                    }
+
+                    var fullSuggestion = value + suggestion;
+                    if (!seen[fullSuggestion]) {
+                        seen[fullSuggestion] = true;
+                        suggestions.push({
+                            text: fullSuggestion,
+                            full: id
+                        });
+                    }
+                }
+            });
+
+            // Show dropdown if there are suggestions
+            if (suggestions.length > 0) {
                 var html = '';
 
                 // Limit to 10 results
-                matches.slice(0, 10).forEach(function(id) {
-                    html += '<div onclick="selectSampleId(\'' + id.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + id + '</div>';
+                suggestions.slice(0, 10).forEach(function(sugg) {
+                    // Highlight the part user has already typed
+                    var displayText = '<strong>' + value + '</strong>' + sugg.text.substring(value.length);
+                    if (sugg.full !== sugg.text) {
+                        displayText += '<span style="color: #999; font-size: 12px; margin-left: 8px;">(' + sugg.full + ')</span>';
+                    }
+
+                    html += '<div onclick="selectSampleId(\'' + sugg.text.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + displayText + '</div>';
                 });
 
                 dropdown.innerHTML = html;
