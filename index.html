@@ -5523,19 +5523,19 @@ html += '</div>';
             html += '</div>';
             html += '</div>';
 
-            html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">';
+            html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; align-items: start;">';
 
             // Sample ID
             html += '<div>';
             html += '<label style="display: block; margin-bottom: 8px; font-weight: 600;">Sample ID *</label>';
-            html += '<input type="text" id="foodSampleId" placeholder="25KS01CB01" oninput="autoDetectSampleType()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+            html += '<input type="text" id="foodSampleId" placeholder="25KS01CB01" oninput="autoDetectSampleType()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" />';
             html += '<div style="font-size: 11px; color: #666; margin-top: 5px;">Format: YYSSTNN[TYPE]## (e.g., 25KS01CB01) - Type auto-detected from ID</div>';
             html += '</div>';
 
             // Detected Sample Type (read-only display)
             html += '<div>';
             html += '<label style="display: block; margin-bottom: 8px; font-weight: 600;">Detected Type</label>';
-            html += '<div id="detectedSampleType" style="padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; color: #666; font-style: italic;">Enter Sample ID to detect type...</div>';
+            html += '<div id="detectedSampleType" style="padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; color: #666; font-style: italic; box-sizing: border-box; min-height: 42px;">Enter Sample ID to detect type...</div>';
             html += '</div>';
 
             html += '</div>'; // End grid row 1
