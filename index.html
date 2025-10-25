@@ -5526,9 +5526,10 @@ html += '</div>';
             html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; align-items: start;">';
 
             // Sample ID
-            html += '<div>';
+            html += '<div style="position: relative;">';
             html += '<label style="display: block; margin-bottom: 8px; font-weight: 600;">Sample ID *</label>';
-            html += '<input type="text" id="foodSampleId" placeholder="25KS01CB01" oninput="autoDetectSampleType()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" />';
+            html += '<input type="text" id="foodSampleId" placeholder="25KS01CB01" oninput="autoDetectSampleType(); showSampleIdAutocomplete();" onfocus="showSampleIdAutocomplete()" onblur="setTimeout(function(){ hideSampleIdAutocomplete(); }, 200)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" />';
+            html += '<div id="sampleIdAutocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
             html += '<div style="font-size: 11px; color: #666; margin-top: 5px;">Format: YYSSTNN[TYPE]## (e.g., 25KS01CB01) - Type auto-detected from ID</div>';
             html += '</div>';
 
@@ -7149,6 +7150,59 @@ html += '</div>';
                 input.value = storeName;
             }
             hideStoreAutocompleteSingle();
+        }
+
+        // Sample ID Autocomplete
+        function showSampleIdAutocomplete() {
+            var input = document.getElementById('foodSampleId');
+            var dropdown = document.getElementById('sampleIdAutocomplete');
+
+            if (!input || !dropdown) return;
+
+            var value = input.value.toUpperCase().trim();
+
+            // Get all existing food sample IDs
+            var existingSampleIds = samples
+                .filter(function(s) { return s.sampleType === 'food'; })
+                .map(function(s) { return s.id; })
+                .sort();
+
+            // Filter sample IDs based on input
+            var matches = existingSampleIds.filter(function(id) {
+                return id.indexOf(value) !== -1;
+            });
+
+            // Show dropdown if there are matches
+            if (matches.length > 0 && value !== '') {
+                var html = '';
+
+                // Limit to 10 results
+                matches.slice(0, 10).forEach(function(id) {
+                    html += '<div onclick="selectSampleId(\'' + id.replace(/'/g, "\\'") + '\')" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' + id + '</div>';
+                });
+
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function hideSampleIdAutocomplete() {
+            var dropdown = document.getElementById('sampleIdAutocomplete');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function selectSampleId(sampleId) {
+            var input = document.getElementById('foodSampleId');
+            if (input) {
+                input.value = sampleId;
+                // Trigger auto-detection
+                autoDetectSampleType();
+            }
+            hideSampleIdAutocomplete();
         }
 
         // Brand Autocomplete and Brand Code Auto-fill
