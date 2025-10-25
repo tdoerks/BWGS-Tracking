@@ -6338,8 +6338,37 @@ html += '</div>';
         }
 
         // Render Bulk Editor Table
-        function renderBulkEditor(samplesToEdit) {
+        function renderBulkEditor(category) {
             var container = document.getElementById('bulkEditorContent');
+
+            // Filter samples by category
+            var samplesToEdit = foodSamples.filter(function(s) {
+                // Include samples with empty store# or no pathogens selected
+                if (!s.storeNum || s.pathogensToTest.length === 0) {
+                    var sampleCategory = s.category || (sampleTypes[s.sampleTypeCode] ? sampleTypes[s.sampleTypeCode].category : null);
+                    return sampleCategory === category;
+                }
+                return false;
+            });
+
+            if (samplesToEdit.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No ' + category + ' samples need editing.</div>';
+                return;
+            }
+
+            var html = '';
+
+            if (category === 'meat') {
+                html = renderMeatBulkTable(samplesToEdit);
+            } else {
+                html = renderSeafoodBulkTable(samplesToEdit);
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Render Retail Meat Bulk Editor Table
+        function renderMeatBulkTable(samplesToEdit) {
             var html = '';
 
             html += '<table style="width: 100%; border-collapse: collapse; background: white; font-size: 13px;">';
@@ -6494,7 +6523,130 @@ html += '</div>';
             html += '</tbody>';
             html += '</table>';
 
-            container.innerHTML = html;
+            return html;
+        }
+
+        // Render Seafood Bulk Editor Table
+        function renderSeafoodBulkTable(samplesToEdit) {
+            var html = '';
+
+            html += '<table style="width: 100%; border-collapse: collapse; background: white; font-size: 13px;">';
+            html += '<thead>';
+            html += '<tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Sample ID</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Store Name</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Brand</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Frozen/Fresh</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Sell-By Date</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Produced By</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Packaged For</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Country</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Organic Claims</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Raising Claims</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600; border-right: 1px solid #dee2e6;">Meat Cut</th>';
+            html += '<th style="padding: 12px 8px; text-align: left; font-weight: 600;">Pathogens</th>';
+            html += '</tr>';
+            html += '</thead>';
+            html += '<tbody>';
+
+            samplesToEdit.forEach(function(sample, index) {
+                html += '<tr style="border-bottom: 1px solid #dee2e6;" data-sample-id="' + sample.id + '">';
+
+                // Sample ID (read-only)
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6; font-weight: 600; color: #667eea;">' + sample.id + '</td>';
+
+                // Store Name
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkStore_' + index + '" value="' + (sample.storeNum || '') + '" placeholder="Store" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Brand
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkBrand_' + index + '" value="' + (sample.brand || '') + '" placeholder="Brand" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Frozen/Fresh
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<select id="bulkFrozenFresh_' + index + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">';
+                html += '<option value="">--</option>';
+                html += '<option value="Frozen"' + (sample.frozenFresh === 'Frozen' ? ' selected' : '') + '>Frozen</option>';
+                html += '<option value="Fresh"' + (sample.frozenFresh === 'Fresh' ? ' selected' : '') + '>Fresh</option>';
+                html += '<option value="Other"' + (sample.frozenFresh === 'Other' ? ' selected' : '') + '>Other</option>';
+                html += '</select>';
+                html += '</td>';
+
+                // Sell-By Date
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="date" id="bulkSellBy_' + index + '" value="' + (sample.sellByDate || '') + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Produced By
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkProducedBy_' + index + '" value="' + (sample.producedBy || '') + '" placeholder="Producer" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Packaged For
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkPackagedFor_' + index + '" value="' + (sample.packagedFor || '') + '" placeholder="Distributor" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Country
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkCountry_' + index + '" value="' + (sample.country || '') + '" placeholder="Country" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Organic Claims
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkOrganicClaims_' + index + '" value="' + (sample.organicClaims || '') + '" placeholder="Claims" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Raising Claims
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<select id="bulkRaisingClaim_' + index + '" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">';
+                html += '<option value="">--</option>';
+                html += '<option value="Farm"' + (sample.seafoodRaisingClaim === 'Farm' ? ' selected' : '') + '>Farm</option>';
+                html += '<option value="Wild Caught"' + (sample.seafoodRaisingClaim === 'Wild Caught' ? ' selected' : '') + '>Wild Caught</option>';
+                html += '<option value="Other"' + (sample.seafoodRaisingClaim && sample.seafoodRaisingClaim !== 'Farm' && sample.seafoodRaisingClaim !== 'Wild Caught' ? ' selected' : '') + '>Other</option>';
+                html += '</select>';
+                html += '</td>';
+
+                // Meat Cut
+                html += '<td style="padding: 10px 8px; border-right: 1px solid #dee2e6;">';
+                html += '<input type="text" id="bulkMeatCut_' + index + '" value="' + (sample.meatCut || '') + '" placeholder="Cut" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" />';
+                html += '</td>';
+
+                // Pathogens (checkboxes)
+                html += '<td style="padding: 10px 8px;">';
+                html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+
+                var pathogensList = [
+                    {code: 'EC', name: 'E. coli'},
+                    {code: 'C1', name: 'Campylo'},
+                    {code: 'S1', name: 'Salmonella'},
+                    {code: 'E', name: 'Entero'},
+                    {code: 'A', name: 'Aero'},
+                    {code: 'V1', name: 'Vibrio V1'},
+                    {code: 'V2', name: 'Vibrio V2'}
+                ];
+
+                pathogensList.forEach(function(p) {
+                    var checked = sample.pathogensToTest.indexOf(p.code) !== -1 ? ' checked' : '';
+                    html += '<label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">';
+                    html += '<input type="checkbox" class="bulkPathogen_' + index + '" value="' + p.code + '"' + checked + '>';
+                    html += p.name;
+                    html += '</label>';
+                });
+
+                html += '</div>';
+                html += '</td>';
+
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            html += '</table>';
+
+            return html;
         }
 
         // Save Bulk Edits
@@ -6508,20 +6660,81 @@ html += '</div>';
 
                 if (!sample) return;
 
-                // Get form values
-                var typeCode = document.getElementById('bulkType_' + index).value;
+                // Determine category
+                var isSeafood = currentBulkTab === 'seafood';
+
+                // Get common form values
                 var storeNum = document.getElementById('bulkStore_' + index).value.trim();
                 var brand = document.getElementById('bulkBrand_' + index).value.trim();
-                var brandCode = document.getElementById('bulkBrandCode_' + index).value.trim();
                 var sellByDate = document.getElementById('bulkSellBy_' + index).value;
-                var packingType = document.getElementById('bulkPackingType_' + index).value.trim();
-                var packedInStore = document.getElementById('bulkPackedInStore_' + index).value;
-                var estId = document.getElementById('bulkEstId_' + index).value.trim();
                 var producedBy = document.getElementById('bulkProducedBy_' + index).value.trim();
-                var country = document.getElementById('bulkCountry_' + index).value.trim();
-                var raisingClaims = document.getElementById('bulkRaisingClaims_' + index).value.trim();
-                var meatTypeDetail = document.getElementById('bulkMeatType_' + index).value.trim();
-                var fatPercent = document.getElementById('bulkFatPercent_' + index).value.trim();
+
+                // Get category-specific values
+                if (isSeafood) {
+                    // Seafood fields
+                    var frozenFresh = document.getElementById('bulkFrozenFresh_' + index).value;
+                    var packagedFor = document.getElementById('bulkPackagedFor_' + index).value.trim();
+                    var country = document.getElementById('bulkCountry_' + index).value.trim();
+                    var organicClaims = document.getElementById('bulkOrganicClaims_' + index).value.trim();
+                    var seafoodRaisingClaim = document.getElementById('bulkRaisingClaim_' + index).value;
+                    var meatCut = document.getElementById('bulkMeatCut_' + index).value.trim();
+
+                    // Update seafood sample
+                    sample.storeNum = storeNum;
+                    sample.brand = brand;
+                    sample.sellByDate = sellByDate;
+                    sample.producedBy = producedBy;
+                    sample.frozenFresh = frozenFresh;
+                    sample.packagedFor = packagedFor;
+                    sample.country = country;
+                    sample.organicClaims = organicClaims;
+                    sample.seafoodRaisingClaim = seafoodRaisingClaim;
+                    sample.meatCut = meatCut;
+
+                    // Add to seafood autocomplete history
+                    addStoreToHistory(storeNum);
+                    addSeafoodBrandToHistory(brand);
+                    addSeafoodProducedByToHistory(producedBy);
+                    addPackagedForToHistory(packagedFor);
+                    addSeafoodCountryToHistory(country);
+                    addOrganicClaimToHistory(organicClaims);
+                    addMeatCutToHistory(meatCut);
+                } else {
+                    // Retail meat fields
+                    var brandCode = document.getElementById('bulkBrandCode_' + index).value.trim();
+                    var packingType = document.getElementById('bulkPackingType_' + index).value.trim();
+                    var packedInStore = document.getElementById('bulkPackedInStore_' + index).value;
+                    var estId = document.getElementById('bulkEstId_' + index).value.trim();
+                    var country = document.getElementById('bulkCountry_' + index).value.trim();
+                    var raisingClaims = document.getElementById('bulkRaisingClaims_' + index).value.trim();
+                    var meatTypeDetail = document.getElementById('bulkMeatType_' + index).value.trim();
+                    var fatPercent = document.getElementById('bulkFatPercent_' + index).value.trim();
+
+                    // Update retail meat sample
+                    sample.storeNum = storeNum;
+                    sample.brand = brand;
+                    sample.brandCode = brandCode;
+                    sample.sellByDate = sellByDate;
+                    sample.packingType = packingType;
+                    sample.packedInStore = packedInStore;
+                    sample.estId = estId;
+                    sample.producedBy = producedBy;
+                    sample.country = country;
+                    sample.raisingClaims = raisingClaims;
+                    sample.meatTypeDetail = meatTypeDetail;
+                    sample.fatPercent = fatPercent;
+
+                    // Add to retail meat autocomplete history
+                    addStoreToHistory(storeNum);
+                    addBrandToHistory(brand);
+                    if (brand && brandCode) saveBrandCodeMapping(brand, brandCode);
+                    addPackingTypeToHistory(packingType);
+                    addProducedByToHistory(producedBy);
+                    addCountryToHistory(country);
+                    addRaisingClaimToHistory(raisingClaims);
+                    addMeatTypeToHistory(meatTypeDetail);
+                    addFatPercentToHistory(fatPercent);
+                }
 
                 // Get selected pathogens
                 var pathogenCheckboxes = document.querySelectorAll('.bulkPathogen_' + index + ':checked');
@@ -6529,32 +6742,6 @@ html += '</div>';
                 pathogenCheckboxes.forEach(function(cb) {
                     pathogensToTest.push(cb.value);
                 });
-
-                // Add values to autocomplete history
-                addStoreToHistory(storeNum);
-                addBrandToHistory(brand);
-                if (brand && brandCode) saveBrandCodeMapping(brand, brandCode);
-                addPackingTypeToHistory(packingType);
-                addProducedByToHistory(producedBy);
-                addCountryToHistory(country);
-                addRaisingClaimToHistory(raisingClaims);
-                addMeatTypeToHistory(meatTypeDetail);
-                addFatPercentToHistory(fatPercent);
-
-                // Update sample
-                sample.sampleTypeCode = typeCode;
-                sample.storeNum = storeNum;
-                sample.brand = brand;
-                sample.brandCode = brandCode;
-                sample.sellByDate = sellByDate;
-                sample.packingType = packingType;
-                sample.packedInStore = packedInStore;
-                sample.estId = estId;
-                sample.producedBy = producedBy;
-                sample.country = country;
-                sample.raisingClaims = raisingClaims;
-                sample.meatTypeDetail = meatTypeDetail;
-                sample.fatPercent = fatPercent;
 
                 // Only update pathogens if changed
                 var oldPathogens = sample.pathogensToTest || [];
