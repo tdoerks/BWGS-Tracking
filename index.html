@@ -1521,7 +1521,7 @@
 
             <div id="plateMapLegend" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
                 <strong>Legend:</strong>
-                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 10px;">
                     <div><span style="display: inline-block; width: 12px; height: 12px; background: #e9ecef; border: 1px solid #999;"></span> Empty</div>
                     <div><span style="display: inline-block; width: 12px; height: 12px; background: #fff9c4; border: 1px solid #f57f17;"></span> BAP Incubating</div>
                     <div><span style="display: inline-block; width: 12px; height: 12px; background: #d4edda; border: 1px solid #155724;"></span> BAP Complete</div>
@@ -5803,7 +5803,7 @@ html += '</div>';
             // Pathogens to Test
             html += '<div style="margin-bottom: 15px;">';
             html += '<label style="display: block; margin-bottom: 8px; font-weight: 600;">Pathogens to Test *</label>';
-            html += '<div id="pathogenCheckboxes" style="display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 6px;"></div>';
+            html += '<div id="pathogenCheckboxes" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 15px; background: #f9f9f9; border-radius: 6px;"></div>';
             html += '</div>';
 
             // Add button
@@ -6413,11 +6413,11 @@ html += '</div>';
                 html += '</div>';
 
                 // Row 1: Basic Info
-                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">';
+                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">';
 
                 // Type
                 html += '<div>';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Type</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Type</label>';
                 html += '<select id="bulkType_' + index + '" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">';
                 html += '<option value="">--</option>';
                 html += '<optgroup label="Meat">';
@@ -6438,20 +6438,20 @@ html += '</div>';
 
                 // Store Name
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Store Name</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Store Name</label>';
                 html += '<input type="text" id="bulkStore_' + index + '" value="' + (sample.storeNum || '') + '" placeholder="e.g., Walmart Topeka" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showStoreAutocomplete(' + index + ')" onfocus="showStoreAutocomplete(' + index + ')" onblur="setTimeout(function(){ hideStoreAutocomplete(' + index + '); }, 200)" />';
                 html += '<div id="storeAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Sell-By Date
                 html += '<div>';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Sell-By Date</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Sell-By Date</label>';
                 html += '<input type="date" id="bulkSellBy_' + index + '" value="' + (sample.sellByDate || '') + '" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" />';
                 html += '</div>';
 
                 // Packing Type
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Packing Type</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Packing Type</label>';
                 html += '<input type="text" id="bulkPackingType_' + index + '" value="' + (sample.packingType || '') + '" placeholder="e.g., Tray" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showPackingTypeAutocompleteBulk(' + index + ')" onfocus="showPackingTypeAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hidePackingTypeAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="packingTypeAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
@@ -6459,31 +6459,31 @@ html += '</div>';
                 html += '</div>'; // End row 1
 
                 // Row 2: Brand & Producer Info
-                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">';
+                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">';
 
                 // Brand
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Brand</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Brand</label>';
                 html += '<input type="text" id="bulkBrand_' + index + '" value="' + (sample.brand || '') + '" placeholder="Brand name" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showBrandAutocompleteBulk(' + index + '); autofillBrandCodeBulk(' + index + ')" onfocus="showBrandAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideBrandAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="brandAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Brand Code
                 html += '<div>';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Brand Code</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Brand Code</label>';
                 html += '<input type="text" id="bulkBrandCode_' + index + '" value="' + (sample.brandCode || '') + '" placeholder="Code" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" />';
                 html += '</div>';
 
                 // Produced By
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Produced By</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Produced By</label>';
                 html += '<input type="text" id="bulkProducedBy_' + index + '" value="' + (sample.producedBy || '') + '" placeholder="Producer" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showProducedByAutocompleteBulk(' + index + ')" onfocus="showProducedByAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideProducedByAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="producedByAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Country
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Country</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Country</label>';
                 html += '<input type="text" id="bulkCountry_' + index + '" value="' + (sample.country || '') + '" placeholder="Country" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showCountryAutocompleteBulk(' + index + ')" onfocus="showCountryAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideCountryAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="countryAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
@@ -6491,11 +6491,11 @@ html += '</div>';
                 html += '</div>'; // End row 2
 
                 // Row 3: Product Details
-                html += '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 15px;">';
+                html += '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 20px;">';
 
                 // Packed in Store
                 html += '<div>';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Packed in Store</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Packed in Store</label>';
                 html += '<select id="bulkPackedInStore_' + index + '" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">';
                 html += '<option value="">--</option>';
                 html += '<option value="Yes"' + (sample.packedInStore === 'Yes' ? ' selected' : '') + '>Yes</option>';
@@ -6507,27 +6507,27 @@ html += '</div>';
 
                 // Est. ID
                 html += '<div>';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Est. ID</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Est. ID</label>';
                 html += '<input type="text" id="bulkEstId_' + index + '" value="' + (sample.estId || '') + '" placeholder="Est. ID" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" />';
                 html += '</div>';
 
                 // Raising Claims
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Raising Claims</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Raising Claims</label>';
                 html += '<input type="text" id="bulkRaisingClaims_' + index + '" value="' + (sample.raisingClaims || '') + '" placeholder="Claims" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showRaisingClaimsAutocompleteBulk(' + index + ')" onfocus="showRaisingClaimsAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideRaisingClaimsAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="raisingClaimsAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Meat Type
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Meat Type</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Meat Type</label>';
                 html += '<input type="text" id="bulkMeatType_' + index + '" value="' + (sample.meatTypeDetail || '') + '" placeholder="Type" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showMeatTypeAutocompleteBulk(' + index + ')" onfocus="showMeatTypeAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideMeatTypeAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="meatTypeAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Fat %
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Fat %</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Fat %</label>';
                 html += '<input type="text" id="bulkFatPercent_' + index + '" value="' + (sample.fatPercent || '') + '" placeholder="%" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showFatPercentAutocompleteBulk(' + index + ')" onfocus="showFatPercentAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideFatPercentAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="fatPercentAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
@@ -6537,7 +6537,7 @@ html += '</div>';
                 // Row 4: Pathogens
                 html += '<div style="border-top: 1px solid #e9ecef; padding-top: 15px;">';
                 html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Pathogens to Test</label>';
-                html += '<div style="display: flex; flex-wrap: wrap; gap: 15px;">';
+                html += '<div style="display: flex; flex-wrap: wrap; gap: 20px;">';
 
                 var pathogensList = [
                     {code: 'EC', name: 'E. coli'},
@@ -6583,25 +6583,25 @@ html += '</div>';
                 html += '</div>';
 
                 // Row 1: Basic Info
-                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">';
+                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">';
 
                 // Store Name
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Store Name</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Store Name</label>';
                 html += '<input type="text" id="bulkStore_' + index + '" value="' + (sample.storeNum || '') + '" placeholder="e.g., Walmart Topeka" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showStoreAutocomplete(' + index + ')" onfocus="showStoreAutocomplete(' + index + ')" onblur="setTimeout(function(){ hideStoreAutocomplete(' + index + '); }, 200)" />';
                 html += '<div id="storeAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Brand
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Brand</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Brand</label>';
                 html += '<input type="text" id="bulkSeafoodBrand_' + index + '" value="' + (sample.seafoodBrand || '') + '" placeholder="e.g., Sea Best" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showSeafoodBrandAutocompleteBulk(' + index + ')" onfocus="showSeafoodBrandAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideSeafoodBrandAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="seafoodBrandAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Frozen/Fresh
                 html += '<div>';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Frozen/Fresh</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Frozen/Fresh</label>';
                 html += '<select id="bulkFrozenFresh_' + index + '" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">';
                 html += '<option value="">--</option>';
                 html += '<option value="Frozen"' + (sample.frozenFresh === 'Frozen' ? ' selected' : '') + '>Frozen</option>';
@@ -6611,32 +6611,32 @@ html += '</div>';
 
                 // Sell-By Date
                 html += '<div>';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Sell-By Date</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Sell-By Date</label>';
                 html += '<input type="date" id="bulkSellBy_' + index + '" value="' + (sample.sellByDate || '') + '" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" />';
                 html += '</div>';
 
                 html += '</div>'; // End row 1
 
                 // Row 2: Producer Info
-                html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+                html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">';
 
                 // Produced By
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Produced By</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Produced By</label>';
                 html += '<input type="text" id="bulkSeafoodProducedBy_' + index + '" value="' + (sample.seafoodProducedBy || '') + '" placeholder="Producer" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showSeafoodProducedByAutocompleteBulk(' + index + ')" onfocus="showSeafoodProducedByAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideSeafoodProducedByAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="seafoodProducedByAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Packaged For
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Packaged For</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Packaged For</label>';
                 html += '<input type="text" id="bulkSeafoodPackagedFor_' + index + '" value="' + (sample.seafoodPackagedFor || '') + '" placeholder="Packaged for" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showSeafoodPackagedForAutocompleteBulk(' + index + ')" onfocus="showSeafoodPackagedForAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideSeafoodPackagedForAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="seafoodPackagedForAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Country
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Country</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Country</label>';
                 html += '<input type="text" id="bulkSeafoodCountry_' + index + '" value="' + (sample.seafoodCountry || '') + '" placeholder="Country" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showSeafoodCountryAutocompleteBulk(' + index + ')" onfocus="showSeafoodCountryAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideSeafoodCountryAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="seafoodCountryAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
@@ -6644,18 +6644,18 @@ html += '</div>';
                 html += '</div>'; // End row 2
 
                 // Row 3: Product Details
-                html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">';
+                html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">';
 
                 // Organic Claims
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Organic Claims</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Organic Claims</label>';
                 html += '<input type="text" id="bulkSeafoodOrganicClaims_' + index + '" value="' + (sample.seafoodOrganicClaims || '') + '" placeholder="Claims" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showSeafoodOrganicClaimsAutocompleteBulk(' + index + ')" onfocus="showSeafoodOrganicClaimsAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideSeafoodOrganicClaimsAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="seafoodOrganicClaimsAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 // Raising Claims
                 html += '<div>';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Raising Claims</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Raising Claims</label>';
                 html += '<select id="bulkSeafoodRaisingClaims_' + index + '" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">';
                 html += '<option value="">--</option>';
                 html += '<option value="Farm"' + (sample.seafoodRaisingClaims === 'Farm' ? ' selected' : '') + '>Farm</option>';
@@ -6666,7 +6666,7 @@ html += '</div>';
 
                 // Meat Cut
                 html += '<div style="position: relative;">';
-                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #666;">Meat Cut</label>';
+                html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Meat Cut</label>';
                 html += '<input type="text" id="bulkSeafoodMeatCut_' + index + '" value="' + (sample.seafoodMeatCut || '') + '" placeholder="Cut type" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;" oninput="showSeafoodMeatCutAutocompleteBulk(' + index + ')" onfocus="showSeafoodMeatCutAutocompleteBulk(' + index + ')" onblur="setTimeout(function(){ hideSeafoodMeatCutAutocompleteBulk(' + index + '); }, 200)" />';
                 html += '<div id="seafoodMeatCutAutocomplete_' + index + '" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
@@ -6676,7 +6676,7 @@ html += '</div>';
                 // Row 4: Pathogens
                 html += '<div style="border-top: 1px solid #e9ecef; padding-top: 15px;">';
                 html += '<label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #666;">Pathogens to Test</label>';
-                html += '<div style="display: flex; flex-wrap: wrap; gap: 15px;">';
+                html += '<div style="display: flex; flex-wrap: wrap; gap: 20px;">';
 
                 var pathogensList = [
                     {code: 'EC', name: 'E. coli'},
