@@ -5860,7 +5860,8 @@ html += '</div>';
                     });
                     html += '</div>';
 
-                    // Delete button
+                    // Action buttons
+                    html += '<button onclick="viewSampleHistory(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 5px;" title="View/edit workflow history">📋 History</button>';
                     html += '<button onclick="deleteSample(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;" title="Delete sample">🗑️ Delete</button>';
 
                     html += '</div>';
@@ -15065,6 +15066,377 @@ html += '</div>';
                     document.body.removeChild(modal);
                 }
             };
+        }
+
+        // View workflow history for a food sample
+        function viewSampleHistory(sampleId) {
+            // Find the food sample
+            var foodSample = foodSamples.find(function(s) { return s.id === sampleId; });
+            if (!foodSample) {
+                alert('Sample not found');
+                return;
+            }
+
+            // Find all workflows for this sample
+            var sampleWorkflows = pathogenWorkflows.filter(function(wf) {
+                return wf.foodSampleId === sampleId;
+            });
+
+            // Create modal
+            var modal = document.createElement('div');
+            modal.id = 'historyModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000; overflow-y: auto;';
+
+            var modalContent = document.createElement('div');
+            modalContent.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 900px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
+
+            var html = '';
+            html += '<h2 style="margin-top: 0; color: #667eea;">📋 Workflow History: ' + sampleId + '</h2>';
+            html += '<p style="color: #666; margin-bottom: 20px;">View and edit all completed stages for this sample</p>';
+
+            // Sample info
+            html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">';
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 13px;">';
+            html += '<div><strong>Store:</strong> ' + foodSample.storeNum + '</div>';
+            html += '<div><strong>Brand:</strong> ' + (foodSample.brand || 'N/A') + '</div>';
+            html += '<div><strong>Received:</strong> ' + foodSample.dateReceived + '</div>';
+            html += '</div>';
+            html += '</div>';
+
+            if (sampleWorkflows.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">🔬</div>';
+                html += '<div style="font-size: 16px;">No workflow stages completed yet</div>';
+                html += '<div style="font-size: 14px; margin-top: 5px;">Process samples in the pathogen testing tabs to see history here</div>';
+                html += '</div>';
+            } else {
+                // Show workflows by pathogen
+                sampleWorkflows.forEach(function(wf) {
+                    var pathogen = pathogens[wf.pathogenCode];
+                    if (!pathogen) return;
+
+                    html += '<div style="border: 2px solid ' + pathogen.color + '; border-radius: 8px; padding: 20px; margin-bottom: 20px; background: ' + pathogen.color + '08;">';
+                    html += '<h3 style="margin-top: 0; color: ' + pathogen.color + ';">' + pathogen.icon + ' ' + pathogen.name + ' (' + wf.pathogenCode + ')</h3>';
+
+                    // List all completed stages
+                    var hasCompletedStages = false;
+                    var stageKeys = Object.keys(wf.stages);
+
+                    html += '<div style="display: flex; flex-direction: column; gap: 10px;">';
+
+                    stageKeys.forEach(function(stageKey) {
+                        var stage = wf.stages[stageKey];
+                        if (stage && stage.completed) {
+                            hasCompletedStages = true;
+                            var edited = stage.edited || false;
+
+                            html += '<div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px;">';
+                            html += '<div style="display: flex; justify-content: space-between; align-items: start;">';
+
+                            // Stage info
+                            html += '<div style="flex: 1;">';
+                            html += '<div style="font-weight: 600; margin-bottom: 5px;">' + getStageName(stageKey);
+                            if (edited) {
+                                html += ' <span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">✏️ EDITED</span>';
+                            }
+                            html += '</div>';
+                            html += '<div style="font-size: 12px; color: #666;">';
+                            if (stage.date) html += '📅 ' + stage.date + '<br>';
+                            if (stage.time) html += '🕐 ' + stage.time + '<br>';
+                            if (stage.reagentLot) html += '🧪 Lot: ' + stage.reagentLot + '<br>';
+                            if (stage.result) html += '📊 Result: ' + stage.result;
+                            html += '</div>';
+                            html += '</div>';
+
+                            // Edit button
+                            html += '<div>';
+                            html += '<button onclick="editWorkflowStage(\'' + wf.id + '\', \'' + stageKey + '\')" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">✏️ Edit</button>';
+                            html += '</div>';
+
+                            html += '</div>'; // End flex container
+
+                            // Show edit history if exists
+                            if (stage.editHistory && stage.editHistory.length > 0) {
+                                html += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">';
+                                html += '<div style="font-size: 11px; font-weight: 600; color: #666; margin-bottom: 5px;">EDIT HISTORY:</div>';
+                                stage.editHistory.forEach(function(edit) {
+                                    html += '<div style="font-size: 11px; color: #888; margin-bottom: 3px;">';
+                                    html += '• ' + edit.timestamp + ' by ' + edit.user;
+                                    if (edit.reason) html += ' - ' + edit.reason;
+                                    html += '</div>';
+                                });
+                                html += '</div>';
+                            }
+
+                            html += '</div>'; // End stage card
+                        }
+                    });
+
+                    html += '</div>'; // End stages list
+
+                    if (!hasCompletedStages) {
+                        html += '<div style="text-align: center; padding: 20px; color: #999; font-style: italic;">No stages completed yet for this pathogen</div>';
+                    }
+
+                    html += '</div>'; // End pathogen section
+                });
+            }
+
+            html += '<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">';
+            html += '<button onclick="closeHistoryModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Close</button>';
+            html += '</div>';
+
+            modalContent.innerHTML = html;
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // Close on background click
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeHistoryModal();
+                }
+            };
+        }
+
+        function closeHistoryModal() {
+            var modal = document.getElementById('historyModal');
+            if (modal) {
+                document.body.removeChild(modal);
+            }
+        }
+
+        // Edit a completed workflow stage with audit trail
+        function editWorkflowStage(workflowId, stageKey) {
+            // Find the workflow
+            var workflow = pathogenWorkflows.find(function(wf) { return wf.id === workflowId; });
+            if (!workflow) {
+                alert('Workflow not found');
+                return;
+            }
+
+            var stage = workflow.stages[stageKey];
+            if (!stage) {
+                alert('Stage not found');
+                return;
+            }
+
+            // Store original values for audit trail
+            var originalValues = JSON.parse(JSON.stringify(stage));
+
+            // Determine which fields this stage has (based on pathogen/stage type)
+            var fields = getStageFields(workflow.pathogenCode, stageKey);
+
+            // Create edit modal
+            var modal = document.createElement('div');
+            modal.id = 'editStageModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+
+            var modalContent = document.createElement('div');
+            modalContent.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
+
+            var html = '';
+            html += '<h3 style="margin-top: 0; color: #17a2b8;">✏️ Edit Stage: ' + getStageName(stageKey) + '</h3>';
+            html += '<p style="color: #666; margin-bottom: 20px;">Sample: ' + workflow.foodSampleId + ' - ' + workflow.pathogenCode + '</p>';
+
+            // Render editable fields
+            fields.forEach(function(field) {
+                var value = stage[field.key] || '';
+
+                html += '<div style="margin-bottom: 15px;">';
+                html += '<label style="display: block; margin-bottom: 5px; font-weight: 600;">' + field.label + '</label>';
+
+                if (field.type === 'date') {
+                    html += '<input type="date" id="edit_' + field.key + '" value="' + value + '" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+                } else if (field.type === 'time') {
+                    html += '<input type="time" id="edit_' + field.key + '" value="' + value + '" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+                } else if (field.type === 'select') {
+                    html += '<select id="edit_' + field.key + '" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+                    field.options.forEach(function(opt) {
+                        var selected = opt === value ? 'selected' : '';
+                        html += '<option value="' + opt + '" ' + selected + '>' + opt + '</option>';
+                    });
+                    html += '</select>';
+                } else {
+                    html += '<input type="text" id="edit_' + field.key + '" value="' + value + '" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" />';
+                }
+
+                html += '</div>';
+            });
+
+            // Reason for edit
+            html += '<div style="margin-bottom: 15px; margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">';
+            html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; color: #dc3545;">Reason for Edit *</label>';
+            html += '<textarea id="edit_reason" placeholder="Required: Why are you making this change?" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; min-height: 60px;"></textarea>';
+            html += '<div style="font-size: 11px; color: #666; margin-top: 5px;">This will be recorded in the audit trail</div>';
+            html += '</div>';
+
+            // Buttons
+            html += '<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">';
+            html += '<button id="cancelEditBtn" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>';
+            html += '<button id="saveEditBtn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">💾 Save Changes</button>';
+            html += '</div>';
+
+            modalContent.innerHTML = html;
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // Cancel button
+            document.getElementById('cancelEditBtn').onclick = function() {
+                document.body.removeChild(modal);
+            };
+
+            // Save button
+            document.getElementById('saveEditBtn').onclick = function() {
+                var reason = document.getElementById('edit_reason').value.trim();
+                if (!reason) {
+                    alert('Please provide a reason for this edit');
+                    return;
+                }
+
+                // Collect new values
+                var changes = [];
+                fields.forEach(function(field) {
+                    var newValue = document.getElementById('edit_' + field.key).value;
+                    var oldValue = originalValues[field.key] || '';
+                    if (newValue !== oldValue) {
+                        changes.push({
+                            field: field.label,
+                            oldValue: oldValue,
+                            newValue: newValue
+                        });
+                        stage[field.key] = newValue;
+                    }
+                });
+
+                if (changes.length === 0) {
+                    alert('No changes detected');
+                    return;
+                }
+
+                // Add to edit history
+                if (!stage.editHistory) {
+                    stage.editHistory = [];
+                }
+
+                var now = new Date();
+                var timestamp = now.toLocaleString();
+
+                stage.editHistory.push({
+                    timestamp: timestamp,
+                    user: currentUser || 'Unknown',
+                    reason: reason,
+                    changes: changes
+                });
+
+                // Mark as edited
+                stage.edited = true;
+
+                // Save and refresh
+                saveData();
+                document.body.removeChild(modal);
+
+                // Refresh the history modal
+                closeHistoryModal();
+                setTimeout(function() {
+                    viewSampleHistory(workflow.foodSampleId);
+                }, 100);
+
+                alert('Changes saved successfully!\n\n' + changes.length + ' field(s) updated.');
+            };
+        }
+
+        function getStageFields(pathogenCode, stageKey) {
+            // Returns array of editable fields for a given pathogen/stage combination
+            // Format: [{key: 'date', label: 'Date', type: 'date'}, ...]
+
+            var commonFields = [
+                {key: 'date', label: 'Date', type: 'date'},
+                {key: 'time', label: 'Time', type: 'time'}
+            ];
+
+            // Most stages have similar fields, customize as needed
+            if (stageKey.includes('MALDI')) {
+                return [
+                    ...commonFields,
+                    {key: 'reagentLot', label: 'MALDI Plate Lot', type: 'text'},
+                    {key: 'result', label: 'Result', type: 'select', options: ['Positive', 'Negative', 'Inconclusive']}
+                ];
+            } else if (stageKey.includes('Incubation') || stageKey.includes('Broth') || stageKey.includes('Prep')) {
+                return [
+                    ...commonFields,
+                    {key: 'reagentLot', label: 'Media Lot', type: 'text'},
+                    {key: 'incubationStart', label: 'Incubation Start', type: 'time'},
+                    {key: 'incubationEnd', label: 'Incubation End', type: 'time'}
+                ];
+            } else if (stageKey.includes('Agar') || stageKey.includes('TCBS') || stageKey.includes('XLT4')) {
+                return [
+                    ...commonFields,
+                    {key: 'reagentLot', label: 'Agar Lot', type: 'text'},
+                    {key: 'platingTime', label: 'Plating Time', type: 'time'}
+                ];
+            } else if (stageKey.includes('Colonies')) {
+                return [
+                    ...commonFields,
+                    {key: 'coloniesPicked', label: 'Colonies Picked', type: 'text'},
+                    {key: 'notes', label: 'Notes', type: 'text'}
+                ];
+            } else {
+                // Default fields
+                return [
+                    ...commonFields,
+                    {key: 'reagentLot', label: 'Reagent/Media Lot', type: 'text'},
+                    {key: 'notes', label: 'Notes', type: 'text'}
+                ];
+            }
+        }
+
+        function getStageName(stageKey) {
+            // Convert stage keys to human-readable names
+            var names = {
+                // Salmonella
+                'day1_BPWIncubation': 'Day 1 - BPW Incubation',
+                'day2_RVR_LAMP': 'Day 2 - RVR + LAMP',
+                'day3_XLT4': 'Day 3 - XLT4 Agar',
+                'day4_MALDI': 'Day 4 - MALDI',
+                // E. coli
+                'day1A_BPWPrep': 'Day 1A - BPW Preparation',
+                'day1B_MacBroth': 'Day 1B - Mac Broth',
+                'day2_MacAgar': 'Day 2 - Mac Agar',
+                'day3_PinkColonies': 'Day 3 - Pink Colonies',
+                'day4_BAP': 'Day 4 - BAP',
+                'day5_MALDI': 'Day 5 - MALDI',
+                // Campylobacter
+                'day1_BoltonBroth': 'Day 1 - Bolton Broth',
+                'day2_mCCDA': 'Day 2 - mCCDA',
+                'day3_Colonies': 'Day 3 - Colonies',
+                'day4_MALDI': 'Day 4 - MALDI',
+                // Enterococcus (Retail Meat)
+                'day1_AzidePrep': 'Day 1 - Azide Preparation',
+                'day2_BEAAgar': 'Day 2 - BEA Agar',
+                'day3_Colonies': 'Day 3 - Colonies',
+                'day4_MALDI': 'Day 4 - MALDI',
+                // Enterococcus (Seafood)
+                'day1_APWPrep': 'Day 1 - APW Preparation',
+                'day2_BEAAgar': 'Day 2 - BEA Agar',
+                'day3_Colonies': 'Day 3 - Colonies',
+                'day4_MALDI': 'Day 4 - MALDI',
+                // Aeromonas
+                'day1_BPWPrep': 'Day 1 - BPW Preparation',
+                'day2_GSPRAgar': 'Day 2 - GSPR Agar',
+                'day3_Colonies': 'Day 3 - Colonies',
+                'day4_MALDI': 'Day 4 - MALDI',
+                // Vibrio V1
+                'day1_APWIncubation': 'Day 1 - APW Incubation',
+                'day2_TCBSAgar': 'Day 2 - TCBS Agar',
+                'day3_YellowColonies': 'Day 3 - Yellow Colonies',
+                'day4_MALDI': 'Day 4 - MALDI',
+                // Vibrio V2
+                'day1_APWIncubation': 'Day 1 - APW Incubation',
+                'day2_TCBSAgar': 'Day 2 - TCBS Agar',
+                'day3_GreenColonies': 'Day 3 - Green Colonies',
+                'day4_MALDI': 'Day 4 - MALDI'
+            };
+            return names[stageKey] || stageKey;
         }
 
         function viewSample(sampleId) {
