@@ -6033,6 +6033,11 @@ html += '</div>';
                 if (template) {
                     container.innerHTML = template.innerHTML;
                 }
+
+                // Set default pathogens for seafood after template loads
+                setTimeout(function() {
+                    setDefaultPathogensForSeafood();
+                }, 100);
             }
         }
 
@@ -6080,6 +6085,28 @@ html += '</div>';
                 var eCheckbox = document.querySelector('input[name="pathogenTest"][value="E"]');
                 if (eCheckbox) eCheckbox.checked = true;
             }
+        }
+
+        // Set default pathogen selections for seafood samples
+        function setDefaultPathogensForSeafood() {
+            // Uncheck all pathogens first
+            var allCheckboxes = document.querySelectorAll('input[name="pathogenTest"]');
+            allCheckboxes.forEach(function(cb) {
+                cb.checked = false;
+            });
+
+            // Seafood samples get: Enterococcus (E), Aeromonas (A), Vibrio V1, Vibrio V2
+            var eCheckbox = document.querySelector('input[name="pathogenTest"][value="E"]');
+            if (eCheckbox) eCheckbox.checked = true;
+
+            var aCheckbox = document.querySelector('input[name="pathogenTest"][value="A"]');
+            if (aCheckbox) aCheckbox.checked = true;
+
+            var v1Checkbox = document.querySelector('input[name="pathogenTest"][value="V1"]');
+            if (v1Checkbox) v1Checkbox.checked = true;
+
+            var v2Checkbox = document.querySelector('input[name="pathogenTest"][value="V2"]');
+            if (v2Checkbox) v2Checkbox.checked = true;
         }
 
         // Legacy function - kept for compatibility
