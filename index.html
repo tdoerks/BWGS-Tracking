@@ -6407,6 +6407,31 @@ html += '</div>';
                 };
 
                 foodSamples.push(foodSample);
+
+                // Auto-create pathogen workflow entries for this sample
+                defaultPathogens.forEach(function(pathogenCode) {
+                    if (pathogenCode === 'EC') {
+                        createEcoliWorkflow(sampleId, pathogenCode);
+                    } else if (pathogenCode === 'C1') {
+                        createCampyloWorkflow(sampleId, pathogenCode);
+                    } else if (pathogenCode === 'S1') {
+                        createSalmonellaWorkflow(sampleId, pathogenCode);
+                    } else if (pathogenCode === 'E') {
+                        // Detect if seafood or retail meat
+                        if (category === 'seafood') {
+                            createEnterococcusSeafoodWorkflow(sampleId, pathogenCode);
+                        } else {
+                            createEnterococcusWorkflow(sampleId, pathogenCode);
+                        }
+                    } else if (pathogenCode === 'A') {
+                        createAeromonasWorkflow(sampleId, pathogenCode);
+                    } else if (pathogenCode === 'V1') {
+                        createVibrioV1Workflow(sampleId, pathogenCode);
+                    } else if (pathogenCode === 'V2') {
+                        createVibrioV2Workflow(sampleId, pathogenCode);
+                    }
+                });
+
                 generatedCount++;
             });
 
