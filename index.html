@@ -2267,6 +2267,7 @@
                     seafoodCountries = data.seafoodCountries || [];
                     seafoodOrganicClaims = data.seafoodOrganicClaims || [];
                     seafoodMeatCuts = data.seafoodMeatCuts || [];
+                    deletedSamples = data.deletedSamples || [];
 
                     // DATA MIGRATION: Add day1BPW stage to existing E. coli workflows
                     migrateEcoliWorkflows();
@@ -2431,6 +2432,7 @@
                 seafoodCountries: seafoodCountries,
                 seafoodOrganicClaims: seafoodOrganicClaims,
                 seafoodMeatCuts: seafoodMeatCuts,
+                deletedSamples: deletedSamples,
                 lastSaved: now.toISOString()
             };
             localStorage.setItem('bwgsTrackerData', JSON.stringify(data));
@@ -2475,6 +2477,7 @@
         }
 
         var samples = [];
+        var deletedSamples = []; // Audit trail for deleted samples
         var nextBapNumber = 1;
         var nextTsbNumber = 1;
         var nextExtractionNumber = 1;
@@ -14933,17 +14936,103 @@ html += '</div>';
         }
 
         function deleteSample(sampleId) {
-            if (confirm('Are you sure you want to delete sample: ' + sampleId + '?\n\nThis action cannot be undone!')) {
+            // Show deletion reason modal
+            var modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+
+            var modalContent = document.createElement('div');
+            modalContent.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
+
+            var html = '';
+            html += '<h3 style="margin-top: 0; color: #dc3545;">⚠️ Delete Sample: ' + sampleId + '</h3>';
+            html += '<p style="color: #666; margin-bottom: 20px;">This action cannot be undone. Please select a reason for deletion:</p>';
+
+            html += '<div style="margin-bottom: 20px;">';
+            html += '<label style="display: block; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">';
+            html += '<input type="radio" name="deleteReason" value="Entered by mistake" style="margin-right: 10px;"> Entered by mistake';
+            html += '</label>';
+
+            html += '<label style="display: block; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">';
+            html += '<input type="radio" name="deleteReason" value="Duplicate sample" style="margin-right: 10px;"> Duplicate sample';
+            html += '</label>';
+
+            html += '<label style="display: block; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">';
+            html += '<input type="radio" name="deleteReason" value="Invalid sample" style="margin-right: 10px;"> Invalid sample';
+            html += '</label>';
+
+            html += '<label style="display: block; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">';
+            html += '<input type="radio" name="deleteReason" value="Test/Training entry" style="margin-right: 10px;"> Test/Training entry';
+            html += '</label>';
+
+            html += '<label style="display: block; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">';
+            html += '<input type="radio" name="deleteReason" value="Other" id="deleteReasonOther" style="margin-right: 10px;" onchange="document.getElementById(\'deleteReasonOtherText\').style.display = this.checked ? \'block\' : \'none\'"> Other';
+            html += '</label>';
+
+            html += '<textarea id="deleteReasonOtherText" placeholder="Please specify reason..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; display: none; font-family: inherit;" rows="3"></textarea>';
+            html += '</div>';
+
+            html += '<div style="display: flex; gap: 10px; justify-content: flex-end;">';
+            html += '<button id="cancelDeleteBtn" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>';
+            html += '<button id="confirmDeleteBtn" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Delete Sample</button>';
+            html += '</div>';
+
+            modalContent.innerHTML = html;
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // Cancel button
+            document.getElementById('cancelDeleteBtn').onclick = function() {
+                document.body.removeChild(modal);
+            };
+
+            // Confirm delete button
+            document.getElementById('confirmDeleteBtn').onclick = function() {
+                var selectedReason = document.querySelector('input[name="deleteReason"]:checked');
+
+                if (!selectedReason) {
+                    alert('Please select a reason for deletion');
+                    return;
+                }
+
+                var reason = selectedReason.value;
+                if (reason === 'Other') {
+                    var otherText = document.getElementById('deleteReasonOtherText').value.trim();
+                    if (!otherText) {
+                        alert('Please specify the reason in the text box');
+                        return;
+                    }
+                    reason = 'Other: ' + otherText;
+                }
+
+                // Find and delete the sample
                 for (var i = 0; i < samples.length; i++) {
                     if (samples[i].id === sampleId) {
-                        samples.splice(i, 1);
+                        var deletedSample = samples.splice(i, 1)[0];
+
+                        // Add to deleted samples audit trail
+                        deletedSamples.push({
+                            sample: deletedSample,
+                            deletedDate: new Date().toISOString(),
+                            deletedBy: currentUser || 'Unknown',
+                            reason: reason
+                        });
+
                         break;
                     }
                 }
+
                 saveData();
                 renderSamples();
-                alert('Sample ' + sampleId + ' deleted successfully.');
-            }
+                document.body.removeChild(modal);
+                alert('Sample ' + sampleId + ' deleted successfully.\nReason: ' + reason);
+            };
+
+            // Close on background click
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            };
         }
 
         function viewSample(sampleId) {
