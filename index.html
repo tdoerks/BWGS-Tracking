@@ -5456,6 +5456,7 @@ html += '</div>';
             html += '<button onclick="switchFoodTestingTab(\'aeromonas\')" id="foodTabAeromonas" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🐟 Aeromonas Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'vibrioV1\')" id="foodTabVibrioV1" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🌊 Vibrio Testing</button>';
             html += '<button onclick="switchFoodTestingTab(\'isolates\')" id="foodTabIsolates" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">🧬 Isolates</button>';
+            html += '<button onclick="switchFoodTestingTab(\'results\')" id="foodTabResults" style="padding: 10px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; font-weight: 600;">📊 Results Summary</button>';
             html += '</div>';
             html += '</div>';
 
@@ -5468,6 +5469,7 @@ html += '</div>';
             html += '<div id="foodTabContentAeromonas" style="display: none;"></div>';
             html += '<div id="foodTabContentVibrioV1" style="display: none;"></div>';
             html += '<div id="foodTabContentIsolates" style="display: none;"></div>';
+            html += '<div id="foodTabContentResults" style="display: none;"></div>';
 
             foodUI.innerHTML = html;
 
@@ -5481,7 +5483,7 @@ html += '</div>';
             currentFoodTab = tab;
 
             // Update tab button styles
-            var tabs = ['samples', 'ecoli', 'campylo', 'salmonella', 'enterococcus', 'aeromonas', 'vibrioV1', 'isolates'];
+            var tabs = ['samples', 'ecoli', 'campylo', 'salmonella', 'enterococcus', 'aeromonas', 'vibrioV1', 'isolates', 'results'];
             tabs.forEach(function(t) {
                 var btn = document.getElementById('foodTab' + t.charAt(0).toUpperCase() + t.slice(1));
                 var content = document.getElementById('foodTabContent' + t.charAt(0).toUpperCase() + t.slice(1));
@@ -5514,6 +5516,8 @@ html += '</div>';
                 renderVibrioV1Tab();
             } else if (tab === 'isolates') {
                 renderIsolatesTab();
+            } else if (tab === 'results') {
+                renderResultsSummaryTab();
             }
         }
 
@@ -10715,6 +10719,186 @@ html += '</div>';
             html += '</div>'; // End container
 
             container.innerHTML = html;
+        }
+
+        // Render Results Summary Tab
+        function renderResultsSummaryTab() {
+            var container = document.getElementById('foodTabContentResults');
+            var html = '';
+
+            html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+            html += '<h3 style="margin-top: 0;">📊 Results Summary - All Samples</h3>';
+
+            // Group samples by month
+            var samplesByMonth = {};
+            foodSamples.forEach(function(sample) {
+                // Extract month from sample ID (e.g., "25KS10CB01" -> "2025-10")
+                if (sample.id && sample.id.length >= 6) {
+                    var year = '20' + sample.id.substring(0, 2);
+                    var month = sample.id.substring(4, 6);
+                    var monthKey = year + '-' + month;
+
+                    if (!samplesByMonth[monthKey]) {
+                        samplesByMonth[monthKey] = [];
+                    }
+                    samplesByMonth[monthKey].push(sample);
+                }
+            });
+
+            // Sort months (most recent first)
+            var monthKeys = Object.keys(samplesByMonth).sort().reverse();
+
+            if (monthKeys.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">📊</div>';
+                html += '<div style="font-size: 16px;">No samples yet</div>';
+                html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples to see results summary</div>';
+                html += '</div>';
+            } else {
+                // Render each month's results
+                monthKeys.forEach(function(monthKey) {
+                    var samples = samplesByMonth[monthKey];
+                    var monthName = new Date(monthKey + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+                    // Separate by category
+                    var meatSamples = samples.filter(function(s) {
+                        var type = sampleTypes[s.sampleTypeCode];
+                        return type && type.category === 'meat';
+                    });
+
+                    var seafoodSamples = samples.filter(function(s) {
+                        var type = sampleTypes[s.sampleTypeCode];
+                        return type && type.category === 'seafood';
+                    });
+
+                    html += '<div style="margin-bottom: 40px;">';
+                    html += '<h4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">' + monthName + ' (' + samples.length + ' samples)</h4>';
+
+                    // Retail Meat Section
+                    if (meatSamples.length > 0) {
+                        html += '<div style="margin-bottom: 30px;">';
+                        html += '<h5 style="color: #333; margin-bottom: 15px;">🥩 Results - Retail Meat (' + meatSamples.length + ' samples)</h5>';
+
+                        html += '<div style="overflow-x: auto;">';
+                        html += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                        html += '<thead>';
+                        html += '<tr style="background: #f8f9fa;">';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: left; font-weight: 700;">Sample</th>';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 700;">S1</th>';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 700;">C1</th>';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 700;">EC</th>';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 700;">E</th>';
+                        html += '</tr>';
+                        html += '</thead>';
+                        html += '<tbody>';
+
+                        meatSamples.forEach(function(sample) {
+                            html += '<tr>';
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; font-weight: 600;">' + sample.id + '</td>';
+
+                            // S1 (Salmonella)
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">' + getPathogenStatus(sample.id, 'S1') + '</td>';
+
+                            // C1 (Campylobacter)
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">' + getPathogenStatus(sample.id, 'C1') + '</td>';
+
+                            // EC (E. coli)
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">' + getPathogenStatus(sample.id, 'EC') + '</td>';
+
+                            // E (Enterococcus)
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">' + getPathogenStatus(sample.id, 'E') + '</td>';
+
+                            html += '</tr>';
+                        });
+
+                        html += '</tbody>';
+                        html += '</table>';
+                        html += '</div>'; // End overflow container
+                        html += '</div>'; // End meat section
+                    }
+
+                    // Seafood Section
+                    if (seafoodSamples.length > 0) {
+                        html += '<div style="margin-bottom: 30px;">';
+                        html += '<h5 style="color: #333; margin-bottom: 15px;">🐟 Results - Seafood (' + seafoodSamples.length + ' samples)</h5>';
+
+                        html += '<div style="overflow-x: auto;">';
+                        html += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                        html += '<thead>';
+                        html += '<tr style="background: #f8f9fa;">';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: left; font-weight: 700;">Sample</th>';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 700;">V1</th>';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 700;">V2</th>';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 700;">E</th>';
+                        html += '<th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 700;">A</th>';
+                        html += '</tr>';
+                        html += '</thead>';
+                        html += '<tbody>';
+
+                        seafoodSamples.forEach(function(sample) {
+                            html += '<tr>';
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; font-weight: 600;">' + sample.id + '</td>';
+
+                            // V1 (Vibrio yellow)
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">' + getPathogenStatus(sample.id, 'V1') + '</td>';
+
+                            // V2 (Vibrio green)
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">' + getPathogenStatus(sample.id, 'V2') + '</td>';
+
+                            // E (Enterococcus)
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">' + getPathogenStatus(sample.id, 'E') + '</td>';
+
+                            // A (Aeromonas)
+                            html += '<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">' + getPathogenStatus(sample.id, 'A') + '</td>';
+
+                            html += '</tr>';
+                        });
+
+                        html += '</tbody>';
+                        html += '</table>';
+                        html += '</div>'; // End overflow container
+                        html += '</div>'; // End seafood section
+                    }
+
+                    html += '</div>'; // End month section
+                });
+            }
+
+            html += '</div>'; // End container
+
+            container.innerHTML = html;
+        }
+
+        // Helper function to get pathogen status for a sample
+        function getPathogenStatus(sampleId, pathogenCode) {
+            var workflow = pathogenWorkflows.find(function(wf) {
+                return wf.foodSampleId === sampleId && wf.pathogenCode === pathogenCode;
+            });
+
+            if (!workflow) {
+                return '<span style="color: #6c757d;">NT</span>'; // Not Tested
+            }
+
+            if (workflow.finalResult === 'positive') {
+                return '<span style="color: #28a745; font-weight: 700;">Positive</span>';
+            } else if (workflow.finalResult === 'negative') {
+                return '<span style="color: #dc3545; font-weight: 700;">Negative</span>';
+            } else {
+                // In progress - show current stage
+                var stage = '';
+                if (!workflow.stages.day1A_BPWPrep || !workflow.stages.day1A_BPWPrep.completed) {
+                    stage = 'Day 1A';
+                } else if (pathogenCode === 'EC') {
+                    if (!workflow.stages.day1B_MacBroth.completed) stage = 'Day 1B';
+                    else if (!workflow.stages.day2_MacAgar.completed) stage = 'Day 2';
+                    else if (!workflow.stages.day3_PinkColonies.completed) stage = 'Day 3';
+                    else if (!workflow.stages.day4_MALDI.completed) stage = 'Day 4';
+                    else if (!workflow.stages.day5_Storage.completed) stage = 'Day 5';
+                }
+                // Add other pathogen stage logic as needed
+
+                return '<span style="color: #ffc107; font-weight: 600;">🔬 ' + (stage || '?') + '</span>';
+            }
         }
 
         // Open E. coli Workflow Modal
