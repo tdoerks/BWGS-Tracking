@@ -5839,6 +5839,9 @@ html += '</div>';
                     html += '</div>';
                     html += '</div>';
 
+                    // Pathogen badges and actions
+                    html += '<div style="display: flex; gap: 10px; align-items: center;">';
+
                     // Pathogen badges
                     html += '<div style="display: flex; gap: 5px;">';
                     sample.pathogensToTest.forEach(function(p) {
@@ -5847,6 +5850,11 @@ html += '</div>';
                             html += '<span style="background: ' + pathogen.color + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + p + '</span>';
                         }
                     });
+                    html += '</div>';
+
+                    // Delete button
+                    html += '<button onclick="deleteSample(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;" title="Delete sample">🗑️ Delete</button>';
+
                     html += '</div>';
 
                     html += '</div>'; // End header row
