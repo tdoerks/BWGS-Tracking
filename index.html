@@ -8128,11 +8128,23 @@ html += '</div>';
                 pathogenName: pathogens[pathogenCode].name,
                 dateCreated: new Date().toISOString().split('T')[0],
                 status: 'Day 1 - Pending', // BPW already done, waiting for Day 2
+                finalResult: null, // 'positive', 'negative', 'in-progress'
+                resultDate: null,
                 stages: {
                     day1_BPWIncubation: {completed: false},    // Day 1 - BPW incubation (from Day 1A remaining)
                     day2_RVR_LAMP: {completed: false},         // Day 2 - RVR + LAMP
                     day3_XLT4: {completed: false},             // Day 3 - XLT4 Agar
-                    day4_MALDI: {completed: false}             // Day 4 - MALDI Identification
+                    day4_MALDI: {completed: false},            // Day 4 - MALDI Identification
+                    day5_Storage: {                            // Day 5 - Storage (after MALDI positive)
+                        completed: false,
+                        vialId: null,
+                        dateStored: null,
+                        freezer: null,
+                        box: null,
+                        shelf: null,
+                        rack: null,
+                        position: null
+                    }
                 },
                 isolateGenerated: false,
                 isolateId: null
@@ -8886,8 +8898,8 @@ html += '</div>';
                 html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples with Campylobacter testing to create workflows</div>';
                 html += '</div>';
             } else {
-                // Kanban board for Campylobacter workflows - 6 STAGES
-                html += '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px;">';
+                // Kanban board for Campylobacter workflows - 6 STAGES (all on one row)
+                html += '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px;">';
 
                 var stages = [
                     {name: 'Day 1A - BPW Prep', key: 'day1A_BPWPrep', emoji: '💧', color: '#00bcd4'},
@@ -9024,14 +9036,15 @@ html += '</div>';
                 html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples with Salmonella testing to create workflows</div>';
                 html += '</div>';
             } else {
-                // Kanban board for Salmonella workflows - 4 STAGES (all on one row)
-                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">';
+                // Kanban board for Salmonella workflows - 5 STAGES (all on one row)
+                html += '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">';
 
                 var stages = [
                     {name: 'Day 1 - BPW Incubation', key: 'day1_BPWIncubation', emoji: '💧', color: '#00bcd4'},
                     {name: 'Day 2 - RVR + LAMP', key: 'day2_RVR_LAMP', emoji: '🔬', color: '#f44336'},
                     {name: 'Day 3 - XLT4 Agar', key: 'day3_XLT4', emoji: '🧫', color: '#e91e63'},
-                    {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '✅', color: '#4caf50'}
+                    {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '🧬', color: '#2196f3'},
+                    {name: 'Day 5 - Storage', key: 'day5_Storage', emoji: '❄️', color: '#4caf50'}
                 ];
 
                 stages.forEach(function(stage) {
@@ -9043,16 +9056,25 @@ html += '</div>';
                     // Count workflows in this stage
                     var count = 0;
                     salmonellaWorkflows.forEach(function(wf) {
+                        // Skip if workflow is complete
+                        if (wf.finalResult === 'negative' || wf.finalResult === 'positive') return;
+
+                        // Safety check: ensure day5_Storage exists
+                        if (!wf.stages.day5_Storage) {
+                            wf.stages.day5_Storage = {completed: false, vialId: null, dateStored: null, freezer: null, box: null, shelf: null, rack: null, position: null};
+                        }
+
                         if (!wf.stages.day1_BPWIncubation.completed && stage.key === 'day1_BPWIncubation') count++;
                         else if (wf.stages.day1_BPWIncubation.completed && !wf.stages.day2_RVR_LAMP.completed && stage.key === 'day2_RVR_LAMP') count++;
                         else if (wf.stages.day2_RVR_LAMP.completed && !wf.stages.day3_XLT4.completed && stage.key === 'day3_XLT4') count++;
                         else if (wf.stages.day3_XLT4.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') count++;
+                        else if (wf.stages.day4_MALDI.completed && !wf.stages.day5_Storage.completed && stage.key === 'day5_Storage') count++;
                     });
 
                     html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
 
-                    // Bulk selection buttons
-                    if (count > 0 && stage.key !== 'day4_MALDI') {
+                    // Bulk selection buttons (exclude MALDI and Storage)
+                    if (count > 0 && stage.key !== 'day4_MALDI' && stage.key !== 'day5_Storage') {
                         html += '<div style="display: flex; gap: 5px; margin-bottom: 10px;">';
                         html += '<button onclick="selectAllSalmonellaInStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Select All</button>';
                         html += '<button onclick="processSelectedSalmonella(\'' + stage.key + '\')" style="flex: 1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Process (<span id="selectedCountS1_' + stage.key + '">0</span>)</button>';
@@ -9063,14 +9085,23 @@ html += '</div>';
                     salmonellaWorkflows.forEach(function(wf) {
                         var shouldShow = false;
 
+                        // Skip if workflow is complete
+                        if (wf.finalResult === 'negative' || wf.finalResult === 'positive') return;
+
+                        // Safety check: ensure day5_Storage exists
+                        if (!wf.stages.day5_Storage) {
+                            wf.stages.day5_Storage = {completed: false, vialId: null, dateStored: null, freezer: null, box: null, shelf: null, rack: null, position: null};
+                        }
+
                         if (!wf.stages.day1_BPWIncubation.completed && stage.key === 'day1_BPWIncubation') shouldShow = true;
                         else if (wf.stages.day1_BPWIncubation.completed && !wf.stages.day2_RVR_LAMP.completed && stage.key === 'day2_RVR_LAMP') shouldShow = true;
                         else if (wf.stages.day2_RVR_LAMP.completed && !wf.stages.day3_XLT4.completed && stage.key === 'day3_XLT4') shouldShow = true;
                         else if (wf.stages.day3_XLT4.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
+                        else if (wf.stages.day4_MALDI.completed && !wf.stages.day5_Storage.completed && stage.key === 'day5_Storage') shouldShow = true;
 
                         if (shouldShow) {
                             html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; position: relative;">';
-                            if (stage.key !== 'day4_MALDI') {
+                            if (stage.key !== 'day4_MALDI' && stage.key !== 'day5_Storage') {
                                 html += '<input type="checkbox" class="salmonella-bulk-checkbox" data-workflow-id="' + wf.id + '" data-stage="' + stage.key + '" onchange="updateSalmonellaSelectedCount(\'' + stage.key + '\')" style="position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; cursor: pointer;" />';
                             }
                             html += '<div style="cursor: pointer; padding-right: 25px;" onclick="openSalmonellaWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
