@@ -8093,7 +8093,12 @@ html += '</div>';
                 stages: {
                     day1A_BPWPrep: {completed: false},      // Day 1A - BPW Sample Prep (shared)
                     day1B_BoltonBroth: {completed: false},  // Day 1B - Bolton Broth Enrichment
-                    day2_CCA: {completed: false},           // Day 2 - Campy-Cefex Agar
+                    day2_CCA: {                             // Day 2 - Campy-Cefex Agar
+                        completed: false,
+                        hasGrowth: null,                    // null, 'yes', 'no'
+                        reincubationCount: 0,               // Track how many times re-incubated
+                        reincubationDates: []               // Array of dates when re-incubated
+                    },
                     day3_BAP: {completed: false},           // Day 3 - BAP Confirmation
                     day4_MALDI: {completed: false},         // Day 4 - MALDI Identification
                     day5_Storage: {                         // Day 5 - Storage (after MALDI positive)
@@ -8910,6 +8915,17 @@ html += '</div>';
                             wf.stages.day5_Storage = {completed: false, vialId: null, dateStored: null, freezer: null, box: null, shelf: null, rack: null, position: null};
                         }
 
+                        // Safety check: migrate old day2_CCA structure
+                        if (typeof wf.stages.day2_CCA !== 'object' || wf.stages.day2_CCA.hasGrowth === undefined) {
+                            var wasCompleted = wf.stages.day2_CCA ? wf.stages.day2_CCA.completed : false;
+                            wf.stages.day2_CCA = {
+                                completed: wasCompleted,
+                                hasGrowth: wasCompleted ? 'yes' : null,
+                                reincubationCount: 0,
+                                reincubationDates: []
+                            };
+                        }
+
                         if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') count++;
                         else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_BoltonBroth.completed && stage.key === 'day1B_BoltonBroth') count++;
                         else if (wf.stages.day1B_BoltonBroth.completed && !wf.stages.day2_CCA.completed && stage.key === 'day2_CCA') count++;
@@ -8940,6 +8956,17 @@ html += '</div>';
                             wf.stages.day5_Storage = {completed: false, vialId: null, dateStored: null, freezer: null, box: null, shelf: null, rack: null, position: null};
                         }
 
+                        // Safety check: migrate old day2_CCA structure
+                        if (typeof wf.stages.day2_CCA !== 'object' || wf.stages.day2_CCA.hasGrowth === undefined) {
+                            var wasCompleted = wf.stages.day2_CCA ? wf.stages.day2_CCA.completed : false;
+                            wf.stages.day2_CCA = {
+                                completed: wasCompleted,
+                                hasGrowth: wasCompleted ? 'yes' : null,
+                                reincubationCount: 0,
+                                reincubationDates: []
+                            };
+                        }
+
                         if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') shouldShow = true;
                         else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_BoltonBroth.completed && stage.key === 'day1B_BoltonBroth') shouldShow = true;
                         else if (wf.stages.day1B_BoltonBroth.completed && !wf.stages.day2_CCA.completed && stage.key === 'day2_CCA') shouldShow = true;
@@ -8954,6 +8981,12 @@ html += '</div>';
                             }
                             html += '<div style="cursor: pointer; padding-right: 25px;" onclick="openCampyloWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
                             html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
+
+                            // Show re-incubation badge for Day 2
+                            if (stage.key === 'day2_CCA' && wf.stages.day2_CCA.reincubationCount > 0) {
+                                html += '<div style="display: inline-block; background: #ffc107; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; margin-bottom: 3px;">🔄 Re-incubated ' + wf.stages.day2_CCA.reincubationCount + 'x</div>';
+                            }
+
                             html += '<div style="font-size: 11px; color: #666;">Click to process →</div>';
                             html += '</div>';
                             html += '</div>';
@@ -11501,6 +11534,16 @@ html += '</div>';
                 html += '</select>';
                 html += '</div>';
 
+                html += '<div class="form-group">';
+                html += '<label><strong>Growth Observed?</strong></label>';
+                html += '<select id="campylo_growthObserved">';
+                html += '<option value="">-- Select --</option>';
+                html += '<option value="yes">✓ Yes - Continue to BAP</option>';
+                html += '<option value="no">🔄 No - Re-incubate for 24h</option>';
+                html += '</select>';
+                html += '<div style="font-size: 11px; color: #666; margin-top: 5px;">If no growth, sample will stay in Day 2 for another check</div>';
+                html += '</div>';
+
             } else if (stageKey === 'day3_BAP') {
                 html += '<div class="form-group">';
                 html += '<label>BAP Plate Lot #:</label>';
@@ -11663,6 +11706,38 @@ html += '</div>';
                 stageData.timeIn = document.getElementById('campylo_timeIn').value;
                 stageData.timeOut = document.getElementById('campylo_timeOut').value;
                 stageData.typicalColonies = document.getElementById('campylo_typicalColonies').value;
+
+                var growthObserved = document.getElementById('campylo_growthObserved').value;
+
+                if (!growthObserved) {
+                    alert('Please select whether growth was observed');
+                    return;
+                }
+
+                stageData.hasGrowth = growthObserved;
+
+                // If no growth, mark for re-incubation (don't complete stage)
+                if (growthObserved === 'no') {
+                    // Initialize arrays if they don't exist
+                    if (!currentCampyloWorkflow.stages.day2_CCA.reincubationDates) {
+                        currentCampyloWorkflow.stages.day2_CCA.reincubationDates = [];
+                    }
+                    if (!currentCampyloWorkflow.stages.day2_CCA.reincubationCount) {
+                        currentCampyloWorkflow.stages.day2_CCA.reincubationCount = 0;
+                    }
+
+                    // Track re-incubation
+                    currentCampyloWorkflow.stages.day2_CCA.reincubationCount++;
+                    currentCampyloWorkflow.stages.day2_CCA.reincubationDates.push(new Date().toISOString().split('T')[0]);
+                    currentCampyloWorkflow.stages.day2_CCA.lastChecked = new Date().toISOString().split('T')[0];
+
+                    // Don't mark as completed - stays in Day 2
+                    saveData();
+                    closeCampyloWorkflowModal();
+                    showSuccessNotification('Sample marked for re-incubation (24h)');
+                    renderCampyloTab();
+                    return; // Exit early - don't complete the stage
+                }
             } else if (currentCampyloStage === 'day3_BAP') {
                 stageData.bapLot = document.getElementById('campylo_bapLot').value;
                 stageData.typicalGrowth = document.getElementById('campylo_typicalGrowth').value;
