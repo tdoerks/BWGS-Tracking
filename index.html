@@ -6366,6 +6366,33 @@ html += '</div>';
                     return;
                 }
 
+                // Determine category and set default pathogens
+                var category = sampleTypeMap[typeCode].category;
+                var defaultPathogens = [];
+
+                if (category === 'meat') {
+                    // Retail Meat defaults
+                    defaultPathogens.push('S1');  // Salmonella - ALL RM
+                    defaultPathogens.push('EC');  // E. coli - ALL RM
+
+                    // Campylo - ALL RM EXCEPT Ground Turkey
+                    if (typeCode !== 'GT') {
+                        defaultPathogens.push('C1');
+                    }
+
+                    // Enterococcus - ONLY specific samples (CB01, CB02, GT01, GB01, giblets)
+                    var giblets = ['CL', 'CG', 'CH'];
+                    if (giblets.indexOf(typeCode) !== -1 || sampleCode === 'CB01' || sampleCode === 'CB02' || sampleCode === 'GT01' || sampleCode === 'GB01') {
+                        defaultPathogens.push('E');
+                    }
+                } else if (category === 'seafood') {
+                    // Seafood defaults
+                    defaultPathogens.push('E');   // Enterococcus
+                    defaultPathogens.push('A');   // Aeromonas
+                    defaultPathogens.push('V1');  // Vibrio (yellow)
+                    defaultPathogens.push('V2');  // Vibrio (green)
+                }
+
                 // Create sample with minimal data - user will fill in details later
                 var foodSample = {
                     id: sampleId,
@@ -6375,7 +6402,7 @@ html += '</div>';
                     sellByDate: '',
                     dateReceived: today,
                     dateAdded: today,
-                    pathogensToTest: [],
+                    pathogensToTest: defaultPathogens,
                     categoryData: {}
                 };
 
