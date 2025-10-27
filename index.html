@@ -15463,22 +15463,22 @@ html += '</div>';
                 selectedSamplesForDelete.splice(index, 1);
             }
 
-            updateBulkDeleteButton();
             renderFoodSamplesTab();
+            updateBulkDeleteButton();
         }
 
         // Select all samples
         function selectAllSamples() {
             selectedSamplesForDelete = foodSamples.map(function(s) { return s.id; });
-            updateBulkDeleteButton();
             renderFoodSamplesTab();
+            updateBulkDeleteButton();
         }
 
         // Deselect all samples
         function deselectAllSamples() {
             selectedSamplesForDelete = [];
-            updateBulkDeleteButton();
             renderFoodSamplesTab();
+            updateBulkDeleteButton();
         }
 
         // Update bulk delete button visibility and count
