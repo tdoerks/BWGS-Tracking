@@ -5861,7 +5861,7 @@ html += '</div>';
                     html += '<div style="display: flex; align-items: center; gap: 10px;">';
 
                     // Checkbox for selection
-                    html += '<input type="checkbox" id="sample-checkbox-' + sample.id.replace(/'/g, "\\'") + '" ' + (isSelected ? 'checked' : '') + ' onchange="toggleSampleSelection(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="width: 20px; height: 20px; cursor: pointer;" title="Select for bulk delete">';
+                    html += '<input type="checkbox" id="sample-checkbox-' + sample.id.replace(/'/g, "\\'") + '" ' + (isSelected ? 'checked' : '') + ' onchange="toggleSampleSelectionForDelete(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="width: 20px; height: 20px; cursor: pointer;" title="Select for bulk delete">';
 
                     html += '<span style="font-size: 24px;">' + (category === 'meat' ? '🥩' : '🐟') + '</span>';
                     html += '<div>';
@@ -15444,7 +15444,7 @@ html += '</div>';
         }
 
         // Toggle individual sample selection
-        function toggleSampleSelection(sampleId) {
+        function toggleSampleSelectionForDelete(sampleId) {
             var index = selectedSamplesForDelete.indexOf(sampleId);
 
             if (index === -1) {
