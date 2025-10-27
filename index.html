@@ -15037,10 +15037,10 @@ html += '</div>';
                     reason = 'Other: ' + otherText;
                 }
 
-                // Find and delete the sample
-                for (var i = 0; i < samples.length; i++) {
-                    if (samples[i].id === sampleId) {
-                        var deletedSample = samples.splice(i, 1)[0];
+                // Find and delete the sample from foodSamples array
+                for (var i = 0; i < foodSamples.length; i++) {
+                    if (foodSamples[i].id === sampleId) {
+                        var deletedSample = foodSamples.splice(i, 1)[0];
 
                         // Add to deleted samples audit trail
                         deletedSamples.push({
@@ -15053,6 +15053,11 @@ html += '</div>';
                         break;
                     }
                 }
+
+                // Also delete associated pathogen workflows
+                pathogenWorkflows = pathogenWorkflows.filter(function(wf) {
+                    return wf.foodSampleId !== sampleId;
+                });
 
                 saveData();
                 renderFoodSamplesTab();  // Refresh the food samples view
