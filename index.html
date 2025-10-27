@@ -8040,13 +8040,33 @@ html += '</div>';
                 pathogenName: pathogens[pathogenCode].name,
                 dateCreated: new Date().toISOString().split('T')[0],
                 status: 'Day 1A - Pending', // Starting status (BPW Prep)
+                finalResult: null, // 'positive', 'negative', 'in-progress'
+                resultDate: null,
                 stages: {
                     day1A_BPWPrep: {completed: false},      // Day 1A - BPW Sample Prep
                     day1B_MacBroth: {completed: false},     // Day 1B - MAC Broth Enrichment
                     day2_MacAgar: {completed: false},       // Day 2 - MAC Agar
-                    day3_PinkColonies: {completed: false},  // Day 3 - Pink Colonies
-                    day4_BAP: {completed: false},           // Day 4 - BAP
-                    day5_MALDI: {completed: false}          // Day 5 - MALDI
+                    day3_PinkColonies: {                    // Day 3 - Pink Colonies Check (DECISION POINT)
+                        completed: false,
+                        hasPinkColonies: null,              // null, 'yes', 'no'
+                        dateChecked: null
+                    },
+                    day4_MALDI: {                           // Day 4 - MALDI (only if pink colonies)
+                        completed: false,
+                        dateSent: null,
+                        result: null,                       // 'positive', 'negative'
+                        speciesId: null                     // If negative, what species was it?
+                    },
+                    day5_Storage: {                         // Day 5 - Storage (only if MALDI positive)
+                        completed: false,
+                        vialId: null,                       // Auto: "25KS10CB01-EC"
+                        dateStored: null,
+                        freezer: null,
+                        box: null,
+                        shelf: null,
+                        rack: null,
+                        position: null
+                    }
                 },
                 isolateGenerated: false,
                 isolateId: null
@@ -8235,16 +8255,16 @@ html += '</div>';
                 html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples with E. coli testing to create workflows</div>';
                 html += '</div>';
             } else {
-                // Kanban board for E. coli workflows - 6 STAGES (Day 1A/1B split)
-                html += '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px;">';
+                // Kanban board for E. coli workflows - 5 STAGES (removed BAP, added Storage)
+                html += '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">';
 
                 var stages = [
                     {name: 'Day 1A - BPW Prep', key: 'day1A_BPWPrep', emoji: '💧', color: '#00bcd4'},
                     {name: 'Day 1B - MAC Broth', key: 'day1B_MacBroth', emoji: '🧪', color: '#e91e63'},
                     {name: 'Day 2 - MAC Agar', key: 'day2_MacAgar', emoji: '🧫', color: '#9c27b0'},
-                    {name: 'Day 3 - Pink Colonies', key: 'day3_PinkColonies', emoji: '🔬', color: '#673ab7'},
-                    {name: 'Day 4 - BAP', key: 'day4_BAP', emoji: '🧫', color: '#3f51b5'},
-                    {name: 'Day 5 - MALDI', key: 'day5_MALDI', emoji: '✅', color: '#4caf50'}
+                    {name: 'Day 3 - Pink Check', key: 'day3_PinkColonies', emoji: '🔬', color: '#673ab7'},
+                    {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '🧬', color: '#3f51b5'},
+                    {name: 'Day 5 - Storage', key: 'day5_Storage', emoji: '❄️', color: '#4caf50'}
                 ];
 
                 stages.forEach(function(stage) {
@@ -8256,12 +8276,15 @@ html += '</div>';
                     // Count workflows in this stage
                     var count = 0;
                     ecoliWorkflows.forEach(function(wf) {
+                        // Skip if workflow is complete (negative or stored)
+                        if (wf.finalResult === 'negative' || wf.finalResult === 'positive') return;
+
                         if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') count++;
                         else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_MacBroth.completed && stage.key === 'day1B_MacBroth') count++;
                         else if (wf.stages.day1B_MacBroth.completed && !wf.stages.day2_MacAgar.completed && stage.key === 'day2_MacAgar') count++;
                         else if (wf.stages.day2_MacAgar.completed && !wf.stages.day3_PinkColonies.completed && stage.key === 'day3_PinkColonies') count++;
-                        else if (wf.stages.day3_PinkColonies.completed && !wf.stages.day4_BAP.completed && stage.key === 'day4_BAP') count++;
-                        else if (wf.stages.day4_BAP.completed && !wf.stages.day5_MALDI.completed && stage.key === 'day5_MALDI') count++;
+                        else if (wf.stages.day3_PinkColonies.completed && wf.stages.day3_PinkColonies.hasPinkColonies === 'yes' && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') count++;
+                        else if (wf.stages.day4_MALDI.completed && wf.stages.day4_MALDI.result === 'positive' && !wf.stages.day5_Storage.completed && stage.key === 'day5_Storage') count++;
                     });
 
                     html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
@@ -8278,12 +8301,15 @@ html += '</div>';
                     ecoliWorkflows.forEach(function(wf) {
                         var shouldShow = false;
 
+                        // Skip if workflow is complete (negative or stored)
+                        if (wf.finalResult === 'negative' || wf.finalResult === 'positive') return;
+
                         if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') shouldShow = true;
                         else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_MacBroth.completed && stage.key === 'day1B_MacBroth') shouldShow = true;
                         else if (wf.stages.day1B_MacBroth.completed && !wf.stages.day2_MacAgar.completed && stage.key === 'day2_MacAgar') shouldShow = true;
                         else if (wf.stages.day2_MacAgar.completed && !wf.stages.day3_PinkColonies.completed && stage.key === 'day3_PinkColonies') shouldShow = true;
-                        else if (wf.stages.day3_PinkColonies.completed && !wf.stages.day4_BAP.completed && stage.key === 'day4_BAP') shouldShow = true;
-                        else if (wf.stages.day4_BAP.completed && !wf.stages.day5_MALDI.completed && stage.key === 'day5_MALDI') shouldShow = true;
+                        else if (wf.stages.day3_PinkColonies.completed && wf.stages.day3_PinkColonies.hasPinkColonies === 'yes' && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
+                        else if (wf.stages.day4_MALDI.completed && wf.stages.day4_MALDI.result === 'positive' && !wf.stages.day5_Storage.completed && stage.key === 'day5_Storage') shouldShow = true;
 
                         if (shouldShow) {
                             html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; position: relative;">';
@@ -8300,6 +8326,39 @@ html += '</div>';
                 });
 
                 html += '</div>'; // End kanban grid
+
+                // Completed Samples Section
+                var completedWorkflows = ecoliWorkflows.filter(function(wf) {
+                    return wf.finalResult === 'negative' || wf.finalResult === 'positive';
+                });
+
+                if (completedWorkflows.length > 0) {
+                    html += '<div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #dee2e6;">';
+                    html += '<h4 style="margin: 0 0 15px 0; color: #495057;">✅ Completed Samples (' + completedWorkflows.length + ')</h4>';
+                    html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">';
+
+                    completedWorkflows.forEach(function(wf) {
+                        var isPositive = wf.finalResult === 'positive';
+                        var bgColor = isPositive ? '#d4edda' : '#e2e3e5';
+                        var borderColor = isPositive ? '#28a745' : '#6c757d';
+                        var textColor = isPositive ? '#155724' : '#383d41';
+                        var resultText = isPositive ? '✅ POSITIVE' : '❌ NEGATIVE';
+
+                        html += '<div style="background: ' + bgColor + '; border: 2px solid ' + borderColor + '; border-radius: 6px; padding: 12px;">';
+                        html += '<div style="font-weight: 600; font-size: 13px; color: ' + textColor + '; margin-bottom: 5px;">' + wf.foodSampleId + '</div>';
+                        html += '<div style="font-size: 12px; font-weight: 600; color: ' + borderColor + ';">' + resultText + '</div>';
+                        if (wf.resultDate) {
+                            html += '<div style="font-size: 11px; color: #666; margin-top: 5px;">Completed: ' + wf.resultDate + '</div>';
+                        }
+                        if (isPositive && wf.stages.day5_Storage.vialId) {
+                            html += '<div style="font-size: 11px; color: #666; margin-top: 3px;">Vial: ' + wf.stages.day5_Storage.vialId + '</div>';
+                        }
+                        html += '</div>';
+                    });
+
+                    html += '</div>'; // End grid
+                    html += '</div>'; // End completed section
+                }
             }
 
             html += '</div>'; // End container
@@ -10695,8 +10754,8 @@ html += '</div>';
             else if (stageKey === 'day1B_MacBroth') stageTitle = '🧪 Day 1B - MAC Broth Enrichment';
             else if (stageKey === 'day2_MacAgar') stageTitle = '🧫 Day 2 - Streak to MAC Agar';
             else if (stageKey === 'day3_PinkColonies') stageTitle = '🔬 Day 3 - Check for Pink Colonies';
-            else if (stageKey === 'day4_BAP') stageTitle = '🧫 Day 4 - Streak to BAP';
-            else if (stageKey === 'day5_MALDI') stageTitle = '✅ Day 5 - MALDI Identification';
+            else if (stageKey === 'day4_MALDI') stageTitle = '🧬 Day 4 - MALDI Identification';
+            else if (stageKey === 'day5_Storage') stageTitle = '❄️ Day 5 - Store in -80°C Freezer';
 
             html += '<h3 style="margin-top: 0;">' + stageTitle + '</h3>';
             html += '<p>Sample: <strong>' + workflow.foodSampleId + '</strong></p>';
@@ -10836,18 +10895,24 @@ html += '</div>';
                 html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
                 html += '</div>';
 
-            } else if (stageKey === 'day4_BAP') {
+            } else if (stageKey === 'day4_MALDI') {
                 html += '<div class="form-group">';
-                html += '<label>BAP Plate Lot #:</label>';
-                html += '<input type="text" id="ecoli_bapLot" placeholder="LOT-BAP-001" />';
+                html += '<label>Date Sent to MALDI:</label>';
+                html += '<input type="date" id="ecoli_maldiDateSent" value="' + new Date().toISOString().split('T')[0] + '" />';
                 html += '</div>';
 
                 html += '<div class="form-group">';
-                html += '<label>Typical Growth?</label>';
-                html += '<select id="ecoli_typicalGrowth">';
-                html += '<option value="Yes">Yes</option>';
-                html += '<option value="No">No</option>';
+                html += '<label>MALDI Result:</label>';
+                html += '<select id="ecoli_maldiResult" onchange="toggleMALDISpeciesField()">';
+                html += '<option value="">-- Select Result --</option>';
+                html += '<option value="positive">Positive - E. coli confirmed</option>';
+                html += '<option value="negative">Negative - Not E. coli</option>';
                 html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group" id="maldiSpeciesGroup" style="display: none;">';
+                html += '<label>Species Identified (if negative):</label>';
+                html += '<input type="text" id="ecoli_maldiSpecies" placeholder="e.g., Citrobacter freundii" />';
                 html += '</div>';
 
                 html += '<div class="form-group">';
@@ -10855,50 +10920,49 @@ html += '</div>';
                 html += '<input type="text" id="ecoli_techInitials" maxlength="3" />';
                 html += '</div>';
 
+            } else if (stageKey === 'day5_Storage') {
+                var autoVialId = workflow.foodSampleId + '-EC';
+
                 html += '<div class="form-group">';
-                html += '<label>Temperature:</label>';
-                html += '<select id="ecoli_temperature">';
-                html += '<option value="37">37°C</option>';
-                html += '<option value="35">35°C</option>';
+                html += '<label>Vial ID:</label>';
+                html += '<input type="text" id="ecoli_vialId" value="' + autoVialId + '" />';
+                html += '<div style="font-size: 11px; color: #666; margin-top: 5px;">Auto-generated, editable</div>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Date Stored:</label>';
+                html += '<input type="date" id="ecoli_dateStored" value="' + new Date().toISOString().split('T')[0] + '" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Freezer:</label>';
+                html += '<select id="ecoli_freezer">';
+                html += '<option value="">-- Select Freezer --</option>';
+                html += '<option value="Freezer-1">Freezer 1</option>';
+                html += '<option value="Freezer-2">Freezer 2</option>';
+                html += '<option value="-80-1">-80°C Freezer 1</option>';
+                html += '<option value="-80-2">-80°C Freezer 2</option>';
                 html += '</select>';
                 html += '</div>';
 
                 html += '<div class="form-group">';
-                html += '<label>Incubator:</label>';
-                html += '<select id="ecoli_incubator">';
-                html += '<option value="INC-1">Incubator 1</option>';
-                html += '<option value="INC-2">Incubator 2</option>';
-                html += '<option value="INC-3">Incubator 3</option>';
-                html += '</select>';
+                html += '<label>Box:</label>';
+                html += '<input type="text" id="ecoli_box" placeholder="e.g., Box 5" />';
                 html += '</div>';
 
                 html += '<div class="form-group">';
-                html += '<label>Time In:</label>';
-                html += '<input type="time" id="ecoli_timeIn" />';
+                html += '<label>Shelf:</label>';
+                html += '<input type="text" id="ecoli_shelf" placeholder="e.g., Shelf A or 2" />';
                 html += '</div>';
 
                 html += '<div class="form-group">';
-                html += '<label>Time Out:</label>';
-                html += '<input type="time" id="ecoli_timeOut" />';
-                html += '</div>';
-
-            } else if (stageKey === 'day5_MALDI') {
-                html += '<div class="form-group">';
-                html += '<label>MALDI Species ID:</label>';
-                html += '<input type="text" id="ecoli_maldiSpecies" placeholder="e.g., Escherichia coli" />';
+                html += '<label>Rack:</label>';
+                html += '<input type="text" id="ecoli_rack" placeholder="e.g., Rack 3" />';
                 html += '</div>';
 
                 html += '<div class="form-group">';
-                html += '<label>Confidence Score:</label>';
-                html += '<input type="text" id="ecoli_maldiConfidence" placeholder="e.g., 2.3" />';
-                html += '</div>';
-
-                html += '<div class="form-group">';
-                html += '<label>Confirmed as E. coli?</label>';
-                html += '<select id="ecoli_confirmed">';
-                html += '<option value="Yes">Yes - Generate Isolate</option>';
-                html += '<option value="No">No - Not E. coli</option>';
-                html += '</select>';
+                html += '<label>Position:</label>';
+                html += '<input type="text" id="ecoli_position" placeholder="e.g., A1, B5" />';
                 html += '</div>';
 
                 html += '<div class="form-group">';
@@ -10916,6 +10980,14 @@ html += '</div>';
 
             modal.innerHTML = html;
             modal.style.display = 'block';
+        }
+
+        function toggleMALDISpeciesField() {
+            var result = document.getElementById('ecoli_maldiResult');
+            var speciesGroup = document.getElementById('maldiSpeciesGroup');
+            if (result && speciesGroup) {
+                speciesGroup.style.display = (result.value === 'negative') ? 'block' : 'none';
+            }
         }
 
         function closeEcoliWorkflowModal() {
@@ -10958,19 +11030,64 @@ html += '</div>';
                 stageData.timeIn = document.getElementById('ecoli_timeIn').value;
                 stageData.timeOut = document.getElementById('ecoli_timeOut').value;
             } else if (currentEcoliStage === 'day3_PinkColonies') {
-                stageData.pinkColonies = document.getElementById('ecoli_pinkColonies').value;
+                var pinkColonies = document.getElementById('ecoli_pinkColonies').value;
+                stageData.hasPinkColonies = pinkColonies === 'Yes' ? 'yes' : 'no';
                 stageData.colonyCount = document.getElementById('ecoli_colonyCount').value;
-            } else if (currentEcoliStage === 'day4_BAP') {
-                stageData.bapLot = document.getElementById('ecoli_bapLot').value;
-                stageData.typicalGrowth = document.getElementById('ecoli_typicalGrowth').value;
-                stageData.temperature = document.getElementById('ecoli_temperature').value;
-                stageData.incubator = document.getElementById('ecoli_incubator').value;
-                stageData.timeIn = document.getElementById('ecoli_timeIn').value;
-                stageData.timeOut = document.getElementById('ecoli_timeOut').value;
-            } else if (currentEcoliStage === 'day5_MALDI') {
-                stageData.maldiSpecies = document.getElementById('ecoli_maldiSpecies').value;
-                stageData.maldiConfidence = document.getElementById('ecoli_maldiConfidence').value;
-                stageData.confirmed = document.getElementById('ecoli_confirmed').value;
+                stageData.dateChecked = new Date().toISOString().split('T')[0];
+
+                // If NO pink colonies, mark as NEGATIVE and end workflow
+                if (stageData.hasPinkColonies === 'no') {
+                    currentEcoliWorkflow.finalResult = 'negative';
+                    currentEcoliWorkflow.resultDate = new Date().toISOString().split('T')[0];
+                }
+            } else if (currentEcoliStage === 'day4_MALDI') {
+                var maldiResult = document.getElementById('ecoli_maldiResult').value;
+                var maldiDateSent = document.getElementById('ecoli_maldiDateSent').value;
+
+                if (!maldiResult) {
+                    alert('Please select MALDI result');
+                    return;
+                }
+
+                stageData.dateSent = maldiDateSent;
+                stageData.result = maldiResult;
+
+                if (maldiResult === 'negative') {
+                    var species = document.getElementById('ecoli_maldiSpecies').value;
+                    if (!species || species.trim() === '') {
+                        alert('Please enter the species identified');
+                        return;
+                    }
+                    stageData.speciesId = species;
+
+                    // Mark as NEGATIVE (not E. coli)
+                    currentEcoliWorkflow.finalResult = 'negative';
+                    currentEcoliWorkflow.resultDate = new Date().toISOString().split('T')[0];
+                }
+                // If positive, continue to storage (finalResult stays null for now)
+            } else if (currentEcoliStage === 'day5_Storage') {
+                var vialId = document.getElementById('ecoli_vialId').value;
+                var freezer = document.getElementById('ecoli_freezer').value;
+
+                if (!vialId || !freezer) {
+                    alert('Please fill in Vial ID and Freezer location');
+                    return;
+                }
+
+                stageData.vialId = vialId;
+                stageData.dateStored = document.getElementById('ecoli_dateStored').value;
+                stageData.freezer = freezer;
+                stageData.box = document.getElementById('ecoli_box').value;
+                stageData.shelf = document.getElementById('ecoli_shelf').value;
+                stageData.rack = document.getElementById('ecoli_rack').value;
+                stageData.position = document.getElementById('ecoli_position').value;
+
+                // Mark as POSITIVE - confirmed E. coli and stored
+                currentEcoliWorkflow.finalResult = 'positive';
+                currentEcoliWorkflow.resultDate = new Date().toISOString().split('T')[0];
+
+                // Generate isolate for sequencing
+                generateIsolate(currentEcoliWorkflow, 'Escherichia coli');
             }
 
             stageData.completedDate = new Date().toISOString().split('T')[0];
@@ -10978,11 +11095,6 @@ html += '</div>';
 
             // Update workflow
             currentEcoliWorkflow.stages[currentEcoliStage] = stageData;
-
-            // If MALDI stage and confirmed, generate isolate
-            if (currentEcoliStage === 'day5_MALDI' && stageData.confirmed === 'Yes') {
-                generateIsolate(currentEcoliWorkflow, stageData.maldiSpecies);
-            }
 
             // Save and close
             saveData();
