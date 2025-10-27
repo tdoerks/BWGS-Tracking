@@ -1895,12 +1895,14 @@
 
     <!-- Monthly Sample Generator Modal -->
     <div id="monthlyGeneratorModal" class="modal">
-        <div class="modal-content" style="max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-content" style="max-width: 700px; width: 90%; max-height: 90vh; display: flex; flex-direction: column;">
             <span class="close-btn" onclick="closeMonthlyGeneratorModal()">&times;</span>
             <h3>📅 Generate Monthly Samples</h3>
 
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Select Month:</label>
+            <!-- Scrollable content area -->
+            <div style="flex: 1; overflow-y: auto; margin-bottom: 20px;">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Select Month:</label>
                 <select id="generatorMonth" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
                     <option value="01">January</option>
                     <option value="02">February</option>
@@ -1970,8 +1972,11 @@
                     </div>
                 </div>
             </div>
+            </div>
+            <!-- End scrollable content area -->
 
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <!-- Sticky button bar at bottom -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 20px; border-top: 2px solid #e0e0e0; background: white;">
                 <button onclick="generateMonthlySamples()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✨ Generate Samples</button>
                 <button class="btn-cancel" onclick="closeMonthlyGeneratorModal()">Cancel</button>
             </div>
