@@ -8283,6 +8283,10 @@ html += '</div>';
                         // Skip if workflow is complete (negative or stored)
                         if (wf.finalResult === 'negative' || wf.finalResult === 'positive') return;
 
+                        // Safety check: ensure all stages exist
+                        if (!wf.stages.day4_MALDI) wf.stages.day4_MALDI = {completed: false, dateSent: null, result: null, speciesId: null};
+                        if (!wf.stages.day5_Storage) wf.stages.day5_Storage = {completed: false, vialId: null, dateStored: null, freezer: null, box: null, shelf: null, rack: null, position: null};
+
                         if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') count++;
                         else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_MacBroth.completed && stage.key === 'day1B_MacBroth') count++;
                         else if (wf.stages.day1B_MacBroth.completed && !wf.stages.day2_MacAgar.completed && stage.key === 'day2_MacAgar') count++;
@@ -8307,6 +8311,10 @@ html += '</div>';
 
                         // Skip if workflow is complete (negative or stored)
                         if (wf.finalResult === 'negative' || wf.finalResult === 'positive') return;
+
+                        // Safety check: ensure all stages exist
+                        if (!wf.stages.day4_MALDI) wf.stages.day4_MALDI = {completed: false, dateSent: null, result: null, speciesId: null};
+                        if (!wf.stages.day5_Storage) wf.stages.day5_Storage = {completed: false, vialId: null, dateStored: null, freezer: null, box: null, shelf: null, rack: null, position: null};
 
                         if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') shouldShow = true;
                         else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_MacBroth.completed && stage.key === 'day1B_MacBroth') shouldShow = true;
