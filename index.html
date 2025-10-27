@@ -8088,12 +8088,24 @@ html += '</div>';
                 pathogenName: pathogens[pathogenCode].name,
                 dateCreated: new Date().toISOString().split('T')[0],
                 status: 'Day 1A - Pending', // Starting status (BPW Prep)
+                finalResult: null, // 'positive', 'negative', 'in-progress'
+                resultDate: null,
                 stages: {
                     day1A_BPWPrep: {completed: false},      // Day 1A - BPW Sample Prep (shared)
                     day1B_BoltonBroth: {completed: false},  // Day 1B - Bolton Broth Enrichment
                     day2_CCA: {completed: false},           // Day 2 - Campy-Cefex Agar
                     day3_BAP: {completed: false},           // Day 3 - BAP Confirmation
-                    day4_MALDI: {completed: false}          // Day 4 - MALDI Identification
+                    day4_MALDI: {completed: false},         // Day 4 - MALDI Identification
+                    day5_Storage: {                         // Day 5 - Storage (after MALDI positive)
+                        completed: false,
+                        vialId: null,
+                        dateStored: null,
+                        freezer: null,
+                        box: null,
+                        shelf: null,
+                        rack: null,
+                        position: null
+                    }
                 },
                 isolateGenerated: false,
                 isolateId: null
@@ -8869,15 +8881,16 @@ html += '</div>';
                 html += '<div style="font-size: 14px; margin-top: 5px;">Add food samples with Campylobacter testing to create workflows</div>';
                 html += '</div>';
             } else {
-                // Kanban board for Campylobacter workflows - 5 STAGES
-                html += '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">';
+                // Kanban board for Campylobacter workflows - 6 STAGES
+                html += '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px;">';
 
                 var stages = [
                     {name: 'Day 1A - BPW Prep', key: 'day1A_BPWPrep', emoji: '💧', color: '#00bcd4'},
                     {name: 'Day 1B - Bolton Broth', key: 'day1B_BoltonBroth', emoji: '🦠', color: '#9c27b0'},
                     {name: 'Day 2 - CCA', key: 'day2_CCA', emoji: '🧫', color: '#673ab7'},
                     {name: 'Day 3 - BAP', key: 'day3_BAP', emoji: '🧫', color: '#3f51b5'},
-                    {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '✅', color: '#4caf50'}
+                    {name: 'Day 4 - MALDI', key: 'day4_MALDI', emoji: '🧬', color: '#2196f3'},
+                    {name: 'Day 5 - Storage', key: 'day5_Storage', emoji: '❄️', color: '#4caf50'}
                 ];
 
                 stages.forEach(function(stage) {
@@ -8889,17 +8902,26 @@ html += '</div>';
                     // Count workflows in this stage
                     var count = 0;
                     campyloWorkflows.forEach(function(wf) {
+                        // Skip if workflow is complete
+                        if (wf.finalResult === 'negative' || wf.finalResult === 'positive') return;
+
+                        // Safety check: ensure day5_Storage exists
+                        if (!wf.stages.day5_Storage) {
+                            wf.stages.day5_Storage = {completed: false, vialId: null, dateStored: null, freezer: null, box: null, shelf: null, rack: null, position: null};
+                        }
+
                         if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') count++;
                         else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_BoltonBroth.completed && stage.key === 'day1B_BoltonBroth') count++;
                         else if (wf.stages.day1B_BoltonBroth.completed && !wf.stages.day2_CCA.completed && stage.key === 'day2_CCA') count++;
                         else if (wf.stages.day2_CCA.completed && !wf.stages.day3_BAP.completed && stage.key === 'day3_BAP') count++;
                         else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') count++;
+                        else if (wf.stages.day4_MALDI.completed && !wf.stages.day5_Storage.completed && stage.key === 'day5_Storage') count++;
                     });
 
                     html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">' + count + ' sample(s)</div>';
 
-                    // Bulk selection buttons
-                    if (count > 0 && stage.key !== 'day4_MALDI') {
+                    // Bulk selection buttons (exclude MALDI and Storage from bulk processing)
+                    if (count > 0 && stage.key !== 'day4_MALDI' && stage.key !== 'day5_Storage') {
                         html += '<div style="display: flex; gap: 5px; margin-bottom: 10px;">';
                         html += '<button onclick="selectAllCampyloInStage(\'' + stage.key + '\')" style="flex: 1; background: ' + stage.color + '; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Select All</button>';
                         html += '<button onclick="processSelectedCampylo(\'' + stage.key + '\')" style="flex: 1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">Process (<span id="selectedCountC1_' + stage.key + '">0</span>)</button>';
@@ -8910,15 +8932,24 @@ html += '</div>';
                     campyloWorkflows.forEach(function(wf) {
                         var shouldShow = false;
 
+                        // Skip if workflow is complete
+                        if (wf.finalResult === 'negative' || wf.finalResult === 'positive') return;
+
+                        // Safety check: ensure day5_Storage exists
+                        if (!wf.stages.day5_Storage) {
+                            wf.stages.day5_Storage = {completed: false, vialId: null, dateStored: null, freezer: null, box: null, shelf: null, rack: null, position: null};
+                        }
+
                         if (!wf.stages.day1A_BPWPrep.completed && stage.key === 'day1A_BPWPrep') shouldShow = true;
                         else if (wf.stages.day1A_BPWPrep.completed && !wf.stages.day1B_BoltonBroth.completed && stage.key === 'day1B_BoltonBroth') shouldShow = true;
                         else if (wf.stages.day1B_BoltonBroth.completed && !wf.stages.day2_CCA.completed && stage.key === 'day2_CCA') shouldShow = true;
                         else if (wf.stages.day2_CCA.completed && !wf.stages.day3_BAP.completed && stage.key === 'day3_BAP') shouldShow = true;
                         else if (wf.stages.day3_BAP.completed && !wf.stages.day4_MALDI.completed && stage.key === 'day4_MALDI') shouldShow = true;
+                        else if (wf.stages.day4_MALDI.completed && !wf.stages.day5_Storage.completed && stage.key === 'day5_Storage') shouldShow = true;
 
                         if (shouldShow) {
                             html += '<div style="background: white; border: 2px solid ' + stage.color + '; border-radius: 6px; padding: 10px; margin-bottom: 8px; position: relative;">';
-                            if (stage.key !== 'day4_MALDI') {
+                            if (stage.key !== 'day4_MALDI' && stage.key !== 'day5_Storage') {
                                 html += '<input type="checkbox" class="campylo-bulk-checkbox" data-workflow-id="' + wf.id + '" data-stage="' + stage.key + '" onchange="updateCampyloSelectedCount(\'' + stage.key + '\')" style="position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; cursor: pointer;" />';
                             }
                             html += '<div style="cursor: pointer; padding-right: 25px;" onclick="openCampyloWorkflowModal(\'' + wf.id + '\', \'' + stage.key + '\')">';
@@ -11335,7 +11366,8 @@ html += '</div>';
             else if (stageKey === 'day1B_BoltonBroth') stageTitle = '🦠 Day 1B - Bolton Broth Enrichment';
             else if (stageKey === 'day2_CCA') stageTitle = '🧫 Day 2 - Campy-Cefex Agar';
             else if (stageKey === 'day3_BAP') stageTitle = '🧫 Day 3 - BAP Confirmation';
-            else if (stageKey === 'day4_MALDI') stageTitle = '✅ Day 4 - MALDI Identification';
+            else if (stageKey === 'day4_MALDI') stageTitle = '🧬 Day 4 - MALDI Identification';
+            else if (stageKey === 'day5_Storage') stageTitle = '❄️ Day 5 - Storage';
 
             html += '<h3 style="margin-top: 0;">' + stageTitle + '</h3>';
             html += '<p>Sample: <strong>' + workflow.foodSampleId + '</strong></p>';
@@ -11529,14 +11561,54 @@ html += '</div>';
                 html += '<div class="form-group">';
                 html += '<label>Confirmed as Campylobacter?</label>';
                 html += '<select id="campylo_confirmed">';
-                html += '<option value="Yes">Yes - Generate Isolate</option>';
-                html += '<option value="No">No - Not Campylobacter</option>';
+                html += '<option value="Yes">Yes - Continue to Storage</option>';
+                html += '<option value="No">No - Mark as Negative</option>';
                 html += '</select>';
                 html += '</div>';
 
                 html += '<div class="form-group">';
                 html += '<label>Technician Initials:</label>';
                 html += '<input type="text" id="campylo_techInitials" maxlength="3" />';
+                html += '</div>';
+
+            } else if (stageKey === 'day5_Storage') {
+                var autoVialId = workflow.foodSampleId + '-C1';
+
+                html += '<div class="form-group">';
+                html += '<label>Vial ID:</label>';
+                html += '<input type="text" id="campylo_vialId" value="' + autoVialId + '" />';
+                html += '<div style="font-size: 11px; color: #666; margin-top: 5px;">Auto-generated, editable</div>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Freezer:</label>';
+                html += '<select id="campylo_freezer">';
+                html += '<option value="">-- Select Freezer --</option>';
+                html += '<option value="Freezer-1">Freezer 1</option>';
+                html += '<option value="Freezer-2">Freezer 2</option>';
+                html += '<option value="-80-1">-80°C Freezer 1</option>';
+                html += '<option value="-80-2">-80°C Freezer 2</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Box:</label>';
+                html += '<input type="text" id="campylo_box" placeholder="e.g., Box 12" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Shelf:</label>';
+                html += '<input type="text" id="campylo_shelf" placeholder="e.g., Shelf 3" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Rack:</label>';
+                html += '<input type="text" id="campylo_rack" placeholder="e.g., Rack A" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Position:</label>';
+                html += '<input type="text" id="campylo_position" placeholder="e.g., A1" />';
                 html += '</div>';
             }
 
@@ -11602,6 +11674,28 @@ html += '</div>';
                 stageData.maldiSpecies = document.getElementById('campylo_maldiSpecies').value;
                 stageData.maldiConfidence = document.getElementById('campylo_maldiConfidence').value;
                 stageData.confirmed = document.getElementById('campylo_confirmed').value;
+
+                // If not confirmed, mark as negative
+                if (stageData.confirmed === 'No') {
+                    currentCampyloWorkflow.finalResult = 'negative';
+                    currentCampyloWorkflow.resultDate = new Date().toISOString().split('T')[0];
+                }
+            } else if (currentCampyloStage === 'day5_Storage') {
+                stageData.vialId = document.getElementById('campylo_vialId').value;
+                stageData.dateStored = new Date().toISOString().split('T')[0];
+                stageData.freezer = document.getElementById('campylo_freezer').value;
+                stageData.box = document.getElementById('campylo_box').value;
+                stageData.shelf = document.getElementById('campylo_shelf').value;
+                stageData.rack = document.getElementById('campylo_rack').value;
+                stageData.position = document.getElementById('campylo_position').value;
+
+                // Mark as positive and generate isolate when stored
+                currentCampyloWorkflow.finalResult = 'positive';
+                currentCampyloWorkflow.resultDate = new Date().toISOString().split('T')[0];
+
+                // Generate isolate with species from MALDI stage
+                var maldiSpecies = currentCampyloWorkflow.stages.day4_MALDI.maldiSpecies || 'Campylobacter sp.';
+                generateIsolate(currentCampyloWorkflow, maldiSpecies);
             }
 
             stageData.completedDate = new Date().toISOString().split('T')[0];
@@ -11609,11 +11703,6 @@ html += '</div>';
 
             // Update workflow
             currentCampyloWorkflow.stages[currentCampyloStage] = stageData;
-
-            // If MALDI stage and confirmed, generate isolate
-            if (currentCampyloStage === 'day4_MALDI' && stageData.confirmed === 'Yes') {
-                generateIsolate(currentCampyloWorkflow, stageData.maldiSpecies);
-            }
 
             // Save and close
             saveData();
