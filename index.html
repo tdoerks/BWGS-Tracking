@@ -2784,7 +2784,12 @@
                 activeBtn.style.color = 'white';
             }
 
-            filterSamples();
+            // Apply filter based on current module
+            if (currentModule === 'food' && currentFoodTab === 'samples') {
+                renderFoodSamplesTab();
+            } else {
+                filterSamples(); // For BWGS sequencing module
+            }
         }
 
         function isWithinDateFilter(dateString) {
@@ -5825,8 +5830,28 @@ html += '</div>';
 
             // List of Food Samples
             html += '<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+
+            // Filter samples by date first (before rendering anything)
+            var filteredSamples = foodSamples.filter(function(sample) {
+                return isWithinDateFilter(sample.dateReceived);
+            });
+
+            // Date filter buttons
+            html += '<div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">';
+            html += '<span style="font-weight: 600; color: #666; display: flex; align-items: center; margin-right: 5px;">📅 Filter by Date:</span>';
+            html += '<button id="dateFilterAll" class="date-filter-btn" onclick="filterByDate(\'all\')" style="padding: 6px 14px; border: 1px solid #007bff; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; background: #007bff; color: white;">All</button>';
+            html += '<button id="dateFilterToday" class="date-filter-btn" onclick="filterByDate(\'today\')" style="padding: 6px 14px; border: 1px solid #007bff; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; background: white; color: #007bff;">Today</button>';
+            html += '<button id="dateFilterWeek" class="date-filter-btn" onclick="filterByDate(\'week\')" style="padding: 6px 14px; border: 1px solid #007bff; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; background: white; color: #007bff;">This Week</button>';
+            html += '<button id="dateFilterMonth" class="date-filter-btn" onclick="filterByDate(\'month\')" style="padding: 6px 14px; border: 1px solid #007bff; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; background: white; color: #007bff;">This Month</button>';
+            html += '<button id="dateFilter30Days" class="date-filter-btn" onclick="filterByDate(\'30days\')" style="padding: 6px 14px; border: 1px solid #007bff; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; background: white; color: #007bff;">Last 30 Days</button>';
+            html += '</div>';
+
             html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
-            html += '<h3 style="margin: 0;">🥩 Food Samples (' + foodSamples.length + ')</h3>';
+            var countText = filteredSamples.length + ' of ' + foodSamples.length;
+            if (filteredSamples.length === foodSamples.length) {
+                countText = foodSamples.length + '';
+            }
+            html += '<h3 style="margin: 0;">🥩 Food Samples (' + countText + ')</h3>';
 
             // Bulk action controls (only show if there are samples)
             if (foodSamples.length > 0) {
@@ -5840,15 +5865,20 @@ html += '</div>';
 
             html += '</div>';
 
-            if (foodSamples.length === 0) {
+            if (filteredSamples.length === 0) {
                 html += '<div style="text-align: center; padding: 40px; color: #999;">';
                 html += '<div style="font-size: 48px; margin-bottom: 10px;">📦</div>';
-                html += '<div style="font-size: 16px;">No food samples yet</div>';
-                html += '<div style="font-size: 14px; margin-top: 5px;">Add your first sample above to get started!</div>';
+                if (foodSamples.length === 0) {
+                    html += '<div style="font-size: 16px;">No food samples yet</div>';
+                    html += '<div style="font-size: 14px; margin-top: 5px;">Add your first sample above to get started!</div>';
+                } else {
+                    html += '<div style="font-size: 16px;">No samples match the current filter</div>';
+                    html += '<div style="font-size: 14px; margin-top: 5px;">Try selecting a different date range</div>';
+                }
                 html += '</div>';
             } else {
-                // Render samples
-                foodSamples.forEach(function(sample) {
+                // Render filtered samples
+                filteredSamples.forEach(function(sample) {
                     var sampleType = sampleTypes[sample.sampleTypeCode];
                     var category = sampleType ? sampleType.category : 'unknown';
 
