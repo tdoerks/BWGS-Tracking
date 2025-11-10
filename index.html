@@ -15801,9 +15801,9 @@ html += '</div>';
             html += '<textarea id="bulkDeleteReasonOtherText" placeholder="Please specify reason..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; display: none; font-family: inherit;" rows="3"></textarea>';
             html += '</div>';
 
-            html += '<div style="display: flex; gap: 10px; justify-content: flex-end;">';
-            html += '<button id="cancelBulkDeleteBtn" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>';
-            html += '<button id="confirmBulkDeleteBtn" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Delete ' + count + ' Sample' + (count > 1 ? 's' : '') + '</button>';
+            html += '<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">';
+            html += '<button id="cancelBulkDeleteBtn" style="padding: 12px 30px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 15px; min-width: 120px;">Cancel</button>';
+            html += '<button id="confirmBulkDeleteBtn" style="padding: 12px 30px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 15px; min-width: 140px;">Delete ' + count + ' Sample' + (count > 1 ? 's' : '') + '</button>';
             html += '</div>';
 
             modalContent.innerHTML = html;
