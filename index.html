@@ -6161,6 +6161,15 @@ html += '</div>';
             }
             var sampleTypeCode = match[1];
 
+            // Check for duplicate Sample ID
+            var existingSample = foodSamples.find(function(s) {
+                return s.id === id;
+            });
+            if (existingSample) {
+                alert('⚠️ Duplicate Sample ID!\n\nSample ID "' + id + '" already exists in the system.\n\nReceived: ' + existingSample.dateReceived + '\nStore: ' + existingSample.storeNum + '\n\nPlease use a different Sample ID or check if this is a duplicate entry.');
+                return;
+            }
+
             // Determine sample category (meat or seafood)
             var sampleType = sampleTypes[sampleTypeCode];
             if (!sampleType) {
