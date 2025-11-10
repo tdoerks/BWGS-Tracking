@@ -2506,6 +2506,7 @@
         // FOOD TESTING MODULE - Data Structures
         var foodSamples = []; // Food samples (meat/seafood)
         var storeNames = []; // Autocomplete store names history
+        var reagentLotHistory = {}; // Track recently used reagent lots by type (e.g., {bpwLot: ['LOT-001', 'LOT-002'], macBrothLot: [...]})
 
         // Retail Meat specific fields
         var brandNames = []; // Autocomplete brand names history
@@ -5421,6 +5422,79 @@ html += '</div>';
                     seqUI.style.display = 'block';
                 }
             }
+        }
+
+        // FOOD TESTING MODULE - Reagent Lot Autocomplete Functions
+
+        // Add reagent lot to history (max 20 recent lots per type)
+        function addReagentLotToHistory(lotType, lotValue) {
+            if (!lotValue || lotValue.trim() === '') return;
+
+            lotValue = lotValue.trim();
+
+            if (!reagentLotHistory[lotType]) {
+                reagentLotHistory[lotType] = [];
+            }
+
+            // Remove if already exists (to move to front)
+            var index = reagentLotHistory[lotType].indexOf(lotValue);
+            if (index !== -1) {
+                reagentLotHistory[lotType].splice(index, 1);
+            }
+
+            // Add to front
+            reagentLotHistory[lotType].unshift(lotValue);
+
+            // Keep only last 20
+            if (reagentLotHistory[lotType].length > 20) {
+                reagentLotHistory[lotType] = reagentLotHistory[lotType].slice(0, 20);
+            }
+
+            saveData();
+        }
+
+        // Show reagent lot autocomplete dropdown
+        function showReagentLotAutocomplete(inputId, lotType) {
+            var input = document.getElementById(inputId);
+            if (!input) return;
+
+            var dropdownId = inputId + '_autocomplete';
+            var dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+
+            var value = input.value.toLowerCase().trim();
+            var history = reagentLotHistory[lotType] || [];
+
+            // Filter based on input
+            var matches = history.filter(function(lot) {
+                return lot.toLowerCase().indexOf(value) !== -1;
+            });
+
+            if (matches.length > 0 || (value === '' && history.length > 0)) {
+                var html = '';
+                var displayLots = value === '' ? history : matches;
+                displayLots.slice(0, 10).forEach(function(lot) {
+                    html += '<div onclick="selectReagentLot(\'' + inputId + '\', \'' + lot.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-family: monospace;" onmouseover="this.style.background=\'#e7f3ff\'" onmouseout="this.style.background=\'white\'">' + lot + '</div>';
+                });
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        // Hide reagent lot autocomplete
+        function hideReagentLotAutocomplete(inputId) {
+            var dropdownId = inputId + '_autocomplete';
+            var dropdown = document.getElementById(dropdownId);
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        // Select a reagent lot from autocomplete
+        function selectReagentLot(inputId, lotValue) {
+            var input = document.getElementById(inputId);
+            if (input) input.value = lotValue;
+            hideReagentLotAutocomplete(inputId);
         }
 
         // FOOD TESTING MODULE - Main Render Function
@@ -8586,9 +8660,10 @@ html += '</div>';
                 html += '<strong>ℹ️ Note:</strong> All samples will use the same lot numbers and settings below.';
                 html += '</div>';
 
-                html += '<div class="form-group">';
+                html += '<div class="form-group" style="position: relative;">';
                 html += '<label>BPW Lot #:</label>';
-                html += '<input type="text" id="bulk_bpwLot" placeholder="LOT-BPW-001" />';
+                html += '<input type="text" id="bulk_bpwLot" placeholder="LOT-BPW-001" oninput="showReagentLotAutocomplete(\'bulk_bpwLot\', \'bpwLot\')" onfocus="showReagentLotAutocomplete(\'bulk_bpwLot\', \'bpwLot\')" onblur="setTimeout(function(){ hideReagentLotAutocomplete(\'bulk_bpwLot\'); }, 200)" />';
+                html += '<div id="bulk_bpwLot_autocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 html += '<div class="form-group">';
@@ -8601,9 +8676,10 @@ html += '</div>';
                 html += '<strong>ℹ️ Note:</strong> All samples will use the same lot numbers and settings below.';
                 html += '</div>';
 
-                html += '<div class="form-group">';
+                html += '<div class="form-group" style="position: relative;">';
                 html += '<label>MAC Broth Lot #:</label>';
-                html += '<input type="text" id="bulk_macBrothLot" placeholder="LOT-MAC-001" />';
+                html += '<input type="text" id="bulk_macBrothLot" placeholder="LOT-MAC-001" oninput="showReagentLotAutocomplete(\'bulk_macBrothLot\', \'macBrothLot\')" onfocus="showReagentLotAutocomplete(\'bulk_macBrothLot\', \'macBrothLot\')" onblur="setTimeout(function(){ hideReagentLotAutocomplete(\'bulk_macBrothLot\'); }, 200)" />';
+                html += '<div id="bulk_macBrothLot_autocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 html += '<div class="form-group">';
@@ -8633,9 +8709,10 @@ html += '</div>';
                 html += '<strong>ℹ️ Note:</strong> All samples will use the same lot numbers and settings below.';
                 html += '</div>';
 
-                html += '<div class="form-group">';
+                html += '<div class="form-group" style="position: relative;">';
                 html += '<label>MAC Agar Plate Lot #:</label>';
-                html += '<input type="text" id="bulk_macAgarLot" placeholder="LOT-MAC-001" />';
+                html += '<input type="text" id="bulk_macAgarLot" placeholder="LOT-MAC-001" oninput="showReagentLotAutocomplete(\'bulk_macAgarLot\', \'macAgarLot\')" onfocus="showReagentLotAutocomplete(\'bulk_macAgarLot\', \'macAgarLot\')" onblur="setTimeout(function(){ hideReagentLotAutocomplete(\'bulk_macAgarLot\'); }, 200)" />';
+                html += '<div id="bulk_macAgarLot_autocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div>';
                 html += '</div>';
 
                 html += '<div class="form-group">';
@@ -8751,18 +8828,22 @@ html += '</div>';
             // Collect common data based on stage
             if (stageKey === 'day1A_BPWPrep') {
                 stageData.bpwLot = document.getElementById('bulk_bpwLot').value;
+                addReagentLotToHistory('bpwLot', stageData.bpwLot);
             } else if (stageKey === 'day1B_MacBroth') {
                 stageData.macBrothLot = document.getElementById('bulk_macBrothLot').value;
+                addReagentLotToHistory('macBrothLot', stageData.macBrothLot);
                 stageData.temperature = document.getElementById('bulk_temperature').value;
                 stageData.incubator = document.getElementById('bulk_incubator').value;
             } else if (stageKey === 'day2_MacAgar') {
                 stageData.macAgarLot = document.getElementById('bulk_macAgarLot').value;
+                addReagentLotToHistory('macAgarLot', stageData.macAgarLot);
                 stageData.temperature = document.getElementById('bulk_temperature').value;
                 stageData.incubator = document.getElementById('bulk_incubator').value;
             } else if (stageKey === 'day3_PinkColonies') {
                 stageData.pinkColonies = document.getElementById('bulk_pinkColonies').value;
             } else if (stageKey === 'day4_BAP') {
                 stageData.bapLot = document.getElementById('bulk_bapLot').value;
+                addReagentLotToHistory('bapLot', stageData.bapLot);
                 stageData.temperature = document.getElementById('bulk_temperature').value;
                 stageData.incubator = document.getElementById('bulk_incubator').value;
             }
@@ -8879,7 +8960,7 @@ html += '</div>';
                 html += '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">';
                 html += '<strong>ℹ️ Note:</strong> All samples will use the same lot numbers and settings below.';
                 html += '</div>';
-                html += '<div class="form-group"><label>Bolton Broth Lot #:</label><input type="text" id="bulk_c1_boltonLot" placeholder="LOT-BOLTON-001" /></div>';
+                html += '<div class="form-group" style="position: relative;"><label>Bolton Broth Lot #:</label><input type="text" id="bulk_c1_boltonLot" placeholder="LOT-BOLTON-001" oninput="showReagentLotAutocomplete(\'bulk_c1_boltonLot\', \'boltonLot\')" onfocus="showReagentLotAutocomplete(\'bulk_c1_boltonLot\', \'boltonLot\')" onblur="setTimeout(function(){ hideReagentLotAutocomplete(\'bulk_c1_boltonLot\'); }, 200)" /><div id="bulk_c1_boltonLot_autocomplete" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px;"></div></div>';
                 html += '<div class="form-group"><label>Temperature:</label><select id="bulk_c1_temperature"><option value="42">42°C</option><option value="37">37°C</option></select></div>';
                 html += '<div class="form-group"><label>Incubator:</label><select id="bulk_c1_incubator"><option value="INC-1">Incubator 1</option><option value="INC-2">Incubator 2</option><option value="INC-3">Incubator 3</option></select></div>';
                 html += '<div class="form-group"><label>Technician Initials:</label><input type="text" id="bulk_c1_techInitials" maxlength="3" /></div>';
@@ -8926,8 +9007,10 @@ html += '</div>';
 
             if (stageKey === 'day1A_BPWPrep') {
                 stageData.bpwLot = document.getElementById('bulk_c1_bpwLot').value;
+                addReagentLotToHistory('bpwLot', stageData.bpwLot);
             } else if (stageKey === 'day1B_BoltonBroth') {
                 stageData.boltonLot = document.getElementById('bulk_c1_boltonLot').value;
+                addReagentLotToHistory('boltonLot', stageData.boltonLot);
                 stageData.temperature = document.getElementById('bulk_c1_temperature').value;
                 stageData.incubator = document.getElementById('bulk_c1_incubator').value;
             } else if (stageKey === 'day2_CCA') {
