@@ -5834,7 +5834,7 @@ html += '</div>';
                 html += '<button onclick="selectAllSamples()" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;">☑️ Select All</button>';
                 html += '<button onclick="deselectAllSamples()" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;">☐ Deselect All</button>';
                 html += '<button id="bulkEditSelectedBtn" onclick="openBulkEditorForSelected()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; box-shadow: 0 2px 8px rgba(240,147,251,0.3); display: none;">📝 Edit Selected (<span id="selectedEditCount">0</span>)</button>';
-                html += '<button id="bulkDeleteBtn" onclick="bulkDeleteSamples()" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; display: none;">🗑️ Delete Selected (<span id="selectedCount">0</span>)</button>';
+                html += '<button id="bulkDeleteBtn" onclick="bulkDeleteSamples()" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; display: none;">🗑️ Delete Selected (<span id="selectedCountFood">0</span>)</button>';
                 html += '</div>';
             }
 
@@ -15720,7 +15720,7 @@ html += '</div>';
         // Update bulk action buttons visibility and count
         function updateBulkDeleteButton() {
             var deleteBtn = document.getElementById('bulkDeleteBtn');
-            var deleteCountSpan = document.getElementById('selectedCount');
+            var deleteCountSpan = document.getElementById('selectedCountFood');
             var editBtn = document.getElementById('bulkEditSelectedBtn');
             var editCountSpan = document.getElementById('selectedEditCount');
 
