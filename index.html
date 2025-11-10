@@ -5831,11 +5831,12 @@ html += '</div>';
             html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
             html += '<h3 style="margin: 0;">🥩 Food Samples (' + foodSamples.length + ')</h3>';
 
-            // Bulk delete controls (only show if there are samples)
+            // Bulk action controls (only show if there are samples)
             if (foodSamples.length > 0) {
                 html += '<div style="display: flex; gap: 10px; align-items: center;">';
                 html += '<button onclick="selectAllSamples()" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;">☑️ Select All</button>';
                 html += '<button onclick="deselectAllSamples()" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;">☐ Deselect All</button>';
+                html += '<button id="bulkEditSelectedBtn" onclick="openBulkEditorForSelected()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; box-shadow: 0 2px 8px rgba(240,147,251,0.3); display: none;">📝 Edit Selected (<span id="selectedEditCount">0</span>)</button>';
                 html += '<button id="bulkDeleteBtn" onclick="bulkDeleteSamples()" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; display: none;">🗑️ Delete Selected (<span id="selectedCount">0</span>)</button>';
                 html += '</div>';
             }
@@ -6481,7 +6482,7 @@ html += '</div>';
         // Track current bulk editor tab
         var currentBulkTab = 'meat';
 
-        // Open Bulk Editor Modal
+        // Open Bulk Editor Modal (for all samples needing editing)
         function openBulkEditorModal() {
             // Find all food samples that have minimal data (need editing)
             var samplesToEdit = foodSamples.filter(function(s) {
@@ -6491,6 +6492,43 @@ html += '</div>';
 
             if (samplesToEdit.length === 0) {
                 alert('No samples need editing. All samples have store numbers and pathogens assigned.');
+                return;
+            }
+
+            // Separate by category
+            var meatSamples = samplesToEdit.filter(function(s) {
+                return s.category === 'meat' || (!s.category && sampleTypes[s.sampleTypeCode] && sampleTypes[s.sampleTypeCode].category === 'meat');
+            });
+            var seafoodSamples = samplesToEdit.filter(function(s) {
+                return s.category === 'seafood' || (!s.category && sampleTypes[s.sampleTypeCode] && sampleTypes[s.sampleTypeCode].category === 'seafood');
+            });
+
+            // Update counts
+            document.getElementById('rmCount').textContent = meatSamples.length;
+            document.getElementById('sfCount').textContent = seafoodSamples.length;
+
+            // Start with meat tab if there are meat samples, otherwise seafood
+            currentBulkTab = meatSamples.length > 0 ? 'meat' : 'seafood';
+            switchBulkEditorTab(currentBulkTab);
+
+            document.getElementById('bulkEditorModal').style.display = 'block';
+        }
+
+        // Open Bulk Editor Modal for SELECTED samples only
+        function openBulkEditorForSelected() {
+            // Check if any samples are selected
+            if (selectedSamplesForDelete.length === 0) {
+                alert('No samples selected. Please select samples using the checkboxes first.');
+                return;
+            }
+
+            // Get only the selected samples
+            var samplesToEdit = foodSamples.filter(function(s) {
+                return selectedSamplesForDelete.indexOf(s.id) !== -1;
+            });
+
+            if (samplesToEdit.length === 0) {
+                alert('Selected samples not found.');
                 return;
             }
 
@@ -15678,17 +15716,30 @@ html += '</div>';
             updateBulkDeleteButton();
         }
 
-        // Update bulk delete button visibility and count
+        // Update bulk action buttons visibility and count
         function updateBulkDeleteButton() {
-            var btn = document.getElementById('bulkDeleteBtn');
-            var countSpan = document.getElementById('selectedCount');
+            var deleteBtn = document.getElementById('bulkDeleteBtn');
+            var deleteCountSpan = document.getElementById('selectedCount');
+            var editBtn = document.getElementById('bulkEditSelectedBtn');
+            var editCountSpan = document.getElementById('selectedEditCount');
 
-            if (btn && countSpan) {
+            // Update delete button
+            if (deleteBtn && deleteCountSpan) {
                 if (selectedSamplesForDelete.length > 0) {
-                    btn.style.display = 'inline-block';
-                    countSpan.textContent = selectedSamplesForDelete.length;
+                    deleteBtn.style.display = 'inline-block';
+                    deleteCountSpan.textContent = selectedSamplesForDelete.length;
                 } else {
-                    btn.style.display = 'none';
+                    deleteBtn.style.display = 'none';
+                }
+            }
+
+            // Update edit button
+            if (editBtn && editCountSpan) {
+                if (selectedSamplesForDelete.length > 0) {
+                    editBtn.style.display = 'inline-block';
+                    editCountSpan.textContent = selectedSamplesForDelete.length;
+                } else {
+                    editBtn.style.display = 'none';
                 }
             }
         }
