@@ -6476,8 +6476,9 @@ html += '</div>';
             renderFoodSamplesTab();
         }
 
-        // Track current bulk editor tab
+        // Track current bulk editor tab and samples being edited
         var currentBulkTab = 'meat';
+        var currentBulkEditSamples = []; // Stores the samples currently being edited in bulk editor
 
         // Open Bulk Editor Modal (for all samples needing editing)
         function openBulkEditorModal() {
@@ -6491,6 +6492,9 @@ html += '</div>';
                 alert('No samples need editing. All samples have store numbers and pathogens assigned.');
                 return;
             }
+
+            // Store samples for bulk editor
+            currentBulkEditSamples = samplesToEdit;
 
             // Separate by category
             var meatSamples = samplesToEdit.filter(function(s) {
@@ -6528,6 +6532,9 @@ html += '</div>';
                 alert('Selected samples not found.');
                 return;
             }
+
+            // Store samples for bulk editor
+            currentBulkEditSamples = samplesToEdit;
 
             // Separate by category
             var meatSamples = samplesToEdit.filter(function(s) {
@@ -6581,18 +6588,15 @@ html += '</div>';
         function renderBulkEditor(category) {
             var container = document.getElementById('bulkEditorContent');
 
-            // Filter samples by category
-            var samplesToEdit = foodSamples.filter(function(s) {
-                // Include samples with empty store# or no pathogens selected
-                if (!s.storeNum || s.pathogensToTest.length === 0) {
-                    var sampleCategory = s.category || (sampleTypes[s.sampleTypeCode] ? sampleTypes[s.sampleTypeCode].category : null);
-                    return sampleCategory === category;
-                }
-                return false;
+            // Use the stored samples (from openBulkEditorModal or openBulkEditorForSelected)
+            // Filter by category
+            var samplesToEdit = currentBulkEditSamples.filter(function(s) {
+                var sampleCategory = s.category || (sampleTypes[s.sampleTypeCode] ? sampleTypes[s.sampleTypeCode].category : null);
+                return sampleCategory === category;
             });
 
             if (samplesToEdit.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No ' + category + ' samples need editing.</div>';
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No ' + category + ' samples to edit.</div>';
                 return;
             }
 
