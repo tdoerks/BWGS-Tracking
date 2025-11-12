@@ -103,10 +103,10 @@ I reviewed the top enhancement ideas from `ENHANCEMENT_IDEAS.md` and found that 
 
 ---
 
-## 🆕 New Enhancement Added
+## 🆕 New Enhancements Added This Session
 
-### **Reagent Lot Autocomplete** (NEW!)
-- **Status:** IMPLEMENTED in this session
+### 1. **Reagent Lot Autocomplete** ✨
+- **Status:** IMPLEMENTED
 - **Commit:** 28bf99b
 - **Features:**
   - Remembers last 20 unique lot numbers per field type
@@ -116,14 +116,37 @@ I reviewed the top enhancement ideas from `ENHANCEMENT_IDEAS.md` and found that 
   - Works across sessions (localStorage)
   - No duplicates - moves existing to top
 
-**How it works:**
-```javascript
-// Stores lots in localStorage by field name
-'recentLots_batch_lot': ["AW1-2024-123", "AW1-2024-122", ...]
+### 2. **Enhanced Bulk Actions from Main View** ⚡
+- **Status:** IMPLEMENTED
+- **Commit:** 0c68099
+- **Features:**
+  - **Bulk Process Next Stage** - Select samples at same stage, process together
+  - **Bulk Export Selected** - Export just selected samples to CSV
+  - Validates all samples at same stage before processing
+  - Clear error messages for mixed-stage selections
+  - Works from any view (List/Kanban/Table)
 
-// Creates <datalist> elements dynamically
-// Attaches to input fields via list="lotList_batch_lot"
-```
+### 3. **Undo System with Ctrl+Z** ↩️
+- **Status:** IMPLEMENTED
+- **Commit:** b40517c
+- **Features:**
+  - Undo button in header (always visible)
+  - Keyboard shortcut: Ctrl+Z (Cmd+Z on Mac)
+  - Stores last 10 actions in stack
+  - Toast notifications for confirmations
+  - Button shows tooltip of what will be undone
+  - Wraps deleteSample() automatically
+
+### 4. **Sticky Stats Header** 📌
+- **Status:** IMPLEMENTED
+- **Commit:** 3ca7aca
+- **Features:**
+  - Stats panel stays at top when scrolling
+  - Minimize/Expand toggle button
+  - Compact mode saves vertical space
+  - Preference saved to localStorage
+  - Smooth transitions
+  - Always see key metrics without scrolling back up
 
 ---
 
@@ -248,13 +271,28 @@ This is a production-grade lab tracker!
 
 ---
 
-**Branch Status:** `claude-playground` has 1 new commit ready
-**Commit:** 28bf99b "Add reagent lot autocomplete feature"
+**Branch Status:** `claude-playground` - PUSHED TO GITHUB ✅
 
-To see changes:
-```bash
-git checkout claude-playground
-git log main..claude-playground
+**Total Commits:** 5
+1. **28bf99b** - Add reagent lot autocomplete feature
+2. **3796624** - Document playground session findings
+3. **0c68099** - Add enhanced bulk actions from main view
+4. **b40517c** - Add undo system with Ctrl+Z support
+5. **3ca7aca** - Add sticky stats header with minimize toggle
+
+**View on GitHub:**
+```
+https://github.com/tdoerks/BWGS-Tracking/tree/claude-playground
 ```
 
-**Note:** Branch exists locally only (couldn't push due to sandbox credentials)
+**To merge to main:**
+```bash
+git checkout main
+git merge claude-playground
+git push origin main
+```
+
+**Or create Pull Request:**
+```
+https://github.com/tdoerks/BWGS-Tracking/pull/new/claude-playground
+```
