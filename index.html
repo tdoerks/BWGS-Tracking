@@ -17614,6 +17614,101 @@ if (sample.qubitDetails) {
         console.log('Keyboard shortcuts: Ctrl+F (search), Ctrl+E (export), Ctrl+N (new sample), Esc (close), 1-5 (filters)');
         console.log('✅ Barcode scanner support enabled - scan barcodes directly into Sample ID field');
         console.log('🎨 Sidebar navigation enabled - toggle with hamburger menu');
+
+        // ========================================
+        // REAGENT LOT AUTOCOMPLETE SYSTEM
+        // ========================================
+
+        // Store and retrieve recent lot numbers
+        function getRecentLots(fieldName) {
+            var key = 'recentLots_' + fieldName;
+            var stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function addRecentLot(fieldName, lotNumber) {
+            if (!lotNumber || lotNumber.trim() === '') return;
+
+            var lots = getRecentLots(fieldName);
+
+            // Remove if already exists (we'll add to front)
+            lots = lots.filter(function(lot) { return lot !== lotNumber; });
+
+            // Add to front
+            lots.unshift(lotNumber);
+
+            // Keep only last 20
+            if (lots.length > 20) {
+                lots = lots.slice(0, 20);
+            }
+
+            var key = 'recentLots_' + fieldName;
+            localStorage.setItem(key, JSON.stringify(lots));
+        }
+
+        // Create datalist for autocomplete
+        function createLotDatalist(fieldName) {
+            var datalistId = 'lotList_' + fieldName;
+
+            // Remove existing datalist if it exists
+            var existing = document.getElementById(datalistId);
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create new datalist
+            var datalist = document.createElement('datalist');
+            datalist.id = datalistId;
+
+            var lots = getRecentLots(fieldName);
+            lots.forEach(function(lot) {
+                var option = document.createElement('option');
+                option.value = lot;
+                datalist.appendChild(option);
+            });
+
+            document.body.appendChild(datalist);
+            return datalistId;
+        }
+
+        // Attach autocomplete to lot number inputs
+        function setupLotAutocomplete(inputId, fieldName) {
+            var input = document.getElementById(inputId);
+            if (!input) return;
+
+            var datalistId = createLotDatalist(fieldName);
+            input.setAttribute('list', datalistId);
+
+            // Update recent lots when input changes
+            input.addEventListener('blur', function() {
+                if (this.value && this.value.trim() !== '') {
+                    addRecentLot(fieldName, this.value.trim());
+                }
+            });
+        }
+
+        // Initialize autocomplete for all lot number fields
+        function initializeLotAutocomplete() {
+            // Batch modal lot fields
+            setupLotAutocomplete('batchLotNumber', 'batch_lot');
+
+            // Individual modal lot fields (these are dynamically created, so we'll hook into the modal opening)
+            // We'll set up a MutationObserver or hook into modal functions
+        }
+
+        // Hook into modal opening to setup autocomplete for dynamic fields
+        var originalStartBatch = window.startBatchProcess;
+        window.startBatchProcess = function() {
+            originalStartBatch.apply(this, arguments);
+            // After modal opens, setup autocomplete
+            setTimeout(function() {
+                setupLotAutocomplete('batchLotNumber', 'batch_lot');
+            }, 100);
+        };
+
+        // Initialize on page load
+        initializeLotAutocomplete();
+        console.log('✨ Reagent lot autocomplete enabled - recently used lots will appear as suggestions');
     </script>
 
         </div> <!-- Close sequencingUI div -->
