@@ -1172,8 +1172,10 @@
                     <strong><span id="selectedCount">0</span> samples selected</strong>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="bulkProcessNext()" style="background: #28a745; color: white;">⚡ Process Next Stage</button>
                     <button onclick="bulkDelete()" style="background: #dc3545; color: white;">🗑️ Delete Selected</button>
                     <button onclick="showBulkStatusChange()" style="background: #ffc107; color: #333;">📝 Change Status</button>
+                    <button onclick="bulkExport()" style="background: #17a2b8; color: white;">📥 Export Selected</button>
                     <button onclick="clearSelection()" style="background: #6c757d; color: white;">✖ Clear Selection</button>
                 </div>
             </div>
@@ -17709,6 +17711,108 @@ if (sample.qubitDetails) {
         // Initialize on page load
         initializeLotAutocomplete();
         console.log('✨ Reagent lot autocomplete enabled - recently used lots will appear as suggestions');
+
+        // ========================================
+        // ENHANCED BULK ACTIONS
+        // ========================================
+
+        // Bulk process to next stage
+        function bulkProcessNext() {
+            if (bulkSelectedSamples.length === 0) {
+                alert('Please select samples first');
+                return;
+            }
+
+            // Group samples by their current status
+            var statusGroups = {};
+            var selectedSampleObjects = samples.filter(function(s) {
+                return bulkSelectedSamples.indexOf(s.id) !== -1;
+            });
+
+            selectedSampleObjects.forEach(function(s) {
+                if (!statusGroups[s.status]) {
+                    statusGroups[s.status] = [];
+                }
+                statusGroups[s.status].push(s);
+            });
+
+            // Check if all samples are at the same stage
+            var statuses = Object.keys(statusGroups);
+            if (statuses.length > 1) {
+                alert('Selected samples are at different stages!\n\nTo process together, samples must be at the same workflow stage.\n\nCurrent stages:\n' +
+                    statuses.map(function(s) { return '• ' + s + ' (' + statusGroups[s].length + ' samples)'; }).join('\n'));
+                return;
+            }
+
+            var currentStatus = statuses[0];
+            var nextAction = getNextAction(currentStatus);
+
+            if (!nextAction) {
+                alert('Selected samples are already complete!');
+                return;
+            }
+
+            // Confirm and launch batch modal
+            if (confirm('Process ' + bulkSelectedSamples.length + ' samples from "' + currentStatus + '" to "' + nextAction.nextStage + '"?')) {
+                // Set up batch processing
+                selectedSamplesForBatch = bulkSelectedSamples.slice(); // Copy array
+                startBatchProcess();
+            }
+        }
+
+        // Helper: Determine next action for a status
+        function getNextAction(status) {
+            var actions = {
+                'Received': {nextStage: 'BAP Complete', action: 'BAP'},
+                'BAP Complete': {nextStage: 'TSB Complete', action: 'TSB'},
+                'TSB Complete': {nextStage: 'Extraction Complete', action: 'Extraction'},
+                'Extraction Complete': {nextStage: 'Clean Extraction Complete', action: 'Clean Extraction'},
+                'Clean Extraction Complete': {nextStage: 'Clean Extraction Qubit Complete', action: 'CE Qubit'},
+                'Clean Extraction Qubit Complete': {nextStage: 'Indexing Complete', action: 'Indexing'},
+                'Indexing Complete': {nextStage: 'Qubit Complete', action: 'Qubit'}
+            };
+            return actions[status] || null;
+        }
+
+        // Bulk export selected samples only
+        function bulkExport() {
+            if (bulkSelectedSamples.length === 0) {
+                alert('Please select samples first');
+                return;
+            }
+
+            var selectedSampleObjects = samples.filter(function(s) {
+                return bulkSelectedSamples.indexOf(s.id) !== -1;
+            });
+
+            // Export as CSV
+            var csv = 'Sample ID,Status,Date Added,Initials,BAP Number,TSB Number,Extraction Number,Indexing Number\n';
+
+            selectedSampleObjects.forEach(function(sample) {
+                csv += sample.id + ',';
+                csv += sample.status + ',';
+                csv += sample.dateAdded + ',';
+                csv += sample.initials + ',';
+                csv += (sample.bapNumber || '') + ',';
+                csv += (sample.tsbNumber || '') + ',';
+                csv += (sample.extractionNumber || '') + ',';
+                csv += (sample.indexingNumber || '') + '\n';
+            });
+
+            var blob = new Blob([csv], {type: 'text/csv'});
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'selected_samples_' + new Date().toISOString().slice(0,10) + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            alert('Exported ' + bulkSelectedSamples.length + ' samples to CSV!');
+        }
+
+        console.log('✨ Enhanced bulk actions enabled - process multiple samples at once from any view!');
     </script>
 
         </div> <!-- Close sequencingUI div -->
