@@ -1106,9 +1106,14 @@
 
         <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
 
-    <!-- Quick Stats Panel -->
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white;">
-        <h3 style="margin-top: 0; color: white;">⚡ Quick Stats</h3>
+    <!-- Quick Stats Panel (Sticky) -->
+    <div id="stickyStatsPanel" style="position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0; color: white;">⚡ Quick Stats</h3>
+            <button onclick="toggleStatsCompact()" id="statsToggle" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                Minimize ▲
+            </button>
+        </div>
         <div id="quickStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
             <!-- Stats will be populated by JavaScript -->
         </div>
@@ -17936,6 +17941,43 @@ if (sample.qubitDetails) {
         });
 
         console.log('✨ Undo system enabled - press Ctrl+Z or click Undo button to revert changes!');
+
+        // ========================================
+        // STICKY STATS HEADER WITH TOGGLE
+        // ========================================
+
+        var statsCompact = false;
+
+        function toggleStatsCompact() {
+            var panel = document.getElementById('stickyStatsPanel');
+            var quickStats = document.getElementById('quickStats');
+            var toggleBtn = document.getElementById('statsToggle');
+
+            statsCompact = !statsCompact;
+
+            if (statsCompact) {
+                // Minimize - show only key numbers in one row
+                quickStats.style.display = 'none';
+                toggleBtn.textContent = 'Expand ▼';
+                panel.style.padding = '12px 20px';
+            } else {
+                // Expand - show full grid
+                quickStats.style.display = 'grid';
+                toggleBtn.textContent = 'Minimize ▲';
+                panel.style.padding = '20px';
+            }
+
+            // Save preference
+            localStorage.setItem('statsCompactMode', statsCompact);
+        }
+
+        // Restore compact mode preference on load
+        var savedCompactMode = localStorage.getItem('statsCompactMode');
+        if (savedCompactMode === 'true') {
+            toggleStatsCompact();
+        }
+
+        console.log('✨ Sticky stats header enabled - stats stay visible when scrolling!');
     </script>
 
         </div> <!-- Close sequencingUI div -->
