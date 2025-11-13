@@ -16804,6 +16804,179 @@ html += '</div>';
             document.getElementById('auditTrailModal').style.display = 'none';
         }
 
+        // View sample timeline - Gantt-chart style visualization
+        function viewSampleTimeline(sampleId) {
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+            if (!sample) return;
+
+            // Calculate stage durations and dates
+            var stages = [
+                {name: 'Received', date: sample.dateAdded, key: null},
+                {name: 'BAP', date: sample.bapDetails ? sample.bapDetails.completionDate : null, key: 'bapDetails'},
+                {name: 'TSB', date: sample.tsbDetails ? sample.tsbDetails.completionDate : null, key: 'tsbDetails'},
+                {name: 'Extraction', date: sample.extractionDetails ? sample.extractionDetails.completedDate : null, key: 'extractionDetails'},
+                {name: 'Clean Extraction', date: sample.cleanExtractionDetails ? sample.cleanExtractionDetails.completedDate : null, key: 'cleanExtractionDetails'},
+                {name: 'CE Qubit', date: sample.cleanExtractionQubitDetails ? sample.cleanExtractionQubitDetails.completedDate : null, key: 'cleanExtractionQubitDetails'},
+                {name: 'Indexing', date: sample.indexingDetails ? sample.indexingDetails.completedDate : null, key: 'indexingDetails'},
+                {name: 'Final Qubit', date: sample.qubitDetails ? sample.qubitDetails.completedDate : null, key: 'qubitDetails'}
+            ];
+
+            // Calculate durations between stages
+            var timeline = [];
+            var startDate = new Date(sample.dateAdded);
+            var currentDate = startDate;
+
+            for (var i = 0; i < stages.length; i++) {
+                var stage = stages[i];
+                if (i === 0 || stage.date) {
+                    var endDate = stage.date ? new Date(stage.date) : new Date();
+                    var durationDays = Math.ceil((endDate - currentDate) / (1000 * 60 * 60 * 24));
+                    if (durationDays < 0) durationDays = 0;
+
+                    var status = 'completed';
+                    var color = '#28a745';
+                    if (!stage.date && i > 0) {
+                        status = 'in-progress';
+                        color = '#ffc107';
+                        durationDays = Math.ceil((new Date() - currentDate) / (1000 * 60 * 60 * 24));
+                    }
+
+                    // Warn if stage took too long
+                    if (durationDays > 3 && status === 'completed') {
+                        color = '#fd7e14'; // Orange for slow
+                    }
+                    if (durationDays > 7) {
+                        color = '#dc3545'; // Red for very slow
+                        status = 'delayed';
+                    }
+
+                    timeline.push({
+                        name: stage.name,
+                        durationDays: durationDays,
+                        startDate: currentDate.toLocaleDateString(),
+                        endDate: stage.date || 'In Progress',
+                        status: status,
+                        color: color,
+                        completed: !!stage.date
+                    });
+
+                    if (stage.date) {
+                        currentDate = endDate;
+                    }
+                } else {
+                    break; // Stop at first incomplete stage
+                }
+            }
+
+            // Create modal
+            var modal = document.createElement('div');
+            modal.id = 'timelineModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000; overflow-y: auto;';
+
+            var modalContent = document.createElement('div');
+            modalContent.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 900px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
+
+            var html = '';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">';
+            html += '<h2 style="margin: 0; color: #667eea;">📊 Sample Timeline</h2>';
+            html += '<button onclick="closeTimelineModal()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕ Close</button>';
+            html += '</div>';
+
+            html += '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">';
+            html += '<div style="font-size: 24px; font-weight: 600; margin-bottom: 5px;">' + sample.id + '</div>';
+            html += '<div style="font-size: 14px; opacity: 0.9;">Current Status: ' + sample.status + '</div>';
+            html += '<div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Total Time: ' + calculateTurnaroundDays(sample) + ' days</div>';
+            html += '</div>';
+
+            // Legend
+            html += '<div style="display: flex; gap: 15px; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap;">';
+            html += '<div style="display: flex; align-items: center; gap: 5px;"><div style="width: 20px; height: 20px; background: #28a745; border-radius: 4px;"></div><span style="font-size: 12px;">Completed (≤3 days)</span></div>';
+            html += '<div style="display: flex; align-items: center; gap: 5px;"><div style="width: 20px; height: 20px; background: #fd7e14; border-radius: 4px;"></div><span style="font-size: 12px;">Slow (3-7 days)</span></div>';
+            html += '<div style="display: flex; align-items: center; gap: 5px;"><div style="width: 20px; height: 20px; background: #dc3545; border-radius: 4px;"></div><span style="font-size: 12px;">Delayed (>7 days)</span></div>';
+            html += '<div style="display: flex; align-items: center; gap: 5px;"><div style="width: 20px; height: 20px; background: #ffc107; border-radius: 4px;"></div><span style="font-size: 12px;">In Progress</span></div>';
+            html += '</div>';
+
+            // Gantt chart
+            html += '<div style="font-weight: 600; margin-bottom: 15px; color: #495057;">📅 Stage Duration Timeline:</div>';
+
+            var maxDays = Math.max.apply(null, timeline.map(function(t) { return t.durationDays; }));
+            if (maxDays === 0) maxDays = 1;
+
+            timeline.forEach(function(item) {
+                var barWidth = (item.durationDays / maxDays) * 100;
+                if (barWidth < 5) barWidth = 5; // Minimum width for visibility
+
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
+                html += '<span style="font-weight: 600; font-size: 14px; color: #495057;">' + item.name + '</span>';
+                html += '<span style="font-size: 12px; color: #6c757d;">' + item.durationDays + ' day' + (item.durationDays === 1 ? '' : 's') + '</span>';
+                html += '</div>';
+
+                html += '<div style="background: #e9ecef; border-radius: 8px; height: 36px; position: relative; overflow: hidden;">';
+                html += '<div style="background: linear-gradient(90deg, ' + item.color + ' 0%, ' + item.color + 'dd 100%); height: 100%; width: ' + barWidth + '%; display: flex; align-items: center; padding: 0 12px; color: white; font-weight: 600; font-size: 13px; transition: width 0.5s; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+
+                if (item.status === 'in-progress') {
+                    html += '⏳ In Progress';
+                } else if (item.status === 'delayed') {
+                    html += '⚠️ Delayed';
+                } else {
+                    html += '✓ Done';
+                }
+
+                html += '</div>';
+                html += '</div>';
+
+                html += '<div style="font-size: 11px; color: #6c757d; margin-top: 3px;">';
+                html += item.startDate + ' → ' + (typeof item.endDate === 'string' ? item.endDate : new Date(item.endDate).toLocaleDateString());
+                html += '</div>';
+                html += '</div>';
+            });
+
+            // Summary
+            var totalDays = calculateTurnaroundDays(sample);
+            if (totalDays === null) {
+                totalDays = Math.ceil((new Date() - new Date(sample.dateAdded)) / (1000 * 60 * 60 * 24));
+            }
+            var avgDaysPerStage = timeline.length > 0 ? (totalDays / timeline.length).toFixed(1) : 0;
+
+            html += '<div style="background: #e7f3ff; border-left: 4px solid #007bff; padding: 15px; margin-top: 20px; border-radius: 4px;">';
+            html += '<div style="font-weight: 600; margin-bottom: 8px; color: #004085;">📈 Summary:</div>';
+            html += '<div style="font-size: 13px; color: #004085; line-height: 1.6;">';
+            html += '• Total Duration: <strong>' + totalDays + ' days</strong><br>';
+            html += '• Stages Completed: <strong>' + timeline.filter(function(t) { return t.completed; }).length + '/' + stages.length + '</strong><br>';
+            html += '• Average per Stage: <strong>' + avgDaysPerStage + ' days</strong><br>';
+            var delayedStages = timeline.filter(function(t) { return t.status === 'delayed'; }).length;
+            if (delayedStages > 0) {
+                html += '• ⚠️ Delayed Stages: <strong>' + delayedStages + '</strong>';
+            }
+            html += '</div>';
+            html += '</div>';
+
+            modalContent.innerHTML = html;
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // Close on background click
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeTimelineModal();
+                }
+            };
+        }
+
+        function closeTimelineModal() {
+            var modal = document.getElementById('timelineModal');
+            if (modal) {
+                document.body.removeChild(modal);
+            }
+        }
+
         function updateQuickStats() {
             var statsPanel = document.getElementById('quickStats');
 
@@ -17587,6 +17760,7 @@ if (sample.qubitDetails) {
                 html += '</div>';
                 html += '<div class="sample-actions">';
                 html += '<button onclick="viewSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">View</button><br>';
+                html += '<button onclick="viewSampleTimeline(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="font-size: 11px; padding: 4px 8px; background: #667eea; color: white; border: none; border-radius: 4px; margin-bottom: 4px;" title="View timeline">📊 Timeline</button><br>';
                 html += '<button onclick="editSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #ffc107; color: #212529; border: none; border-radius: 4px; margin-bottom: 4px; font-weight: 600;">Edit</button><br>';
                 html += '<button onclick="editNotes(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #17a2b8; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Notes</button><br>';
                 html += '<button onclick="changeFlag(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="font-size: 11px; padding: 4px 8px; background: #fd7e14; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Flag</button><br>';
