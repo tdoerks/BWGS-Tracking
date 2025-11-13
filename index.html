@@ -1106,9 +1106,14 @@
 
         <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
 
-    <!-- Quick Stats Panel -->
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white;">
-        <h3 style="margin-top: 0; color: white;">⚡ Quick Stats</h3>
+    <!-- Quick Stats Panel (Sticky) -->
+    <div id="stickyStatsPanel" style="position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0; color: white;">⚡ Quick Stats</h3>
+            <button onclick="toggleStatsCompact()" id="statsToggle" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                Minimize ▲
+            </button>
+        </div>
         <div id="quickStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
             <!-- Stats will be populated by JavaScript -->
         </div>
@@ -1163,7 +1168,12 @@
     </div>
 
     <div class="sample-list">
-        <h3>Samples</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">Samples</h3>
+            <button id="undoButton" onclick="undoLastAction()" style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; opacity: 0.5;" disabled title="Nothing to undo">
+                ↩️ Undo (Ctrl+Z)
+            </button>
+        </div>
 
         <!-- Bulk Operations Bar -->
         <div id="bulkOpsBar" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 8px; margin-bottom: 20px; color: white;">
@@ -1172,8 +1182,10 @@
                     <strong><span id="selectedCount">0</span> samples selected</strong>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="bulkProcessNext()" style="background: #28a745; color: white;">⚡ Process Next Stage</button>
                     <button onclick="bulkDelete()" style="background: #dc3545; color: white;">🗑️ Delete Selected</button>
                     <button onclick="showBulkStatusChange()" style="background: #ffc107; color: #333;">📝 Change Status</button>
+                    <button onclick="bulkExport()" style="background: #17a2b8; color: white;">📥 Export Selected</button>
                     <button onclick="clearSelection()" style="background: #6c757d; color: white;">✖ Clear Selection</button>
                 </div>
             </div>
@@ -1219,6 +1231,14 @@
 
                 <button onclick="toggleCompactView()" id="compactViewBtn" style="padding: 10px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
                     📋 Compact View
+                </button>
+
+                <button onclick="expandAllSamples()" style="padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;" title="Expand all sample details">
+                    ▼ Expand All
+                </button>
+
+                <button onclick="collapseAllSamples()" style="padding: 10px 15px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;" title="Collapse all sample details">
+                    ▶ Collapse All
                 </button>
             </div>
 
@@ -1810,6 +1830,17 @@
             </div>
 
             <button class="btn-cancel" onclick="closeReagentSearchModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Sample History/Audit Trail Modal -->
+    <div id="sampleHistoryModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px; width: 95%; max-height: 90vh; overflow-y: auto;">
+            <span class="close-btn" onclick="closeSampleHistoryModal()">&times;</span>
+            <div id="sampleHistoryContent">
+                <!-- Content will be dynamically inserted -->
+            </div>
+            <button class="btn-cancel" onclick="closeSampleHistoryModal()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
 
@@ -2496,12 +2527,13 @@
         var currentProcessType = '';
         var selectedSamples = [];
         var undoStack = []; // Track last 10 actions for undo
-        var reagentLotHistory = {}; // Store recently used lot numbers by field name
+        var reagentLotHistory = {}; // Store recently used lot numbers by field name with timestamps: {fieldName: [{lot: 'LOT-001', timestamp: 1234567890, dateUsed: '2025-11-13'}]}
         var currentBatchSamples = [];
         var currentBatchType = '';
         var currentDateFilter = 'all'; // Track current date filter
         var lastWellPositions = {}; // Track last well position used per plate type
         var isCompactView = false; // Track compact view state
+        var expandedSamples = {}; // Track which samples are expanded (default: all expanded)
 
         // FOOD TESTING MODULE - Data Structures
         var foodSamples = []; // Food samples (meat/seafood)
@@ -2712,6 +2744,67 @@
             }
 
             renderSamples();
+        }
+
+        // Toggle individual sample expansion
+        function toggleSampleExpansion(sampleId) {
+            // Default is expanded, so if not in object, it's expanded
+            if (expandedSamples[sampleId] === undefined) {
+                expandedSamples[sampleId] = false; // Collapse it
+            } else {
+                expandedSamples[sampleId] = !expandedSamples[sampleId];
+            }
+
+            // Save to localStorage
+            try {
+                localStorage.setItem('expandedSamples', JSON.stringify(expandedSamples));
+            } catch (e) {
+                console.log('Could not save expansion state');
+            }
+
+            // Update just this sample's display
+            var detailsDiv = document.getElementById('sample-details-' + sampleId);
+            var toggleBtn = document.getElementById('toggle-btn-' + sampleId);
+
+            if (detailsDiv && toggleBtn) {
+                var isExpanded = expandedSamples[sampleId] !== false;
+                detailsDiv.style.display = isExpanded ? 'block' : 'none';
+                toggleBtn.textContent = isExpanded ? '▼' : '▶';
+                toggleBtn.title = isExpanded ? 'Collapse' : 'Expand';
+            }
+        }
+
+        // Expand all samples
+        function expandAllSamples() {
+            expandedSamples = {};
+            try {
+                localStorage.setItem('expandedSamples', JSON.stringify(expandedSamples));
+            } catch (e) {}
+            renderSamples();
+        }
+
+        // Collapse all samples
+        function collapseAllSamples() {
+            expandedSamples = {};
+            for (var i = 0; i < samples.length; i++) {
+                expandedSamples[samples[i].id] = false;
+            }
+            try {
+                localStorage.setItem('expandedSamples', JSON.stringify(expandedSamples));
+            } catch (e) {}
+            renderSamples();
+        }
+
+        // Load expansion state from localStorage
+        function loadExpansionState() {
+            try {
+                var saved = localStorage.getItem('expandedSamples');
+                if (saved) {
+                    expandedSamples = JSON.parse(saved);
+                }
+            } catch (e) {
+                expandedSamples = {};
+            }
         }
 
         // Calculate sample progress (how many stages completed)
@@ -5436,14 +5529,27 @@ html += '</div>';
                 reagentLotHistory[lotType] = [];
             }
 
-            // Remove if already exists (to move to front)
-            var index = reagentLotHistory[lotType].indexOf(lotValue);
-            if (index !== -1) {
-                reagentLotHistory[lotType].splice(index, 1);
+            // Remove if already exists (to move to front and update timestamp)
+            var existingIndex = -1;
+            for (var i = 0; i < reagentLotHistory[lotType].length; i++) {
+                var item = reagentLotHistory[lotType][i];
+                var itemLot = typeof item === 'string' ? item : item.lot;
+                if (itemLot === lotValue) {
+                    existingIndex = i;
+                    break;
+                }
+            }
+            if (existingIndex !== -1) {
+                reagentLotHistory[lotType].splice(existingIndex, 1);
             }
 
-            // Add to front
-            reagentLotHistory[lotType].unshift(lotValue);
+            // Add to front with timestamp
+            var now = new Date();
+            reagentLotHistory[lotType].unshift({
+                lot: lotValue,
+                timestamp: now.getTime(),
+                dateUsed: now.toLocaleDateString()
+            });
 
             // Keep only last 20
             if (reagentLotHistory[lotType].length > 20) {
@@ -5451,6 +5557,18 @@ html += '</div>';
             }
 
             saveData();
+        }
+
+        // Calculate days ago from timestamp
+        function getDaysAgo(timestamp) {
+            var now = Date.now();
+            var diffMs = now - timestamp;
+            var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return diffDays + ' days ago';
+            if (diffDays < 30) return Math.floor(diffDays / 7) + ' weeks ago';
+            return Math.floor(diffDays / 30) + ' months ago';
         }
 
         // Show reagent lot autocomplete dropdown
@@ -5466,20 +5584,148 @@ html += '</div>';
             var history = reagentLotHistory[lotType] || [];
 
             // Filter based on input
-            var matches = history.filter(function(lot) {
-                return lot.toLowerCase().indexOf(value) !== -1;
+            var matches = history.filter(function(item) {
+                var lotValue = typeof item === 'string' ? item : item.lot;
+                return lotValue.toLowerCase().indexOf(value) !== -1;
             });
 
             if (matches.length > 0 || (value === '' && history.length > 0)) {
                 var html = '';
                 var displayLots = value === '' ? history : matches;
-                displayLots.slice(0, 10).forEach(function(lot) {
-                    html += '<div onclick="selectReagentLot(\'' + inputId + '\', \'' + lot.replace(/'/g, "\\'") + '\')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-family: monospace;" onmouseover="this.style.background=\'#e7f3ff\'" onmouseout="this.style.background=\'white\'">' + lot + '</div>';
+                displayLots.slice(0, 10).forEach(function(item) {
+                    var lotValue = typeof item === 'string' ? item : item.lot;
+                    var timestamp = typeof item === 'string' ? null : item.timestamp;
+                    var daysAgo = timestamp ? getDaysAgo(timestamp) : null;
+                    var isExpired = timestamp && (Date.now() - timestamp) > (30 * 24 * 60 * 60 * 1000); // 30 days
+
+                    html += '<div style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;" onmouseover="this.style.background=\'#e7f3ff\'" onmouseout="this.style.background=\'white\'">';
+                    html += '<span onclick="selectReagentLot(\'' + inputId + '\', \'' + lotValue.replace(/'/g, "\\'") + '\')" style="flex: 1; font-family: monospace; font-weight: 600;">' + lotValue + '</span>';
+                    if (daysAgo) {
+                        var textColor = isExpired ? '#dc3545' : '#6c757d';
+                        var icon = isExpired ? '⚠️ ' : '';
+                        html += '<span style="font-size: 11px; color: ' + textColor + '; margin-right: 8px;">' + icon + daysAgo + '</span>';
+                    }
+                    html += '<button onclick="event.stopPropagation(); viewLotUsageHistory(\'' + lotValue.replace(/'/g, "\\'") + '\', \'' + lotType + '\')" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;" title="View all samples using this lot">📊</button>';
+                    html += '</div>';
                 });
                 dropdown.innerHTML = html;
                 dropdown.style.display = 'block';
             } else {
                 dropdown.style.display = 'none';
+            }
+        }
+
+        // View lot usage history - show all samples using this lot
+        function viewLotUsageHistory(lotNumber, lotType) {
+            hideReagentLotAutocomplete(''); // Close dropdown
+
+            // Search all samples for this lot number
+            var results = [];
+
+            for (var i = 0; i < samples.length; i++) {
+                var sample = samples[i];
+                var found = false;
+                var usedIn = [];
+
+                // Check BAP
+                if (sample.bapDetails && sample.bapDetails.lotNumber && sample.bapDetails.lotNumber.toLowerCase().indexOf(lotNumber.toLowerCase()) !== -1) {
+                    found = true;
+                    usedIn.push('BAP');
+                }
+                // Check TSB
+                if (sample.tsbDetails && sample.tsbDetails.lotNumber && sample.tsbDetails.lotNumber.toLowerCase().indexOf(lotNumber.toLowerCase()) !== -1) {
+                    found = true;
+                    usedIn.push('TSB');
+                }
+                // Check Extraction reagents
+                if (sample.extractionDetails && sample.extractionDetails.reagentLots) {
+                    for (var key in sample.extractionDetails.reagentLots) {
+                        if (sample.extractionDetails.reagentLots[key] && sample.extractionDetails.reagentLots[key].toLowerCase().indexOf(lotNumber.toLowerCase()) !== -1) {
+                            found = true;
+                            usedIn.push('Extraction (' + key + ')');
+                        }
+                    }
+                }
+                // Check Clean Extraction
+                if (sample.cleanExtractionDetails && sample.cleanExtractionDetails.reagentLots) {
+                    for (var key in sample.cleanExtractionDetails.reagentLots) {
+                        if (sample.cleanExtractionDetails.reagentLots[key] && sample.cleanExtractionDetails.reagentLots[key].toLowerCase().indexOf(lotNumber.toLowerCase()) !== -1) {
+                            found = true;
+                            usedIn.push('Clean Extraction (' + key + ')');
+                        }
+                    }
+                }
+                // Check Qubit
+                if (sample.cleanExtractionQubitDetails && sample.cleanExtractionQubitDetails.reagentLot && sample.cleanExtractionQubitDetails.reagentLot.toLowerCase().indexOf(lotNumber.toLowerCase()) !== -1) {
+                    found = true;
+                    usedIn.push('CE Qubit');
+                }
+                if (sample.qubitDetails && sample.qubitDetails.reagentLot && sample.qubitDetails.reagentLot.toLowerCase().indexOf(lotNumber.toLowerCase()) !== -1) {
+                    found = true;
+                    usedIn.push('Final Qubit');
+                }
+
+                if (found) {
+                    results.push({sample: sample, usedIn: usedIn});
+                }
+            }
+
+            // Create modal
+            var modal = document.createElement('div');
+            modal.id = 'lotUsageModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000; overflow-y: auto;';
+
+            var modalContent = document.createElement('div');
+            modalContent.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 800px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
+
+            var html = '';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">';
+            html += '<h2 style="margin: 0; color: #17a2b8;">📊 Lot Usage History</h2>';
+            html += '<button onclick="closeLotUsageModal()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕ Close</button>';
+            html += '</div>';
+
+            html += '<div style="background: #e7f3f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+            html += '<div style="font-size: 18px; font-weight: 600; color: #17a2b8; margin-bottom: 5px;">Lot Number: ' + lotNumber + '</div>';
+            html += '<div style="font-size: 14px; color: #666;">Type: ' + lotType + '</div>';
+            html += '</div>';
+
+            if (results.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">';
+                html += '<div style="font-size: 48px; margin-bottom: 10px;">🔍</div>';
+                html += '<div style="font-size: 16px;">No samples found using this lot</div>';
+                html += '</div>';
+            } else {
+                html += '<div style="background: #d4edda; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+                html += '<strong style="color: #155724;">✅ Found ' + results.length + ' sample' + (results.length === 1 ? '' : 's') + ' using this lot:</strong>';
+                html += '</div>';
+
+                results.forEach(function(result) {
+                    html += '<div style="background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 15px; margin-bottom: 10px; border-radius: 4px;">';
+                    html += '<div style="font-weight: 600; font-size: 16px; margin-bottom: 8px;">' + result.sample.id + '</div>';
+                    html += '<div style="font-size: 13px; color: #666; margin-bottom: 5px;"><strong>Status:</strong> ' + result.sample.status + '</div>';
+                    html += '<div style="font-size: 13px; color: #666; margin-bottom: 5px;"><strong>Date Added:</strong> ' + result.sample.dateAdded + '</div>';
+                    html += '<div style="font-size: 13px; color: #17a2b8;"><strong>Used In:</strong> ' + result.usedIn.join(', ') + '</div>';
+                    html += '<div style="margin-top: 10px;"><button onclick="closeLotUsageModal(); viewSample(\'' + result.sample.id.replace(/'/g, "\\'") + '\')" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">View Details</button></div>';
+                    html += '</div>';
+                });
+            }
+
+            modalContent.innerHTML = html;
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // Close on background click
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeLotUsageModal();
+                }
+            };
+        }
+
+        function closeLotUsageModal() {
+            var modal = document.getElementById('lotUsageModal');
+            if (modal) {
+                document.body.removeChild(modal);
             }
         }
 
@@ -16558,6 +16804,179 @@ html += '</div>';
             document.getElementById('auditTrailModal').style.display = 'none';
         }
 
+        // View sample timeline - Gantt-chart style visualization
+        function viewSampleTimeline(sampleId) {
+            var sample = null;
+            for (var i = 0; i < samples.length; i++) {
+                if (samples[i].id === sampleId) {
+                    sample = samples[i];
+                    break;
+                }
+            }
+            if (!sample) return;
+
+            // Calculate stage durations and dates
+            var stages = [
+                {name: 'Received', date: sample.dateAdded, key: null},
+                {name: 'BAP', date: sample.bapDetails ? sample.bapDetails.completionDate : null, key: 'bapDetails'},
+                {name: 'TSB', date: sample.tsbDetails ? sample.tsbDetails.completionDate : null, key: 'tsbDetails'},
+                {name: 'Extraction', date: sample.extractionDetails ? sample.extractionDetails.completedDate : null, key: 'extractionDetails'},
+                {name: 'Clean Extraction', date: sample.cleanExtractionDetails ? sample.cleanExtractionDetails.completedDate : null, key: 'cleanExtractionDetails'},
+                {name: 'CE Qubit', date: sample.cleanExtractionQubitDetails ? sample.cleanExtractionQubitDetails.completedDate : null, key: 'cleanExtractionQubitDetails'},
+                {name: 'Indexing', date: sample.indexingDetails ? sample.indexingDetails.completedDate : null, key: 'indexingDetails'},
+                {name: 'Final Qubit', date: sample.qubitDetails ? sample.qubitDetails.completedDate : null, key: 'qubitDetails'}
+            ];
+
+            // Calculate durations between stages
+            var timeline = [];
+            var startDate = new Date(sample.dateAdded);
+            var currentDate = startDate;
+
+            for (var i = 0; i < stages.length; i++) {
+                var stage = stages[i];
+                if (i === 0 || stage.date) {
+                    var endDate = stage.date ? new Date(stage.date) : new Date();
+                    var durationDays = Math.ceil((endDate - currentDate) / (1000 * 60 * 60 * 24));
+                    if (durationDays < 0) durationDays = 0;
+
+                    var status = 'completed';
+                    var color = '#28a745';
+                    if (!stage.date && i > 0) {
+                        status = 'in-progress';
+                        color = '#ffc107';
+                        durationDays = Math.ceil((new Date() - currentDate) / (1000 * 60 * 60 * 24));
+                    }
+
+                    // Warn if stage took too long
+                    if (durationDays > 3 && status === 'completed') {
+                        color = '#fd7e14'; // Orange for slow
+                    }
+                    if (durationDays > 7) {
+                        color = '#dc3545'; // Red for very slow
+                        status = 'delayed';
+                    }
+
+                    timeline.push({
+                        name: stage.name,
+                        durationDays: durationDays,
+                        startDate: currentDate.toLocaleDateString(),
+                        endDate: stage.date || 'In Progress',
+                        status: status,
+                        color: color,
+                        completed: !!stage.date
+                    });
+
+                    if (stage.date) {
+                        currentDate = endDate;
+                    }
+                } else {
+                    break; // Stop at first incomplete stage
+                }
+            }
+
+            // Create modal
+            var modal = document.createElement('div');
+            modal.id = 'timelineModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000; overflow-y: auto;';
+
+            var modalContent = document.createElement('div');
+            modalContent.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 900px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
+
+            var html = '';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">';
+            html += '<h2 style="margin: 0; color: #667eea;">📊 Sample Timeline</h2>';
+            html += '<button onclick="closeTimelineModal()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕ Close</button>';
+            html += '</div>';
+
+            html += '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">';
+            html += '<div style="font-size: 24px; font-weight: 600; margin-bottom: 5px;">' + sample.id + '</div>';
+            html += '<div style="font-size: 14px; opacity: 0.9;">Current Status: ' + sample.status + '</div>';
+            html += '<div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Total Time: ' + calculateTurnaroundDays(sample) + ' days</div>';
+            html += '</div>';
+
+            // Legend
+            html += '<div style="display: flex; gap: 15px; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap;">';
+            html += '<div style="display: flex; align-items: center; gap: 5px;"><div style="width: 20px; height: 20px; background: #28a745; border-radius: 4px;"></div><span style="font-size: 12px;">Completed (≤3 days)</span></div>';
+            html += '<div style="display: flex; align-items: center; gap: 5px;"><div style="width: 20px; height: 20px; background: #fd7e14; border-radius: 4px;"></div><span style="font-size: 12px;">Slow (3-7 days)</span></div>';
+            html += '<div style="display: flex; align-items: center; gap: 5px;"><div style="width: 20px; height: 20px; background: #dc3545; border-radius: 4px;"></div><span style="font-size: 12px;">Delayed (>7 days)</span></div>';
+            html += '<div style="display: flex; align-items: center; gap: 5px;"><div style="width: 20px; height: 20px; background: #ffc107; border-radius: 4px;"></div><span style="font-size: 12px;">In Progress</span></div>';
+            html += '</div>';
+
+            // Gantt chart
+            html += '<div style="font-weight: 600; margin-bottom: 15px; color: #495057;">📅 Stage Duration Timeline:</div>';
+
+            var maxDays = Math.max.apply(null, timeline.map(function(t) { return t.durationDays; }));
+            if (maxDays === 0) maxDays = 1;
+
+            timeline.forEach(function(item) {
+                var barWidth = (item.durationDays / maxDays) * 100;
+                if (barWidth < 5) barWidth = 5; // Minimum width for visibility
+
+                html += '<div style="margin-bottom: 20px;">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
+                html += '<span style="font-weight: 600; font-size: 14px; color: #495057;">' + item.name + '</span>';
+                html += '<span style="font-size: 12px; color: #6c757d;">' + item.durationDays + ' day' + (item.durationDays === 1 ? '' : 's') + '</span>';
+                html += '</div>';
+
+                html += '<div style="background: #e9ecef; border-radius: 8px; height: 36px; position: relative; overflow: hidden;">';
+                html += '<div style="background: linear-gradient(90deg, ' + item.color + ' 0%, ' + item.color + 'dd 100%); height: 100%; width: ' + barWidth + '%; display: flex; align-items: center; padding: 0 12px; color: white; font-weight: 600; font-size: 13px; transition: width 0.5s; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+
+                if (item.status === 'in-progress') {
+                    html += '⏳ In Progress';
+                } else if (item.status === 'delayed') {
+                    html += '⚠️ Delayed';
+                } else {
+                    html += '✓ Done';
+                }
+
+                html += '</div>';
+                html += '</div>';
+
+                html += '<div style="font-size: 11px; color: #6c757d; margin-top: 3px;">';
+                html += item.startDate + ' → ' + (typeof item.endDate === 'string' ? item.endDate : new Date(item.endDate).toLocaleDateString());
+                html += '</div>';
+                html += '</div>';
+            });
+
+            // Summary
+            var totalDays = calculateTurnaroundDays(sample);
+            if (totalDays === null) {
+                totalDays = Math.ceil((new Date() - new Date(sample.dateAdded)) / (1000 * 60 * 60 * 24));
+            }
+            var avgDaysPerStage = timeline.length > 0 ? (totalDays / timeline.length).toFixed(1) : 0;
+
+            html += '<div style="background: #e7f3ff; border-left: 4px solid #007bff; padding: 15px; margin-top: 20px; border-radius: 4px;">';
+            html += '<div style="font-weight: 600; margin-bottom: 8px; color: #004085;">📈 Summary:</div>';
+            html += '<div style="font-size: 13px; color: #004085; line-height: 1.6;">';
+            html += '• Total Duration: <strong>' + totalDays + ' days</strong><br>';
+            html += '• Stages Completed: <strong>' + timeline.filter(function(t) { return t.completed; }).length + '/' + stages.length + '</strong><br>';
+            html += '• Average per Stage: <strong>' + avgDaysPerStage + ' days</strong><br>';
+            var delayedStages = timeline.filter(function(t) { return t.status === 'delayed'; }).length;
+            if (delayedStages > 0) {
+                html += '• ⚠️ Delayed Stages: <strong>' + delayedStages + '</strong>';
+            }
+            html += '</div>';
+            html += '</div>';
+
+            modalContent.innerHTML = html;
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // Close on background click
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeTimelineModal();
+                }
+            };
+        }
+
+        function closeTimelineModal() {
+            var modal = document.getElementById('timelineModal');
+            if (modal) {
+                document.body.removeChild(modal);
+            }
+        }
+
         function updateQuickStats() {
             var statsPanel = document.getElementById('quickStats');
 
@@ -17221,6 +17640,11 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                     html += '<input type="checkbox" class="sample-checkbox-batch" value="' + sample.id + '" onchange="updateSelection()"> ';
                 }
                 
+                // Add expand/collapse toggle button
+                var isExpanded = expandedSamples[sample.id] !== false; // Default is expanded
+                var toggleIcon = isExpanded ? '▼' : '▶';
+                html += '<button id="toggle-btn-' + sample.id + '" onclick="toggleSampleExpansion(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: none; border: none; cursor: pointer; font-size: 14px; color: #6c757d; padding: 0 8px 0 0; vertical-align: middle;" title="' + (isExpanded ? 'Collapse' : 'Expand') + '">' + toggleIcon + '</button>';
+
                 html += '<strong>' + sample.id + '</strong> ';
                 html += '<span class="status status-' + sample.status.toLowerCase().replace(/ /g, '-') + '">' + sample.status + '</span>';
 
@@ -17242,6 +17666,10 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
 
                 // Add progress bar
                 html += getProgressBarHTML(sample);
+
+                // Start collapsible details section
+                var displayStyle = isExpanded ? 'block' : 'none';
+                html += '<div id="sample-details-' + sample.id + '" style="display: ' + displayStyle + '; transition: all 0.3s ease;">';
 
                 // In compact view, skip all the detailed info
                 if (!isCompactView) {
@@ -17327,9 +17755,12 @@ if (sample.qubitDetails) {
                 }
                 } // End of !isCompactView
 
+                html += '</div>'; // Close collapsible details div
+
                 html += '</div>';
                 html += '<div class="sample-actions">';
                 html += '<button onclick="viewSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">View</button><br>';
+                html += '<button onclick="viewSampleTimeline(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="font-size: 11px; padding: 4px 8px; background: #667eea; color: white; border: none; border-radius: 4px; margin-bottom: 4px;" title="View timeline">📊 Timeline</button><br>';
                 html += '<button onclick="editSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #ffc107; color: #212529; border: none; border-radius: 4px; margin-bottom: 4px; font-weight: 600;">Edit</button><br>';
                 html += '<button onclick="editNotes(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #17a2b8; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Notes</button><br>';
                 html += '<button onclick="changeFlag(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="font-size: 11px; padding: 4px 8px; background: #fd7e14; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">Flag</button><br>';
@@ -17385,9 +17816,10 @@ if (sample.qubitDetails) {
                 document.getElementById('appContent').style.display = 'block';
                 sessionStorage.setItem('bwgsAuthenticated', 'true');
                 loadData();
+                loadExpansionState(); // Load saved expansion state
                 renderSamples();
                 switchModule(currentModule);
-            } else {
+            } else{
                 document.getElementById('passwordError').style.display = 'block';
                 document.getElementById('passwordInput').value = '';
             }
@@ -17614,6 +18046,347 @@ if (sample.qubitDetails) {
         console.log('Keyboard shortcuts: Ctrl+F (search), Ctrl+E (export), Ctrl+N (new sample), Esc (close), 1-5 (filters)');
         console.log('✅ Barcode scanner support enabled - scan barcodes directly into Sample ID field');
         console.log('🎨 Sidebar navigation enabled - toggle with hamburger menu');
+
+        // ========================================
+        // REAGENT LOT AUTOCOMPLETE SYSTEM
+        // ========================================
+
+        // Store and retrieve recent lot numbers
+        function getRecentLots(fieldName) {
+            var key = 'recentLots_' + fieldName;
+            var stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function addRecentLot(fieldName, lotNumber) {
+            if (!lotNumber || lotNumber.trim() === '') return;
+
+            var lots = getRecentLots(fieldName);
+
+            // Remove if already exists (we'll add to front)
+            lots = lots.filter(function(lot) { return lot !== lotNumber; });
+
+            // Add to front
+            lots.unshift(lotNumber);
+
+            // Keep only last 20
+            if (lots.length > 20) {
+                lots = lots.slice(0, 20);
+            }
+
+            var key = 'recentLots_' + fieldName;
+            localStorage.setItem(key, JSON.stringify(lots));
+        }
+
+        // Create datalist for autocomplete
+        function createLotDatalist(fieldName) {
+            var datalistId = 'lotList_' + fieldName;
+
+            // Remove existing datalist if it exists
+            var existing = document.getElementById(datalistId);
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create new datalist
+            var datalist = document.createElement('datalist');
+            datalist.id = datalistId;
+
+            var lots = getRecentLots(fieldName);
+            lots.forEach(function(lot) {
+                var option = document.createElement('option');
+                option.value = lot;
+                datalist.appendChild(option);
+            });
+
+            document.body.appendChild(datalist);
+            return datalistId;
+        }
+
+        // Attach autocomplete to lot number inputs
+        function setupLotAutocomplete(inputId, fieldName) {
+            var input = document.getElementById(inputId);
+            if (!input) return;
+
+            var datalistId = createLotDatalist(fieldName);
+            input.setAttribute('list', datalistId);
+
+            // Update recent lots when input changes
+            input.addEventListener('blur', function() {
+                if (this.value && this.value.trim() !== '') {
+                    addRecentLot(fieldName, this.value.trim());
+                }
+            });
+        }
+
+        // Initialize autocomplete for all lot number fields
+        function initializeLotAutocomplete() {
+            // Batch modal lot fields
+            setupLotAutocomplete('batchLotNumber', 'batch_lot');
+
+            // Individual modal lot fields (these are dynamically created, so we'll hook into the modal opening)
+            // We'll set up a MutationObserver or hook into modal functions
+        }
+
+        // Hook into modal opening to setup autocomplete for dynamic fields
+        var originalStartBatch = window.startBatchProcess;
+        window.startBatchProcess = function() {
+            originalStartBatch.apply(this, arguments);
+            // After modal opens, setup autocomplete
+            setTimeout(function() {
+                setupLotAutocomplete('batchLotNumber', 'batch_lot');
+            }, 100);
+        };
+
+        // Initialize on page load
+        initializeLotAutocomplete();
+        console.log('✨ Reagent lot autocomplete enabled - recently used lots will appear as suggestions');
+
+        // ========================================
+        // ENHANCED BULK ACTIONS
+        // ========================================
+
+        // Bulk process to next stage
+        function bulkProcessNext() {
+            if (bulkSelectedSamples.length === 0) {
+                alert('Please select samples first');
+                return;
+            }
+
+            // Group samples by their current status
+            var statusGroups = {};
+            var selectedSampleObjects = samples.filter(function(s) {
+                return bulkSelectedSamples.indexOf(s.id) !== -1;
+            });
+
+            selectedSampleObjects.forEach(function(s) {
+                if (!statusGroups[s.status]) {
+                    statusGroups[s.status] = [];
+                }
+                statusGroups[s.status].push(s);
+            });
+
+            // Check if all samples are at the same stage
+            var statuses = Object.keys(statusGroups);
+            if (statuses.length > 1) {
+                alert('Selected samples are at different stages!\n\nTo process together, samples must be at the same workflow stage.\n\nCurrent stages:\n' +
+                    statuses.map(function(s) { return '• ' + s + ' (' + statusGroups[s].length + ' samples)'; }).join('\n'));
+                return;
+            }
+
+            var currentStatus = statuses[0];
+            var nextAction = getNextAction(currentStatus);
+
+            if (!nextAction) {
+                alert('Selected samples are already complete!');
+                return;
+            }
+
+            // Confirm and launch batch modal
+            if (confirm('Process ' + bulkSelectedSamples.length + ' samples from "' + currentStatus + '" to "' + nextAction.nextStage + '"?')) {
+                // Set up batch processing
+                selectedSamplesForBatch = bulkSelectedSamples.slice(); // Copy array
+                startBatchProcess();
+            }
+        }
+
+        // Helper: Determine next action for a status
+        function getNextAction(status) {
+            var actions = {
+                'Received': {nextStage: 'BAP Complete', action: 'BAP'},
+                'BAP Complete': {nextStage: 'TSB Complete', action: 'TSB'},
+                'TSB Complete': {nextStage: 'Extraction Complete', action: 'Extraction'},
+                'Extraction Complete': {nextStage: 'Clean Extraction Complete', action: 'Clean Extraction'},
+                'Clean Extraction Complete': {nextStage: 'Clean Extraction Qubit Complete', action: 'CE Qubit'},
+                'Clean Extraction Qubit Complete': {nextStage: 'Indexing Complete', action: 'Indexing'},
+                'Indexing Complete': {nextStage: 'Qubit Complete', action: 'Qubit'}
+            };
+            return actions[status] || null;
+        }
+
+        // Bulk export selected samples only
+        function bulkExport() {
+            if (bulkSelectedSamples.length === 0) {
+                alert('Please select samples first');
+                return;
+            }
+
+            var selectedSampleObjects = samples.filter(function(s) {
+                return bulkSelectedSamples.indexOf(s.id) !== -1;
+            });
+
+            // Export as CSV
+            var csv = 'Sample ID,Status,Date Added,Initials,BAP Number,TSB Number,Extraction Number,Indexing Number\n';
+
+            selectedSampleObjects.forEach(function(sample) {
+                csv += sample.id + ',';
+                csv += sample.status + ',';
+                csv += sample.dateAdded + ',';
+                csv += sample.initials + ',';
+                csv += (sample.bapNumber || '') + ',';
+                csv += (sample.tsbNumber || '') + ',';
+                csv += (sample.extractionNumber || '') + ',';
+                csv += (sample.indexingNumber || '') + '\n';
+            });
+
+            var blob = new Blob([csv], {type: 'text/csv'});
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'selected_samples_' + new Date().toISOString().slice(0,10) + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            alert('Exported ' + bulkSelectedSamples.length + ' samples to CSV!');
+        }
+
+        console.log('✨ Enhanced bulk actions enabled - process multiple samples at once from any view!');
+
+        // ========================================
+        // UNDO SYSTEM
+        // ========================================
+
+        var undoStack = [];
+        var maxUndoSteps = 10;
+
+        // Save current state before making changes
+        function saveUndoState(action, data) {
+            var state = {
+                action: action,
+                data: data,
+                timestamp: new Date().toISOString(),
+                samplesBefore: JSON.parse(JSON.stringify(samples)) // Deep copy
+            };
+
+            undoStack.push(state);
+
+            // Keep only last N steps
+            if (undoStack.length > maxUndoSteps) {
+                undoStack.shift();
+            }
+
+            updateUndoButton();
+        }
+
+        // Undo last action
+        function undoLastAction() {
+            if (undoStack.length === 0) {
+                alert('Nothing to undo!');
+                return;
+            }
+
+            var lastState = undoStack.pop();
+
+            // Restore samples to previous state
+            samples = lastState.samplesBefore;
+            saveData();
+            renderSamples();
+            updateUndoButton();
+
+            // Show what was undone
+            var message = 'Undone: ' + lastState.action;
+            if (lastState.data && lastState.data.sampleId) {
+                message += ' (Sample: ' + lastState.data.sampleId + ')';
+            }
+
+            // Show toast notification
+            showToast(message, 'success');
+        }
+
+        // Update undo button state
+        function updateUndoButton() {
+            var btn = document.getElementById('undoButton');
+            if (btn) {
+                if (undoStack.length > 0) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                    btn.title = 'Undo: ' + undoStack[undoStack.length - 1].action;
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                    btn.title = 'Nothing to undo';
+                }
+            }
+        }
+
+        // Toast notification helper
+        function showToast(message, type) {
+            var toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: ' +
+                (type === 'success' ? '#28a745' : '#dc3545') +
+                '; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000; font-weight: 600; animation: slideIn 0.3s ease;';
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(function() {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Wrap existing delete function
+        var originalDeleteSample = window.deleteSample;
+        if (originalDeleteSample) {
+            window.deleteSample = function(sampleId) {
+                saveUndoState('Delete sample', {sampleId: sampleId});
+                return originalDeleteSample(sampleId);
+            };
+        }
+
+        // Keyboard shortcut: Ctrl+Z for undo
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undoLastAction();
+            }
+        });
+
+        console.log('✨ Undo system enabled - press Ctrl+Z or click Undo button to revert changes!');
+
+        // ========================================
+        // STICKY STATS HEADER WITH TOGGLE
+        // ========================================
+
+        var statsCompact = false;
+
+        function toggleStatsCompact() {
+            var panel = document.getElementById('stickyStatsPanel');
+            var quickStats = document.getElementById('quickStats');
+            var toggleBtn = document.getElementById('statsToggle');
+
+            statsCompact = !statsCompact;
+
+            if (statsCompact) {
+                // Minimize - show only key numbers in one row
+                quickStats.style.display = 'none';
+                toggleBtn.textContent = 'Expand ▼';
+                panel.style.padding = '12px 20px';
+            } else {
+                // Expand - show full grid
+                quickStats.style.display = 'grid';
+                toggleBtn.textContent = 'Minimize ▲';
+                panel.style.padding = '20px';
+            }
+
+            // Save preference
+            localStorage.setItem('statsCompactMode', statsCompact);
+        }
+
+        // Restore compact mode preference on load
+        var savedCompactMode = localStorage.getItem('statsCompactMode');
+        if (savedCompactMode === 'true') {
+            toggleStatsCompact();
+        }
+
+        console.log('✨ Sticky stats header enabled - stats stay visible when scrolling!');
     </script>
 
         </div> <!-- Close sequencingUI div -->
