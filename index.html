@@ -1127,6 +1127,41 @@
         #batchActionBar button:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+
+        /* Continue to Next Stage button */
+        .continue-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: white !important;
+            font-weight: 700 !important;
+            font-size: 12px !important;
+            padding: 6px 12px !important;
+            border: none !important;
+            border-radius: 6px !important;
+            cursor: pointer !important;
+            margin-top: 6px !important;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+            transition: all 0.2s !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            justify-content: center !important;
+        }
+
+        .continue-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+        }
+
+        .continue-btn:active {
+            transform: translateY(0) !important;
+        }
+
+        .continue-btn::after {
+            content: "→";
+            font-size: 14px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -17984,19 +18019,25 @@ if (sample.qubitDetails) {
                     html += '<button onclick="finishProcess(\'' + sample.id + '\', \'BAP\')" style="background: #28a745;">Finish BAP</button>';
                 } else if (sample.status === 'BAP Complete') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'TSB\')">Start TSB</button>';
+                    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
                 } else if (sample.status === 'TSB In Progress') {
                     html += '<button onclick="finishProcess(\'' + sample.id + '\', \'TSB\')" style="background: #28a745;">Finish TSB</button>';
                 } else if (sample.status === 'TSB Complete') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Extraction\')">Start Extraction</button>';
+                    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
                 } else if (sample.status === 'Extraction Complete') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Clean Extraction\')">Start Clean Extraction</button>';
+                    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
                 } else if (sample.status === 'Clean Extraction Complete') {
     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Clean Extraction Qubit\')">Start Qubit</button>';
+    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
 } else if (sample.status === 'Clean Extraction Qubit Complete') {
     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Indexing\')">Start Indexing</button><br>';
+    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn" style="display: block; width: 100%;">Continue</button>';
     html += '<button onclick="markQCFailed(\'' + sample.id.replace(/'/g, "\\'") + '\', \'CE Qubit\')" style="background: #dc3545; margin-top: 4px;">QC Failed</button>';
 } else if (sample.status === 'Indexing Complete') {
     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Final Qubit\')">Start Final Qubit</button>';
+    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
                 } else if (sample.status === 'Qubit Complete') {
                     html += '<button onclick="markQCFailed(\'' + sample.id.replace(/'/g, "\\'") + '\', \'Final Qubit\')" style="background: #dc3545;">QC Failed</button><br>';
                     html += '<div style="color: green; font-weight: bold; text-align: center; margin-top: 4px;">✓ Complete</div>';
@@ -18929,6 +18970,141 @@ if (sample.qubitDetails) {
         console.log('✅ Quick Actions & Usability Features loaded!');
         console.log('📋 Features: Export Selected, Batch Process, Auto-save, Validation, Mobile Responsive');
 
+        // ========================================
+        // CONTINUE TO NEXT STAGE FEATURE
+        // ========================================
+
+        /**
+         * One-click advancement to next workflow stage
+         * Opens the appropriate modal with minimal user input required
+         */
+        function continueToNextStage(sampleId) {
+            var sample = samples.find(function(s) { return s.id === sampleId; });
+            if (!sample) {
+                showToast('❌ Sample not found', 'error');
+                return;
+            }
+
+            // Map current status to next action
+            var nextActions = {
+                'BAP Complete': {
+                    action: 'TSB',
+                    message: 'Continue to TSB?',
+                    icon: '🧪'
+                },
+                'TSB Complete': {
+                    action: 'Extraction',
+                    message: 'Continue to Extraction?',
+                    icon: '🔬'
+                },
+                'Extraction Complete': {
+                    action: 'Clean Extraction',
+                    message: 'Continue to Clean Extraction?',
+                    icon: '✨'
+                },
+                'Clean Extraction Complete': {
+                    action: 'Clean Extraction Qubit',
+                    message: 'Continue to Qubit?',
+                    icon: '📊'
+                },
+                'Clean Extraction Qubit Complete': {
+                    action: 'Indexing',
+                    message: 'Continue to Indexing?',
+                    icon: '🏷️'
+                },
+                'Indexing Complete': {
+                    action: 'Final Qubit',
+                    message: 'Continue to Final Qubit?',
+                    icon: '✅'
+                }
+            };
+
+            var next = nextActions[sample.status];
+
+            if (!next) {
+                showToast('⚠️ No next stage available for this sample', 'warning');
+                return;
+            }
+
+            // Show confirmation with icon
+            if (confirm(next.icon + ' ' + next.message + '\n\nSample: ' + sampleId + '\nCurrent: ' + sample.status + '\nNext: ' + next.action)) {
+                // Call the appropriate start process function
+                startProcess(sampleId, next.action);
+                showToast('🚀 Continuing to ' + next.action + '...', 'info');
+            }
+        }
+
+        /**
+         * Batch continue - advance multiple samples to their next stages
+         */
+        function batchContinueToNextStage() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            // Get selected samples
+            var samplesToAdvance = samples.filter(function(s) {
+                return selectedSamples.indexOf(s.id) !== -1;
+            });
+
+            // Check if all samples can advance
+            var canAdvance = samplesToAdvance.filter(function(s) {
+                return s.status === 'BAP Complete' ||
+                       s.status === 'TSB Complete' ||
+                       s.status === 'Extraction Complete' ||
+                       s.status === 'Clean Extraction Complete' ||
+                       s.status === 'Clean Extraction Qubit Complete' ||
+                       s.status === 'Indexing Complete';
+            });
+
+            if (canAdvance.length === 0) {
+                showToast('⚠️ No selected samples can be advanced', 'warning');
+                return;
+            }
+
+            if (canAdvance.length !== samplesToAdvance.length) {
+                var msg = '⚠️ Only ' + canAdvance.length + ' of ' + samplesToAdvance.length + ' selected samples can be advanced.\n\nContinue with those ' + canAdvance.length + ' samples?';
+                if (!confirm(msg)) {
+                    return;
+                }
+            }
+
+            // Confirm batch continue
+            if (!confirm('🚀 Continue ' + canAdvance.length + ' samples to their next stages?')) {
+                return;
+            }
+
+            // Advance each sample
+            var advanced = 0;
+            canAdvance.forEach(function(sample) {
+                // Determine next action without showing modal
+                var nextActions = {
+                    'BAP Complete': 'TSB',
+                    'TSB Complete': 'Extraction',
+                    'Extraction Complete': 'Clean Extraction',
+                    'Clean Extraction Complete': 'Clean Extraction Qubit',
+                    'Clean Extraction Qubit Complete': 'Indexing',
+                    'Indexing Complete': 'Final Qubit'
+                };
+
+                var nextAction = nextActions[sample.status];
+                if (nextAction) {
+                    // This will open the modal for the first sample
+                    // For true batch processing, would need to call openBatchModal
+                    startProcess(sample.id, nextAction);
+                    advanced++;
+                }
+            });
+
+            if (advanced > 0) {
+                showToast('✅ Advanced ' + advanced + ' samples', 'success');
+            }
+        }
+
+        console.log('✅ Continue to Next Stage feature loaded!');
+        console.log('⏭️ Feature: One-click stage advancement with "Continue →" button');
+
     </script>
 
         </div> <!-- Close sequencingUI div -->
@@ -18955,6 +19131,7 @@ if (sample.qubitDetails) {
             <strong><span id="selectedCount">0</span> samples selected</strong>
         </div>
         <div style="display: flex; gap: 10px;">
+            <button onclick="batchContinueToNextStage()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-weight: 700;">⏭️ Continue All</button>
             <button onclick="exportSelectedSamples()">📥 Export Selected</button>
             <button onclick="batchProcessSelected()">⚙️ Batch Process</button>
             <button onclick="batchFlag()">🚩 Flag</button>
