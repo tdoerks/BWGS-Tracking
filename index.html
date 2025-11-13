@@ -1232,6 +1232,14 @@
                 <button onclick="toggleCompactView()" id="compactViewBtn" style="padding: 10px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
                     📋 Compact View
                 </button>
+
+                <button onclick="expandAllSamples()" style="padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;" title="Expand all sample details">
+                    ▼ Expand All
+                </button>
+
+                <button onclick="collapseAllSamples()" style="padding: 10px 15px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;" title="Collapse all sample details">
+                    ▶ Collapse All
+                </button>
             </div>
 
             <!-- View Mode Toggle -->
@@ -2525,6 +2533,7 @@
         var currentDateFilter = 'all'; // Track current date filter
         var lastWellPositions = {}; // Track last well position used per plate type
         var isCompactView = false; // Track compact view state
+        var expandedSamples = {}; // Track which samples are expanded (default: all expanded)
 
         // FOOD TESTING MODULE - Data Structures
         var foodSamples = []; // Food samples (meat/seafood)
@@ -2735,6 +2744,67 @@
             }
 
             renderSamples();
+        }
+
+        // Toggle individual sample expansion
+        function toggleSampleExpansion(sampleId) {
+            // Default is expanded, so if not in object, it's expanded
+            if (expandedSamples[sampleId] === undefined) {
+                expandedSamples[sampleId] = false; // Collapse it
+            } else {
+                expandedSamples[sampleId] = !expandedSamples[sampleId];
+            }
+
+            // Save to localStorage
+            try {
+                localStorage.setItem('expandedSamples', JSON.stringify(expandedSamples));
+            } catch (e) {
+                console.log('Could not save expansion state');
+            }
+
+            // Update just this sample's display
+            var detailsDiv = document.getElementById('sample-details-' + sampleId);
+            var toggleBtn = document.getElementById('toggle-btn-' + sampleId);
+
+            if (detailsDiv && toggleBtn) {
+                var isExpanded = expandedSamples[sampleId] !== false;
+                detailsDiv.style.display = isExpanded ? 'block' : 'none';
+                toggleBtn.textContent = isExpanded ? '▼' : '▶';
+                toggleBtn.title = isExpanded ? 'Collapse' : 'Expand';
+            }
+        }
+
+        // Expand all samples
+        function expandAllSamples() {
+            expandedSamples = {};
+            try {
+                localStorage.setItem('expandedSamples', JSON.stringify(expandedSamples));
+            } catch (e) {}
+            renderSamples();
+        }
+
+        // Collapse all samples
+        function collapseAllSamples() {
+            expandedSamples = {};
+            for (var i = 0; i < samples.length; i++) {
+                expandedSamples[samples[i].id] = false;
+            }
+            try {
+                localStorage.setItem('expandedSamples', JSON.stringify(expandedSamples));
+            } catch (e) {}
+            renderSamples();
+        }
+
+        // Load expansion state from localStorage
+        function loadExpansionState() {
+            try {
+                var saved = localStorage.getItem('expandedSamples');
+                if (saved) {
+                    expandedSamples = JSON.parse(saved);
+                }
+            } catch (e) {
+                expandedSamples = {};
+            }
         }
 
         // Calculate sample progress (how many stages completed)
@@ -17244,6 +17314,11 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
                     html += '<input type="checkbox" class="sample-checkbox-batch" value="' + sample.id + '" onchange="updateSelection()"> ';
                 }
                 
+                // Add expand/collapse toggle button
+                var isExpanded = expandedSamples[sample.id] !== false; // Default is expanded
+                var toggleIcon = isExpanded ? '▼' : '▶';
+                html += '<button id="toggle-btn-' + sample.id + '" onclick="toggleSampleExpansion(\'' + sample.id.replace(/'/g, "\\'") + '\')" style="background: none; border: none; cursor: pointer; font-size: 14px; color: #6c757d; padding: 0 8px 0 0; vertical-align: middle;" title="' + (isExpanded ? 'Collapse' : 'Expand') + '">' + toggleIcon + '</button>';
+
                 html += '<strong>' + sample.id + '</strong> ';
                 html += '<span class="status status-' + sample.status.toLowerCase().replace(/ /g, '-') + '">' + sample.status + '</span>';
 
@@ -17265,6 +17340,10 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
 
                 // Add progress bar
                 html += getProgressBarHTML(sample);
+
+                // Start collapsible details section
+                var displayStyle = isExpanded ? 'block' : 'none';
+                html += '<div id="sample-details-' + sample.id + '" style="display: ' + displayStyle + '; transition: all 0.3s ease;">';
 
                 // In compact view, skip all the detailed info
                 if (!isCompactView) {
@@ -17350,6 +17429,8 @@ if (sample.qubitDetails) {
                 }
                 } // End of !isCompactView
 
+                html += '</div>'; // Close collapsible details div
+
                 html += '</div>';
                 html += '<div class="sample-actions">';
                 html += '<button onclick="viewSample(\'' + sample.id + '\')" style="font-size: 11px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; margin-bottom: 4px;">View</button><br>';
@@ -17408,9 +17489,10 @@ if (sample.qubitDetails) {
                 document.getElementById('appContent').style.display = 'block';
                 sessionStorage.setItem('bwgsAuthenticated', 'true');
                 loadData();
+                loadExpansionState(); // Load saved expansion state
                 renderSamples();
                 switchModule(currentModule);
-            } else {
+            } else{
                 document.getElementById('passwordError').style.display = 'block';
                 document.getElementById('passwordInput').value = '';
             }
