@@ -917,6 +917,216 @@
         .kanban-card.dragging {
             opacity: 0.4;
         }
+
+        /* Quick Actions Floating Toolbar */
+        #quickActionsToolbar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            z-index: 900;
+            transition: all 0.3s;
+        }
+
+        #quickActionsToolbar.collapsed {
+            padding: 12px 15px;
+        }
+
+        #quickActionsToolbar button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        #quickActionsToolbar button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #quickActionsToolbar button:active {
+            transform: translateY(0);
+        }
+
+        #quickActionsToolbar .toggle-btn {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 50%;
+            min-width: auto;
+        }
+
+        /* Auto-save indicator */
+        #autoSaveIndicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s;
+        }
+
+        #autoSaveIndicator.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        #autoSaveIndicator.saving {
+            background: #ffc107;
+        }
+
+        #autoSaveIndicator.error {
+            background: #dc3545;
+        }
+
+        /* Validation warning */
+        .validation-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .validation-warning::before {
+            content: "⚠️";
+            font-size: 20px;
+        }
+
+        /* Mobile responsiveness improvements */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            #quickActionsToolbar {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px;
+                flex-direction: column;
+                border-radius: 20px;
+            }
+
+            #quickActionsToolbar button {
+                width: 100%;
+                padding: 10px;
+            }
+
+            .sample {
+                font-size: 13px;
+            }
+
+            .sample-actions button {
+                font-size: 11px !important;
+                padding: 6px 10px !important;
+            }
+
+            .kanban-container {
+                flex-direction: column;
+            }
+
+            .kanban-column {
+                width: 100% !important;
+                min-width: auto !important;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .stats-panel {
+                flex-direction: column;
+            }
+
+            .stat-card {
+                width: 100%;
+            }
+        }
+
+        /* Enhanced sample selection */
+        .sample.selected {
+            box-shadow: 0 0 0 3px #667eea;
+            border-left-color: #667eea !important;
+        }
+
+        .sample input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Batch action bar */
+        #batchActionBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.2);
+            z-index: 950;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        #batchActionBar.show {
+            transform: translateY(0);
+        }
+
+        #batchActionBar button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        #batchActionBar button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -17633,7 +17843,7 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
 
                 // Always show checkbox for bulk operations
                 var isChecked = bulkSelectedSamples.indexOf(sample.id) !== -1 ? ' checked' : '';
-                html += '<input type="checkbox" class="sample-checkbox" value="' + sample.id + '" onchange="toggleSampleSelection(\'' + sample.id.replace(/'/g, "\\'") + '\', this)"' + isChecked + '> ';
+                html += '<input type="checkbox" class="sample-checkbox" data-sample-id="' + sample.id + '" value="' + sample.id + '" onchange="toggleSampleSelection(\'' + sample.id.replace(/'/g, "\\'") + '\', this); updateSelection();"' + isChecked + '> ';
 
                 if (showCheckbox) {
                     // Batch processing checkbox (keep for compatibility)
@@ -18387,10 +18597,371 @@ if (sample.qubitDetails) {
         }
 
         console.log('✨ Sticky stats header enabled - stats stay visible when scrolling!');
+
+        // ========================================
+        // QUICK ACTIONS & USABILITY FEATURES
+        // ========================================
+
+        // Track selected samples for batch operations
+        var selectedSamples = [];
+        var quickActionsCollapsed = false;
+
+        // Show quick actions toolbar when authenticated
+        if (sessionStorage.getItem('bwgsAuthenticated') === 'true') {
+            document.getElementById('quickActionsToolbar').style.display = 'flex';
+        }
+
+        // Toggle quick actions toolbar
+        function toggleQuickActions() {
+            quickActionsCollapsed = !quickActionsCollapsed;
+            var toolbar = document.getElementById('quickActionsToolbar');
+            var content = document.getElementById('quickActionsContent');
+
+            if (quickActionsCollapsed) {
+                toolbar.classList.add('collapsed');
+                content.style.display = 'none';
+            } else {
+                toolbar.classList.remove('collapsed');
+                content.style.display = 'flex';
+            }
+        }
+
+        // Quick export selected samples
+        function quickExportSelected() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected. Select samples to export.', 'warning');
+                return;
+            }
+            exportSelectedSamples();
+        }
+
+        // Quick batch process
+        function quickBatchProcess() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected. Select samples to batch process.', 'warning');
+                return;
+            }
+            batchProcessSelected();
+        }
+
+        // Quick add sample (focus on input)
+        function quickAddSample() {
+            scrollToSection('addSamples');
+            setTimeout(function() {
+                document.getElementById('sampleId').focus();
+            }, 300);
+        }
+
+        // Update selection tracking
+        function updateSelection() {
+            selectedSamples = [];
+            var checkboxes = document.querySelectorAll('.sample-checkbox:checked');
+            checkboxes.forEach(function(checkbox) {
+                selectedSamples.push(checkbox.getAttribute('data-sample-id'));
+            });
+
+            // Update batch action bar
+            var batchBar = document.getElementById('batchActionBar');
+            var selectedCount = document.getElementById('selectedCount');
+
+            if (selectedSamples.length > 0) {
+                batchBar.classList.add('show');
+                selectedCount.textContent = selectedSamples.length;
+            } else {
+                batchBar.classList.remove('show');
+            }
+
+            // Update sample visual styling
+            var allSamples = document.querySelectorAll('.sample');
+            allSamples.forEach(function(sampleEl) {
+                var sampleId = sampleEl.querySelector('.sample-checkbox')?.getAttribute('data-sample-id');
+                if (sampleId && selectedSamples.indexOf(sampleId) !== -1) {
+                    sampleEl.classList.add('selected');
+                } else {
+                    sampleEl.classList.remove('selected');
+                }
+            });
+        }
+
+        // Clear all selections
+        function clearSelection() {
+            var checkboxes = document.querySelectorAll('.sample-checkbox');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = false;
+            });
+            selectedSamples = [];
+            updateSelection();
+            showToast('Selection cleared', 'info');
+        }
+
+        // Export only selected samples to CSV
+        function exportSelectedSamples() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            // Filter samples by selection
+            var samplesToExport = samples.filter(function(s) {
+                return selectedSamples.indexOf(s.id) !== -1;
+            });
+
+            // Generate CSV
+            var csv = 'Sample ID,Date Added,Added By,Status,BAP Lot,TSB Lot,Extraction Lot,Notes\n';
+
+            samplesToExport.forEach(function(sample) {
+                var row = [
+                    sample.id,
+                    sample.dateAdded || '',
+                    sample.initials || '',
+                    sample.status || '',
+                    sample.bapDetails?.lotNumber || '',
+                    sample.tsbDetails?.lotNumber || '',
+                    sample.extractionDetails?.lotNumber || '',
+                    (sample.notes || '').replace(/,/g, ';').replace(/\n/g, ' ')
+                ];
+                csv += row.join(',') + '\n';
+            });
+
+            // Download
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'selected_samples_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+
+            showToast('✅ Exported ' + samplesToExport.length + ' samples', 'success');
+            showAutoSaveIndicator('📥 Exported ' + samplesToExport.length + ' samples', 'success');
+        }
+
+        // Batch process selected samples
+        function batchProcessSelected() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            // Validate all samples are at same stage
+            var samplesToProcess = samples.filter(function(s) {
+                return selectedSamples.indexOf(s.id) !== -1;
+            });
+
+            var statuses = samplesToProcess.map(function(s) { return s.status; });
+            var uniqueStatuses = statuses.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+            if (uniqueStatuses.length > 1) {
+                showToast('⚠️ Selected samples must all be at the same workflow stage', 'error');
+                return;
+            }
+
+            // Process based on current status
+            var status = uniqueStatuses[0];
+            showToast('🚀 Starting batch process for ' + samplesToProcess.length + ' samples at "' + status + '"', 'info');
+
+            // Trigger the existing bulk process functionality
+            startBulkProcessing();
+        }
+
+        // Batch flag selected samples
+        function batchFlag() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            var flag = prompt('Set flag for ' + selectedSamples.length + ' samples:\n\n1 = Rush 🔴\n2 = Hold ⏸️\n3 = Review ⚠️\n4 = None\n\nEnter number:');
+
+            if (!flag) return;
+
+            var flagValue = flag === '1' ? 'Rush' : flag === '2' ? 'Hold' : flag === '3' ? 'Review' : 'None';
+
+            selectedSamples.forEach(function(sampleId) {
+                var sample = samples.find(function(s) { return s.id === sampleId; });
+                if (sample) {
+                    sample.flag = flagValue;
+                }
+            });
+
+            saveData();
+            renderSamples();
+            showToast('✅ Flagged ' + selectedSamples.length + ' samples as: ' + flagValue, 'success');
+        }
+
+        // Batch delete selected samples
+        function batchDelete() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            if (!confirm('⚠️ DELETE ' + selectedSamples.length + ' SAMPLES?\n\nThis cannot be undone!')) {
+                return;
+            }
+
+            if (!confirm('Are you ABSOLUTELY SURE? This will permanently delete ' + selectedSamples.length + ' samples!')) {
+                return;
+            }
+
+            var deletedCount = 0;
+            selectedSamples.forEach(function(sampleId) {
+                var index = samples.findIndex(function(s) { return s.id === sampleId; });
+                if (index !== -1) {
+                    samples.splice(index, 1);
+                    deletedCount++;
+                }
+            });
+
+            selectedSamples = [];
+            saveData();
+            renderSamples();
+            updateSelection();
+            showToast('🗑️ Deleted ' + deletedCount + ' samples', 'success');
+        }
+
+        // Auto-save indicator
+        function showAutoSaveIndicator(message, type) {
+            var indicator = document.getElementById('autoSaveIndicator');
+            indicator.textContent = message || '💾 Saved';
+
+            // Reset classes
+            indicator.className = '';
+
+            // Add type class
+            if (type === 'saving') {
+                indicator.classList.add('saving');
+            } else if (type === 'error') {
+                indicator.classList.add('error');
+            }
+
+            // Show indicator
+            indicator.classList.add('show');
+
+            // Hide after 2 seconds
+            setTimeout(function() {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // Enhance the existing saveData function to show indicator
+        var originalSaveData = saveData;
+        saveData = function() {
+            try {
+                originalSaveData();
+                showAutoSaveIndicator('💾 Auto-saved', 'success');
+            } catch (err) {
+                showAutoSaveIndicator('❌ Save failed', 'error');
+                console.error('Save error:', err);
+            }
+        };
+
+        // Sample validation before processing
+        function validateSampleProcessing(sampleId, processType) {
+            var sample = samples.find(function(s) { return s.id === sampleId; });
+            if (!sample) {
+                showToast('❌ Sample not found', 'error');
+                return false;
+            }
+
+            var warnings = [];
+
+            // Validate based on process type
+            if (processType === 'BAP') {
+                if (!sample.initials) {
+                    warnings.push('Missing technician initials');
+                }
+            }
+
+            if (processType === 'TSB') {
+                if (!sample.bapDetails || !sample.bapDetails.completionDate) {
+                    warnings.push('BAP processing not complete');
+                    return false;
+                }
+            }
+
+            if (processType === 'Extraction') {
+                if (!sample.tsbDetails || !sample.tsbDetails.completionDate) {
+                    warnings.push('TSB processing not complete');
+                    return false;
+                }
+            }
+
+            // Show warnings if any
+            if (warnings.length > 0) {
+                var msg = '⚠️ Validation warnings for ' + sampleId + ':\n\n' + warnings.join('\n') + '\n\nContinue anyway?';
+                return confirm(msg);
+            }
+
+            return true;
+        }
+
+        // Add validation warnings to process modals
+        function showProcessValidationWarnings(sampleId) {
+            var sample = samples.find(function(s) { return s.id === sampleId; });
+            if (!sample) return '';
+
+            var warnings = [];
+
+            // Check for missing critical data
+            if (!sample.initials) {
+                warnings.push('Missing technician initials');
+            }
+
+            if (sample.flag === 'Hold') {
+                warnings.push('Sample is on HOLD');
+            }
+
+            if (warnings.length === 0) return '';
+
+            var html = '<div class="validation-warning">';
+            html += warnings.join('<br>');
+            html += '</div>';
+
+            return html;
+        }
+
+        // Toast notification system (lightweight)
+        function showToast(message, type) {
+            // Reuse auto-save indicator for toast messages
+            showAutoSaveIndicator(message, type);
+        }
+
+        console.log('✅ Quick Actions & Usability Features loaded!');
+        console.log('📋 Features: Export Selected, Batch Process, Auto-save, Validation, Mobile Responsive');
+
     </script>
 
         </div> <!-- Close sequencingUI div -->
         </div> <!-- Close main-content div -->
     </div> <!-- Close appContent div -->
+
+    <!-- Quick Actions Floating Toolbar -->
+    <div id="quickActionsToolbar" style="display: none;">
+        <button class="toggle-btn" onclick="toggleQuickActions()" title="Toggle Quick Actions">⚡</button>
+        <div id="quickActionsContent">
+            <button onclick="quickExportSelected()" title="Export selected samples">📥 Export</button>
+            <button onclick="quickBatchProcess()" title="Batch process selected">⚙️ Process</button>
+            <button onclick="quickAddSample()" title="Quick add sample">➕ Add</button>
+            <button onclick="scrollToSection('samples')" title="Go to samples">🧬 Samples</button>
+        </div>
+    </div>
+
+    <!-- Auto-save Indicator -->
+    <div id="autoSaveIndicator">💾 Saved</div>
+
+    <!-- Batch Action Bar (shows when samples selected) -->
+    <div id="batchActionBar">
+        <div>
+            <strong><span id="selectedCount">0</span> samples selected</strong>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="exportSelectedSamples()">📥 Export Selected</button>
+            <button onclick="batchProcessSelected()">⚙️ Batch Process</button>
+            <button onclick="batchFlag()">🚩 Flag</button>
+            <button onclick="batchDelete()">🗑️ Delete</button>
+            <button onclick="clearSelection()">✕ Clear</button>
+        </div>
+    </div>
+
 </body>
 </html>
