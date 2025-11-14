@@ -917,6 +917,321 @@
         .kanban-card.dragging {
             opacity: 0.4;
         }
+
+        /* Quick Actions Floating Toolbar */
+        #quickActionsToolbar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            z-index: 900;
+            transition: all 0.3s;
+        }
+
+        #quickActionsToolbar.collapsed {
+            padding: 12px 15px;
+        }
+
+        #quickActionsToolbar button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        #quickActionsToolbar button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #quickActionsToolbar button:active {
+            transform: translateY(0);
+        }
+
+        #quickActionsToolbar .toggle-btn {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 50%;
+            min-width: auto;
+        }
+
+        /* Auto-save indicator */
+        #autoSaveIndicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s;
+        }
+
+        #autoSaveIndicator.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        #autoSaveIndicator.saving {
+            background: #ffc107;
+        }
+
+        #autoSaveIndicator.error {
+            background: #dc3545;
+        }
+
+        /* Validation warning */
+        .validation-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .validation-warning::before {
+            content: "⚠️";
+            font-size: 20px;
+        }
+
+        /* Mobile responsiveness improvements */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            #quickActionsToolbar {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px;
+                flex-direction: column;
+                border-radius: 20px;
+            }
+
+            #quickActionsToolbar button {
+                width: 100%;
+                padding: 10px;
+            }
+
+            .sample {
+                font-size: 13px;
+            }
+
+            .sample-actions button {
+                font-size: 11px !important;
+                padding: 6px 10px !important;
+            }
+
+            .kanban-container {
+                flex-direction: column;
+            }
+
+            .kanban-column {
+                width: 100% !important;
+                min-width: auto !important;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .stats-panel {
+                flex-direction: column;
+            }
+
+            .stat-card {
+                width: 100%;
+            }
+        }
+
+        /* Enhanced sample selection */
+        .sample.selected {
+            box-shadow: 0 0 0 3px #667eea;
+            border-left-color: #667eea !important;
+        }
+
+        .sample input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Batch action bar */
+        #batchActionBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.2);
+            z-index: 950;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        #batchActionBar.show {
+            transform: translateY(0);
+        }
+
+        #batchActionBar button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        #batchActionBar button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Continue to Next Stage button */
+        .continue-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: white !important;
+            font-weight: 700 !important;
+            font-size: 12px !important;
+            padding: 6px 12px !important;
+            border: none !important;
+            border-radius: 6px !important;
+            cursor: pointer !important;
+            margin-top: 6px !important;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+            transition: all 0.2s !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            justify-content: center !important;
+        }
+
+        .continue-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+        }
+
+        .continue-btn:active {
+            transform: translateY(0) !important;
+        }
+
+        .continue-btn::after {
+            content: "→";
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Work Queue Cards */
+        .work-queue-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .work-queue-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .work-queue-card.urgent {
+            border-left-color: #dc3545;
+        }
+
+        .work-queue-card.ready {
+            border-left-color: #28a745;
+        }
+
+        .work-queue-card.waiting {
+            border-left-color: #ffc107;
+        }
+
+        .work-queue-card.overdue {
+            border-left-color: #fd7e14;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .work-queue-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: #333;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .work-queue-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .work-queue-action {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .work-queue-badge {
+            display: inline-block;
+            background: #dc3545;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1116,6 +1431,22 @@
         </div>
         <div id="quickStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
             <!-- Stats will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Work Queue Dashboard - "What to Work On Now" -->
+    <div id="workQueuePanel" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: white;">🎯 What to Work On Now</h3>
+            <button onclick="refreshWorkQueue()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                🔄 Refresh
+            </button>
+        </div>
+        <div id="workQueue" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+            <!-- Work queue items will be populated by JavaScript -->
+        </div>
+        <div id="noWorkMessage" style="display: none; text-align: center; padding: 30px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 16px;">
+            ✅ All caught up! No urgent items at the moment.
         </div>
     </div>
 
@@ -17633,7 +17964,7 @@ else if (samples[i].status === 'Indexing Complete') indexingCount++;
 
                 // Always show checkbox for bulk operations
                 var isChecked = bulkSelectedSamples.indexOf(sample.id) !== -1 ? ' checked' : '';
-                html += '<input type="checkbox" class="sample-checkbox" value="' + sample.id + '" onchange="toggleSampleSelection(\'' + sample.id.replace(/'/g, "\\'") + '\', this)"' + isChecked + '> ';
+                html += '<input type="checkbox" class="sample-checkbox" data-sample-id="' + sample.id + '" value="' + sample.id + '" onchange="toggleSampleSelection(\'' + sample.id.replace(/'/g, "\\'") + '\', this); updateSelection();"' + isChecked + '> ';
 
                 if (showCheckbox) {
                     // Batch processing checkbox (keep for compatibility)
@@ -17774,19 +18105,25 @@ if (sample.qubitDetails) {
                     html += '<button onclick="finishProcess(\'' + sample.id + '\', \'BAP\')" style="background: #28a745;">Finish BAP</button>';
                 } else if (sample.status === 'BAP Complete') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'TSB\')">Start TSB</button>';
+                    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
                 } else if (sample.status === 'TSB In Progress') {
                     html += '<button onclick="finishProcess(\'' + sample.id + '\', \'TSB\')" style="background: #28a745;">Finish TSB</button>';
                 } else if (sample.status === 'TSB Complete') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Extraction\')">Start Extraction</button>';
+                    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
                 } else if (sample.status === 'Extraction Complete') {
                     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Clean Extraction\')">Start Clean Extraction</button>';
+                    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
                 } else if (sample.status === 'Clean Extraction Complete') {
     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Clean Extraction Qubit\')">Start Qubit</button>';
+    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
 } else if (sample.status === 'Clean Extraction Qubit Complete') {
     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Indexing\')">Start Indexing</button><br>';
+    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn" style="display: block; width: 100%;">Continue</button>';
     html += '<button onclick="markQCFailed(\'' + sample.id.replace(/'/g, "\\'") + '\', \'CE Qubit\')" style="background: #dc3545; margin-top: 4px;">QC Failed</button>';
 } else if (sample.status === 'Indexing Complete') {
     html += '<button onclick="startProcess(\'' + sample.id + '\', \'Final Qubit\')">Start Final Qubit</button>';
+    html += '<button onclick="continueToNextStage(\'' + sample.id.replace(/'/g, "\\'") + '\')" class="continue-btn">Continue</button>';
                 } else if (sample.status === 'Qubit Complete') {
                     html += '<button onclick="markQCFailed(\'' + sample.id.replace(/'/g, "\\'") + '\', \'Final Qubit\')" style="background: #dc3545;">QC Failed</button><br>';
                     html += '<div style="color: green; font-weight: bold; text-align: center; margin-top: 4px;">✓ Complete</div>';
@@ -18387,10 +18724,754 @@ if (sample.qubitDetails) {
         }
 
         console.log('✨ Sticky stats header enabled - stats stay visible when scrolling!');
+
+        // ========================================
+        // QUICK ACTIONS & USABILITY FEATURES
+        // ========================================
+
+        // Track selected samples for batch operations
+        var selectedSamples = [];
+        var quickActionsCollapsed = false;
+
+        // Show quick actions toolbar when authenticated
+        if (sessionStorage.getItem('bwgsAuthenticated') === 'true') {
+            document.getElementById('quickActionsToolbar').style.display = 'flex';
+        }
+
+        // Toggle quick actions toolbar
+        function toggleQuickActions() {
+            quickActionsCollapsed = !quickActionsCollapsed;
+            var toolbar = document.getElementById('quickActionsToolbar');
+            var content = document.getElementById('quickActionsContent');
+
+            if (quickActionsCollapsed) {
+                toolbar.classList.add('collapsed');
+                content.style.display = 'none';
+            } else {
+                toolbar.classList.remove('collapsed');
+                content.style.display = 'flex';
+            }
+        }
+
+        // Quick export selected samples
+        function quickExportSelected() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected. Select samples to export.', 'warning');
+                return;
+            }
+            exportSelectedSamples();
+        }
+
+        // Quick batch process
+        function quickBatchProcess() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected. Select samples to batch process.', 'warning');
+                return;
+            }
+            batchProcessSelected();
+        }
+
+        // Quick add sample (focus on input)
+        function quickAddSample() {
+            scrollToSection('addSamples');
+            setTimeout(function() {
+                document.getElementById('sampleId').focus();
+            }, 300);
+        }
+
+        // Update selection tracking
+        function updateSelection() {
+            selectedSamples = [];
+            var checkboxes = document.querySelectorAll('.sample-checkbox:checked');
+            checkboxes.forEach(function(checkbox) {
+                selectedSamples.push(checkbox.getAttribute('data-sample-id'));
+            });
+
+            // Update batch action bar
+            var batchBar = document.getElementById('batchActionBar');
+            var selectedCount = document.getElementById('selectedCount');
+
+            if (selectedSamples.length > 0) {
+                batchBar.classList.add('show');
+                selectedCount.textContent = selectedSamples.length;
+            } else {
+                batchBar.classList.remove('show');
+            }
+
+            // Update sample visual styling
+            var allSamples = document.querySelectorAll('.sample');
+            allSamples.forEach(function(sampleEl) {
+                var sampleId = sampleEl.querySelector('.sample-checkbox')?.getAttribute('data-sample-id');
+                if (sampleId && selectedSamples.indexOf(sampleId) !== -1) {
+                    sampleEl.classList.add('selected');
+                } else {
+                    sampleEl.classList.remove('selected');
+                }
+            });
+        }
+
+        // Clear all selections
+        function clearSelection() {
+            var checkboxes = document.querySelectorAll('.sample-checkbox');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = false;
+            });
+            selectedSamples = [];
+            updateSelection();
+            showToast('Selection cleared', 'info');
+        }
+
+        // Export only selected samples to CSV
+        function exportSelectedSamples() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            // Filter samples by selection
+            var samplesToExport = samples.filter(function(s) {
+                return selectedSamples.indexOf(s.id) !== -1;
+            });
+
+            // Generate CSV
+            var csv = 'Sample ID,Date Added,Added By,Status,BAP Lot,TSB Lot,Extraction Lot,Notes\n';
+
+            samplesToExport.forEach(function(sample) {
+                var row = [
+                    sample.id,
+                    sample.dateAdded || '',
+                    sample.initials || '',
+                    sample.status || '',
+                    sample.bapDetails?.lotNumber || '',
+                    sample.tsbDetails?.lotNumber || '',
+                    sample.extractionDetails?.lotNumber || '',
+                    (sample.notes || '').replace(/,/g, ';').replace(/\n/g, ' ')
+                ];
+                csv += row.join(',') + '\n';
+            });
+
+            // Download
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'selected_samples_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+
+            showToast('✅ Exported ' + samplesToExport.length + ' samples', 'success');
+            showAutoSaveIndicator('📥 Exported ' + samplesToExport.length + ' samples', 'success');
+        }
+
+        // Batch process selected samples
+        function batchProcessSelected() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            // Validate all samples are at same stage
+            var samplesToProcess = samples.filter(function(s) {
+                return selectedSamples.indexOf(s.id) !== -1;
+            });
+
+            var statuses = samplesToProcess.map(function(s) { return s.status; });
+            var uniqueStatuses = statuses.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+            if (uniqueStatuses.length > 1) {
+                showToast('⚠️ Selected samples must all be at the same workflow stage', 'error');
+                return;
+            }
+
+            // Process based on current status
+            var status = uniqueStatuses[0];
+            showToast('🚀 Starting batch process for ' + samplesToProcess.length + ' samples at "' + status + '"', 'info');
+
+            // Trigger the existing bulk process functionality
+            startBulkProcessing();
+        }
+
+        // Batch flag selected samples
+        function batchFlag() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            var flag = prompt('Set flag for ' + selectedSamples.length + ' samples:\n\n1 = Rush 🔴\n2 = Hold ⏸️\n3 = Review ⚠️\n4 = None\n\nEnter number:');
+
+            if (!flag) return;
+
+            var flagValue = flag === '1' ? 'Rush' : flag === '2' ? 'Hold' : flag === '3' ? 'Review' : 'None';
+
+            selectedSamples.forEach(function(sampleId) {
+                var sample = samples.find(function(s) { return s.id === sampleId; });
+                if (sample) {
+                    sample.flag = flagValue;
+                }
+            });
+
+            saveData();
+            renderSamples();
+            showToast('✅ Flagged ' + selectedSamples.length + ' samples as: ' + flagValue, 'success');
+        }
+
+        // Batch delete selected samples
+        function batchDelete() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            if (!confirm('⚠️ DELETE ' + selectedSamples.length + ' SAMPLES?\n\nThis cannot be undone!')) {
+                return;
+            }
+
+            if (!confirm('Are you ABSOLUTELY SURE? This will permanently delete ' + selectedSamples.length + ' samples!')) {
+                return;
+            }
+
+            var deletedCount = 0;
+            selectedSamples.forEach(function(sampleId) {
+                var index = samples.findIndex(function(s) { return s.id === sampleId; });
+                if (index !== -1) {
+                    samples.splice(index, 1);
+                    deletedCount++;
+                }
+            });
+
+            selectedSamples = [];
+            saveData();
+            renderSamples();
+            updateSelection();
+            showToast('🗑️ Deleted ' + deletedCount + ' samples', 'success');
+        }
+
+        // Auto-save indicator
+        function showAutoSaveIndicator(message, type) {
+            var indicator = document.getElementById('autoSaveIndicator');
+            indicator.textContent = message || '💾 Saved';
+
+            // Reset classes
+            indicator.className = '';
+
+            // Add type class
+            if (type === 'saving') {
+                indicator.classList.add('saving');
+            } else if (type === 'error') {
+                indicator.classList.add('error');
+            }
+
+            // Show indicator
+            indicator.classList.add('show');
+
+            // Hide after 2 seconds
+            setTimeout(function() {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // Enhance the existing saveData function to show indicator
+        var originalSaveData = saveData;
+        saveData = function() {
+            try {
+                originalSaveData();
+                showAutoSaveIndicator('💾 Auto-saved', 'success');
+            } catch (err) {
+                showAutoSaveIndicator('❌ Save failed', 'error');
+                console.error('Save error:', err);
+            }
+        };
+
+        // Sample validation before processing
+        function validateSampleProcessing(sampleId, processType) {
+            var sample = samples.find(function(s) { return s.id === sampleId; });
+            if (!sample) {
+                showToast('❌ Sample not found', 'error');
+                return false;
+            }
+
+            var warnings = [];
+
+            // Validate based on process type
+            if (processType === 'BAP') {
+                if (!sample.initials) {
+                    warnings.push('Missing technician initials');
+                }
+            }
+
+            if (processType === 'TSB') {
+                if (!sample.bapDetails || !sample.bapDetails.completionDate) {
+                    warnings.push('BAP processing not complete');
+                    return false;
+                }
+            }
+
+            if (processType === 'Extraction') {
+                if (!sample.tsbDetails || !sample.tsbDetails.completionDate) {
+                    warnings.push('TSB processing not complete');
+                    return false;
+                }
+            }
+
+            // Show warnings if any
+            if (warnings.length > 0) {
+                var msg = '⚠️ Validation warnings for ' + sampleId + ':\n\n' + warnings.join('\n') + '\n\nContinue anyway?';
+                return confirm(msg);
+            }
+
+            return true;
+        }
+
+        // Add validation warnings to process modals
+        function showProcessValidationWarnings(sampleId) {
+            var sample = samples.find(function(s) { return s.id === sampleId; });
+            if (!sample) return '';
+
+            var warnings = [];
+
+            // Check for missing critical data
+            if (!sample.initials) {
+                warnings.push('Missing technician initials');
+            }
+
+            if (sample.flag === 'Hold') {
+                warnings.push('Sample is on HOLD');
+            }
+
+            if (warnings.length === 0) return '';
+
+            var html = '<div class="validation-warning">';
+            html += warnings.join('<br>');
+            html += '</div>';
+
+            return html;
+        }
+
+        // Toast notification system (lightweight)
+        function showToast(message, type) {
+            // Reuse auto-save indicator for toast messages
+            showAutoSaveIndicator(message, type);
+        }
+
+        console.log('✅ Quick Actions & Usability Features loaded!');
+        console.log('📋 Features: Export Selected, Batch Process, Auto-save, Validation, Mobile Responsive');
+
+        // ========================================
+        // CONTINUE TO NEXT STAGE FEATURE
+        // ========================================
+
+        /**
+         * One-click advancement to next workflow stage
+         * Opens the appropriate modal with minimal user input required
+         */
+        function continueToNextStage(sampleId) {
+            var sample = samples.find(function(s) { return s.id === sampleId; });
+            if (!sample) {
+                showToast('❌ Sample not found', 'error');
+                return;
+            }
+
+            // Map current status to next action
+            var nextActions = {
+                'BAP Complete': {
+                    action: 'TSB',
+                    message: 'Continue to TSB?',
+                    icon: '🧪'
+                },
+                'TSB Complete': {
+                    action: 'Extraction',
+                    message: 'Continue to Extraction?',
+                    icon: '🔬'
+                },
+                'Extraction Complete': {
+                    action: 'Clean Extraction',
+                    message: 'Continue to Clean Extraction?',
+                    icon: '✨'
+                },
+                'Clean Extraction Complete': {
+                    action: 'Clean Extraction Qubit',
+                    message: 'Continue to Qubit?',
+                    icon: '📊'
+                },
+                'Clean Extraction Qubit Complete': {
+                    action: 'Indexing',
+                    message: 'Continue to Indexing?',
+                    icon: '🏷️'
+                },
+                'Indexing Complete': {
+                    action: 'Final Qubit',
+                    message: 'Continue to Final Qubit?',
+                    icon: '✅'
+                }
+            };
+
+            var next = nextActions[sample.status];
+
+            if (!next) {
+                showToast('⚠️ No next stage available for this sample', 'warning');
+                return;
+            }
+
+            // Show confirmation with icon
+            if (confirm(next.icon + ' ' + next.message + '\n\nSample: ' + sampleId + '\nCurrent: ' + sample.status + '\nNext: ' + next.action)) {
+                // Call the appropriate start process function
+                startProcess(sampleId, next.action);
+                showToast('🚀 Continuing to ' + next.action + '...', 'info');
+            }
+        }
+
+        /**
+         * Batch continue - advance multiple samples to their next stages
+         */
+        function batchContinueToNextStage() {
+            if (selectedSamples.length === 0) {
+                showToast('⚠️ No samples selected', 'warning');
+                return;
+            }
+
+            // Get selected samples
+            var samplesToAdvance = samples.filter(function(s) {
+                return selectedSamples.indexOf(s.id) !== -1;
+            });
+
+            // Check if all samples can advance
+            var canAdvance = samplesToAdvance.filter(function(s) {
+                return s.status === 'BAP Complete' ||
+                       s.status === 'TSB Complete' ||
+                       s.status === 'Extraction Complete' ||
+                       s.status === 'Clean Extraction Complete' ||
+                       s.status === 'Clean Extraction Qubit Complete' ||
+                       s.status === 'Indexing Complete';
+            });
+
+            if (canAdvance.length === 0) {
+                showToast('⚠️ No selected samples can be advanced', 'warning');
+                return;
+            }
+
+            if (canAdvance.length !== samplesToAdvance.length) {
+                var msg = '⚠️ Only ' + canAdvance.length + ' of ' + samplesToAdvance.length + ' selected samples can be advanced.\n\nContinue with those ' + canAdvance.length + ' samples?';
+                if (!confirm(msg)) {
+                    return;
+                }
+            }
+
+            // Confirm batch continue
+            if (!confirm('🚀 Continue ' + canAdvance.length + ' samples to their next stages?')) {
+                return;
+            }
+
+            // Advance each sample
+            var advanced = 0;
+            canAdvance.forEach(function(sample) {
+                // Determine next action without showing modal
+                var nextActions = {
+                    'BAP Complete': 'TSB',
+                    'TSB Complete': 'Extraction',
+                    'Extraction Complete': 'Clean Extraction',
+                    'Clean Extraction Complete': 'Clean Extraction Qubit',
+                    'Clean Extraction Qubit Complete': 'Indexing',
+                    'Indexing Complete': 'Final Qubit'
+                };
+
+                var nextAction = nextActions[sample.status];
+                if (nextAction) {
+                    // This will open the modal for the first sample
+                    // For true batch processing, would need to call openBatchModal
+                    startProcess(sample.id, nextAction);
+                    advanced++;
+                }
+            });
+
+            if (advanced > 0) {
+                showToast('✅ Advanced ' + advanced + ' samples', 'success');
+            }
+        }
+
+        console.log('✅ Continue to Next Stage feature loaded!');
+        console.log('⏭️ Feature: One-click stage advancement with "Continue →" button');
+
+        // ========================================
+        // WORK QUEUE DASHBOARD - "WHAT TO WORK ON NOW"
+        // ========================================
+
+        /**
+         * Analyzes all samples and shows actionable items
+         * Updates automatically when samples change
+         */
+        function updateWorkQueue() {
+            var queue = [];
+
+            // 1. URGENT: Rush samples
+            var rushSamples = samples.filter(function(s) {
+                return s.flag === 'Rush' && s.status !== 'Qubit Complete';
+            });
+            if (rushSamples.length > 0) {
+                queue.push({
+                    type: 'urgent',
+                    icon: '🔴',
+                    count: rushSamples.length,
+                    label: 'Rush Samples Need Attention',
+                    action: 'Click to view rush samples',
+                    filter: function() { filterByFlag('Rush'); }
+                });
+            }
+
+            // 2. READY: BAP incubations complete (ready for TSB)
+            var bapReady = samples.filter(function(s) {
+                return s.status === 'BAP Complete';
+            });
+            if (bapReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '🧪',
+                    count: bapReady.length,
+                    label: 'Ready for TSB Processing',
+                    action: 'Click to start TSB',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'BAP Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 3. READY: TSB incubations complete (ready for Extraction)
+            var tsbReady = samples.filter(function(s) {
+                return s.status === 'TSB Complete';
+            });
+            if (tsbReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '🔬',
+                    count: tsbReady.length,
+                    label: 'Ready for Extraction',
+                    action: 'Click to start extraction',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'TSB Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 4. READY: Extraction complete (ready for Clean Extraction)
+            var extractionReady = samples.filter(function(s) {
+                return s.status === 'Extraction Complete';
+            });
+            if (extractionReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '✨',
+                    count: extractionReady.length,
+                    label: 'Ready for Clean Extraction',
+                    action: 'Click to start',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'Extraction Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 5. READY: Clean Extraction Qubit Complete (ready for Indexing)
+            var qubitReady = samples.filter(function(s) {
+                return s.status === 'Clean Extraction Qubit Complete';
+            });
+            if (qubitReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '🏷️',
+                    count: qubitReady.length,
+                    label: 'Ready for Indexing',
+                    action: 'Click to start indexing',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'Clean Extraction Qubit Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 6. READY: Indexing Complete (ready for Final Qubit)
+            var indexingReady = samples.filter(function(s) {
+                return s.status === 'Indexing Complete';
+            });
+            if (indexingReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '✅',
+                    count: indexingReady.length,
+                    label: 'Ready for Final Qubit',
+                    action: 'Click to complete',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'Indexing Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 7. WAITING: Samples on Hold
+            var onHold = samples.filter(function(s) {
+                return s.flag === 'Hold';
+            });
+            if (onHold.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '⏸️',
+                    count: onHold.length,
+                    label: 'Samples on Hold',
+                    action: 'Click to review',
+                    filter: function() { filterByFlag('Hold'); }
+                });
+            }
+
+            // 8. WAITING: Samples pending review
+            var needsReview = samples.filter(function(s) {
+                return s.flag === 'Review';
+            });
+            if (needsReview.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '⚠️',
+                    count: needsReview.length,
+                    label: 'Samples Need Review',
+                    action: 'Click to review',
+                    filter: function() { filterByFlag('Review'); }
+                });
+            }
+
+            // 9. IN PROGRESS: Currently incubating
+            var incubating = samples.filter(function(s) {
+                return s.status === 'BAP In Progress' || s.status === 'TSB In Progress';
+            });
+            if (incubating.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '⏱️',
+                    count: incubating.length,
+                    label: 'Currently Incubating',
+                    action: 'Click to view',
+                    filter: function() {
+                        // Filter to show in-progress samples
+                        var radios = document.getElementsByName('statusFilter');
+                        radios[0].checked = true; // Show all
+                        filterSamples();
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // Render the work queue
+            var container = document.getElementById('workQueue');
+            var noWorkMsg = document.getElementById('noWorkMessage');
+
+            if (queue.length === 0) {
+                container.style.display = 'none';
+                noWorkMsg.style.display = 'block';
+            } else {
+                container.style.display = 'grid';
+                noWorkMsg.style.display = 'none';
+
+                var html = '';
+                queue.forEach(function(item) {
+                    html += '<div class="work-queue-card ' + item.type + '" onclick="(' + item.filter.toString() + ')()">';
+                    html += '<div class="work-queue-number">' + item.icon + ' ' + item.count + '</div>';
+                    html += '<div class="work-queue-label">' + item.label + '</div>';
+                    html += '<div class="work-queue-action">' + item.action + '</div>';
+                    html += '</div>';
+                });
+
+                container.innerHTML = html;
+            }
+        }
+
+        // Refresh work queue manually
+        function refreshWorkQueue() {
+            updateWorkQueue();
+            showToast('🔄 Work queue refreshed', 'success');
+        }
+
+        // Update work queue whenever samples change
+        var originalRenderSamples = renderSamples;
+        renderSamples = function() {
+            originalRenderSamples();
+            updateWorkQueue();
+        };
+
+        // Initial load
+        if (sessionStorage.getItem('bwgsAuthenticated') === 'true') {
+            updateWorkQueue();
+        }
+
+        console.log('✅ Work Queue Dashboard loaded!');
+        console.log('🎯 Feature: "What to Work On Now" - shows actionable items at a glance');
+
     </script>
 
         </div> <!-- Close sequencingUI div -->
         </div> <!-- Close main-content div -->
     </div> <!-- Close appContent div -->
+
+    <!-- Quick Actions Floating Toolbar -->
+    <div id="quickActionsToolbar" style="display: none;">
+        <button class="toggle-btn" onclick="toggleQuickActions()" title="Toggle Quick Actions">⚡</button>
+        <div id="quickActionsContent">
+            <button onclick="quickExportSelected()" title="Export selected samples">📥 Export</button>
+            <button onclick="quickBatchProcess()" title="Batch process selected">⚙️ Process</button>
+            <button onclick="quickAddSample()" title="Quick add sample">➕ Add</button>
+            <button onclick="scrollToSection('samples')" title="Go to samples">🧬 Samples</button>
+        </div>
+    </div>
+
+    <!-- Auto-save Indicator -->
+    <div id="autoSaveIndicator">💾 Saved</div>
+
+    <!-- Batch Action Bar (shows when samples selected) -->
+    <div id="batchActionBar">
+        <div>
+            <strong><span id="selectedCount">0</span> samples selected</strong>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="batchContinueToNextStage()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-weight: 700;">⏭️ Continue All</button>
+            <button onclick="exportSelectedSamples()">📥 Export Selected</button>
+            <button onclick="batchProcessSelected()">⚙️ Batch Process</button>
+            <button onclick="batchFlag()">🚩 Flag</button>
+            <button onclick="batchDelete()">🗑️ Delete</button>
+            <button onclick="clearSelection()">✕ Clear</button>
+        </div>
+    </div>
+
 </body>
 </html>
