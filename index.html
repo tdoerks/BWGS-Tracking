@@ -16246,6 +16246,14 @@ html += '</div>';
             document.getElementById('timelineModal').style.display = 'none';
         }
 
+        // Close timeline modal when clicking outside
+        window.addEventListener('click', function(event) {
+            var modal = document.getElementById('timelineModal');
+            if (event.target === modal) {
+                closeTimelineModal();
+            }
+        });
+
         function renderTimeline() {
             var view = document.getElementById('timelineView').value;
             var events = [];
