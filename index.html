@@ -1162,6 +1162,76 @@
             font-size: 14px;
             font-weight: bold;
         }
+
+        /* Work Queue Cards */
+        .work-queue-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .work-queue-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .work-queue-card.urgent {
+            border-left-color: #dc3545;
+        }
+
+        .work-queue-card.ready {
+            border-left-color: #28a745;
+        }
+
+        .work-queue-card.waiting {
+            border-left-color: #ffc107;
+        }
+
+        .work-queue-card.overdue {
+            border-left-color: #fd7e14;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .work-queue-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: #333;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .work-queue-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .work-queue-action {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .work-queue-badge {
+            display: inline-block;
+            background: #dc3545;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1361,6 +1431,22 @@
         </div>
         <div id="quickStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
             <!-- Stats will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Work Queue Dashboard - "What to Work On Now" -->
+    <div id="workQueuePanel" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: white;">🎯 What to Work On Now</h3>
+            <button onclick="refreshWorkQueue()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                🔄 Refresh
+            </button>
+        </div>
+        <div id="workQueue" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+            <!-- Work queue items will be populated by JavaScript -->
+        </div>
+        <div id="noWorkMessage" style="display: none; text-align: center; padding: 30px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 16px;">
+            ✅ All caught up! No urgent items at the moment.
         </div>
     </div>
 
@@ -19104,6 +19190,253 @@ if (sample.qubitDetails) {
 
         console.log('✅ Continue to Next Stage feature loaded!');
         console.log('⏭️ Feature: One-click stage advancement with "Continue →" button');
+
+        // ========================================
+        // WORK QUEUE DASHBOARD - "WHAT TO WORK ON NOW"
+        // ========================================
+
+        /**
+         * Analyzes all samples and shows actionable items
+         * Updates automatically when samples change
+         */
+        function updateWorkQueue() {
+            var queue = [];
+
+            // 1. URGENT: Rush samples
+            var rushSamples = samples.filter(function(s) {
+                return s.flag === 'Rush' && s.status !== 'Qubit Complete';
+            });
+            if (rushSamples.length > 0) {
+                queue.push({
+                    type: 'urgent',
+                    icon: '🔴',
+                    count: rushSamples.length,
+                    label: 'Rush Samples Need Attention',
+                    action: 'Click to view rush samples',
+                    filter: function() { filterByFlag('Rush'); }
+                });
+            }
+
+            // 2. READY: BAP incubations complete (ready for TSB)
+            var bapReady = samples.filter(function(s) {
+                return s.status === 'BAP Complete';
+            });
+            if (bapReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '🧪',
+                    count: bapReady.length,
+                    label: 'Ready for TSB Processing',
+                    action: 'Click to start TSB',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'BAP Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 3. READY: TSB incubations complete (ready for Extraction)
+            var tsbReady = samples.filter(function(s) {
+                return s.status === 'TSB Complete';
+            });
+            if (tsbReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '🔬',
+                    count: tsbReady.length,
+                    label: 'Ready for Extraction',
+                    action: 'Click to start extraction',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'TSB Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 4. READY: Extraction complete (ready for Clean Extraction)
+            var extractionReady = samples.filter(function(s) {
+                return s.status === 'Extraction Complete';
+            });
+            if (extractionReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '✨',
+                    count: extractionReady.length,
+                    label: 'Ready for Clean Extraction',
+                    action: 'Click to start',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'Extraction Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 5. READY: Clean Extraction Qubit Complete (ready for Indexing)
+            var qubitReady = samples.filter(function(s) {
+                return s.status === 'Clean Extraction Qubit Complete';
+            });
+            if (qubitReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '🏷️',
+                    count: qubitReady.length,
+                    label: 'Ready for Indexing',
+                    action: 'Click to start indexing',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'Clean Extraction Qubit Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 6. READY: Indexing Complete (ready for Final Qubit)
+            var indexingReady = samples.filter(function(s) {
+                return s.status === 'Indexing Complete';
+            });
+            if (indexingReady.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '✅',
+                    count: indexingReady.length,
+                    label: 'Ready for Final Qubit',
+                    action: 'Click to complete',
+                    filter: function() {
+                        var radios = document.getElementsByName('statusFilter');
+                        for (var i = 0; i < radios.length; i++) {
+                            if (radios[i].value === 'Indexing Complete') {
+                                radios[i].checked = true;
+                                filterSamples();
+                                break;
+                            }
+                        }
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // 7. WAITING: Samples on Hold
+            var onHold = samples.filter(function(s) {
+                return s.flag === 'Hold';
+            });
+            if (onHold.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '⏸️',
+                    count: onHold.length,
+                    label: 'Samples on Hold',
+                    action: 'Click to review',
+                    filter: function() { filterByFlag('Hold'); }
+                });
+            }
+
+            // 8. WAITING: Samples pending review
+            var needsReview = samples.filter(function(s) {
+                return s.flag === 'Review';
+            });
+            if (needsReview.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '⚠️',
+                    count: needsReview.length,
+                    label: 'Samples Need Review',
+                    action: 'Click to review',
+                    filter: function() { filterByFlag('Review'); }
+                });
+            }
+
+            // 9. IN PROGRESS: Currently incubating
+            var incubating = samples.filter(function(s) {
+                return s.status === 'BAP In Progress' || s.status === 'TSB In Progress';
+            });
+            if (incubating.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '⏱️',
+                    count: incubating.length,
+                    label: 'Currently Incubating',
+                    action: 'Click to view',
+                    filter: function() {
+                        // Filter to show in-progress samples
+                        var radios = document.getElementsByName('statusFilter');
+                        radios[0].checked = true; // Show all
+                        filterSamples();
+                        scrollToSection('samples');
+                    }
+                });
+            }
+
+            // Render the work queue
+            var container = document.getElementById('workQueue');
+            var noWorkMsg = document.getElementById('noWorkMessage');
+
+            if (queue.length === 0) {
+                container.style.display = 'none';
+                noWorkMsg.style.display = 'block';
+            } else {
+                container.style.display = 'grid';
+                noWorkMsg.style.display = 'none';
+
+                var html = '';
+                queue.forEach(function(item) {
+                    html += '<div class="work-queue-card ' + item.type + '" onclick="(' + item.filter.toString() + ')()">';
+                    html += '<div class="work-queue-number">' + item.icon + ' ' + item.count + '</div>';
+                    html += '<div class="work-queue-label">' + item.label + '</div>';
+                    html += '<div class="work-queue-action">' + item.action + '</div>';
+                    html += '</div>';
+                });
+
+                container.innerHTML = html;
+            }
+        }
+
+        // Refresh work queue manually
+        function refreshWorkQueue() {
+            updateWorkQueue();
+            showToast('🔄 Work queue refreshed', 'success');
+        }
+
+        // Update work queue whenever samples change
+        var originalRenderSamples = renderSamples;
+        renderSamples = function() {
+            originalRenderSamples();
+            updateWorkQueue();
+        };
+
+        // Initial load
+        if (sessionStorage.getItem('bwgsAuthenticated') === 'true') {
+            updateWorkQueue();
+        }
+
+        console.log('✅ Work Queue Dashboard loaded!');
+        console.log('🎯 Feature: "What to Work On Now" - shows actionable items at a glance');
 
     </script>
 
