@@ -16510,32 +16510,48 @@ html += '</div>';
                     reason = 'Other: ' + otherText;
                 }
 
-                // Find and delete the sample from foodSamples array
-                for (var i = 0; i < foodSamples.length; i++) {
-                    if (foodSamples[i].id === sampleId) {
-                        var deletedSample = foodSamples.splice(i, 1)[0];
+                try {
+                    // Find and delete the sample from foodSamples array
+                    for (var i = 0; i < foodSamples.length; i++) {
+                        if (foodSamples[i].id === sampleId) {
+                            var deletedSample = foodSamples.splice(i, 1)[0];
 
-                        // Add to deleted samples audit trail
-                        deletedSamples.push({
-                            sample: deletedSample,
-                            deletedDate: new Date().toISOString(),
-                            deletedBy: currentUser || 'Unknown',
-                            reason: reason
-                        });
+                            // Add to deleted samples audit trail
+                            deletedSamples.push({
+                                sample: deletedSample,
+                                deletedDate: new Date().toISOString(),
+                                deletedBy: currentUser || 'Unknown',
+                                reason: reason
+                            });
 
-                        break;
+                            break;
+                        }
+                    }
+
+                    // Also delete associated pathogen workflows
+                    pathogenWorkflows = pathogenWorkflows.filter(function(wf) {
+                        return wf.foodSampleId !== sampleId;
+                    });
+
+                    saveData();
+
+                    // Close modal first
+                    if (modal && modal.parentNode) {
+                        document.body.removeChild(modal);
+                    }
+
+                    // Then re-render
+                    renderFoodSamplesTab();  // Refresh the food samples view
+
+                    alert('Sample ' + sampleId + ' deleted successfully.\nReason: ' + reason);
+                } catch (error) {
+                    console.error('Error deleting sample:', error);
+                    alert('Error deleting sample: ' + error.message);
+                    // Try to close modal
+                    if (modal && modal.parentNode) {
+                        document.body.removeChild(modal);
                     }
                 }
-
-                // Also delete associated pathogen workflows
-                pathogenWorkflows = pathogenWorkflows.filter(function(wf) {
-                    return wf.foodSampleId !== sampleId;
-                });
-
-                saveData();
-                renderFoodSamplesTab();  // Refresh the food samples view
-                document.body.removeChild(modal);
-                alert('Sample ' + sampleId + ' deleted successfully.\nReason: ' + reason);
             };
 
             // Close on background click
@@ -16701,45 +16717,66 @@ html += '</div>';
 
                 // Use setTimeout to allow UI to update
                 setTimeout(function() {
-                    // Delete all selected samples
-                    var deletedCount = 0;
-                    var samplesToDelete = selectedSamplesForDelete.slice(); // Make a copy of the array
+                    try {
+                        // Delete all selected samples
+                        var deletedCount = 0;
+                        var samplesToDelete = selectedSamplesForDelete.slice(); // Make a copy of the array
 
-                    // Delete pathogen workflows in one pass (more efficient)
-                    pathogenWorkflows = pathogenWorkflows.filter(function(wf) {
-                        return samplesToDelete.indexOf(wf.foodSampleId) === -1;
-                    });
+                        // Delete pathogen workflows in one pass (more efficient)
+                        pathogenWorkflows = pathogenWorkflows.filter(function(wf) {
+                            return samplesToDelete.indexOf(wf.foodSampleId) === -1;
+                        });
 
-                    // Delete food samples
-                    samplesToDelete.forEach(function(sampleId) {
-                        for (var i = 0; i < foodSamples.length; i++) {
-                            if (foodSamples[i].id === sampleId) {
-                                var deletedSample = foodSamples.splice(i, 1)[0];
+                        // Delete food samples
+                        samplesToDelete.forEach(function(sampleId) {
+                            for (var i = 0; i < foodSamples.length; i++) {
+                                if (foodSamples[i].id === sampleId) {
+                                    var deletedSample = foodSamples.splice(i, 1)[0];
 
-                                // Add to deleted samples audit trail
-                                deletedSamples.push({
-                                    sample: deletedSample,
-                                    deletedDate: new Date().toISOString(),
-                                    deletedBy: currentUser || 'Unknown',
-                                    reason: reason
-                                });
+                                    // Add to deleted samples audit trail
+                                    deletedSamples.push({
+                                        sample: deletedSample,
+                                        deletedDate: new Date().toISOString(),
+                                        deletedBy: currentUser || 'Unknown',
+                                        reason: reason
+                                    });
 
-                                deletedCount++;
-                                break;
+                                    deletedCount++;
+                                    break;
+                                }
                             }
+                        });
+
+                        // Clear selection
+                        selectedSamplesForDelete = [];
+
+                        saveData();
+
+                        // Close modal first
+                        if (modal && modal.parentNode) {
+                            document.body.removeChild(modal);
                         }
-                    });
 
-                    // Clear selection
-                    selectedSamplesForDelete = [];
+                        // Then re-render
+                        renderFoodSamplesTab();
 
-                    saveData();
-                    renderFoodSamplesTab();
-                    document.body.removeChild(modal);
-
-                    // Use the deletedCount we tracked, or fall back to the original count
-                    var finalCount = deletedCount > 0 ? deletedCount : count;
-                    alert(finalCount + ' sample' + (finalCount > 1 ? 's' : '') + ' deleted successfully.\nReason: ' + reason);
+                        // Use the deletedCount we tracked, or fall back to the original count
+                        var finalCount = deletedCount > 0 ? deletedCount : count;
+                        alert(finalCount + ' sample' + (finalCount > 1 ? 's' : '') + ' deleted successfully.\nReason: ' + reason);
+                    } catch (error) {
+                        console.error('Error deleting samples:', error);
+                        alert('Error deleting samples: ' + error.message);
+                        // Re-enable button on error
+                        if (deleteBtn) {
+                            deleteBtn.disabled = false;
+                            deleteBtn.textContent = 'Delete Samples';
+                            deleteBtn.style.opacity = '1';
+                        }
+                        // Try to close modal
+                        if (modal && modal.parentNode) {
+                            document.body.removeChild(modal);
+                        }
+                    }
                 }, 100);
             };
 
