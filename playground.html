@@ -6184,6 +6184,18 @@ html += '</div>';
             var container = document.getElementById('foodTabContentSamples');
             var html = '';
 
+            // Work Queue Dashboard for Food Testing
+            html += '<div id="foodWorkQueuePanel" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
+            html += '<h3 style="margin: 0; color: white;">🎯 What to Work On Now - Food Testing</h3>';
+            html += '<button onclick="updateFoodWorkQueue()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">🔄 Refresh</button>';
+            html += '</div>';
+            html += '<div id="foodWorkQueue" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">';
+            html += '<!-- Work queue items will be populated by JavaScript -->';
+            html += '</div>';
+            html += '<div id="foodNoWorkMessage" style="display: none; text-align: center; padding: 30px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 16px;">✅ All caught up! No urgent items at the moment.</div>';
+            html += '</div>';
+
             // Add Food Sample Form
             html += '<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
             html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
@@ -6594,6 +6606,154 @@ html += '</div>';
 
             // Update bulk delete button state
             updateBulkDeleteButton();
+
+            // Update work queue for Food Testing
+            updateFoodWorkQueue();
+        }
+
+        // Food Testing Work Queue Dashboard
+        function updateFoodWorkQueue() {
+            var queue = [];
+
+            if (!foodSamples || foodSamples.length === 0) {
+                var container = document.getElementById('foodWorkQueue');
+                var noWorkMsg = document.getElementById('foodNoWorkMessage');
+                if (container) container.style.display = 'none';
+                if (noWorkMsg) noWorkMsg.style.display = 'block';
+                return;
+            }
+
+            // 1. Samples awaiting pathogen testing
+            var awaitingTesting = foodSamples.filter(function(s) {
+                return s.status === 'Active' && (!s.ecoliTested && !s.campyloTested && !s.salmonellaTested);
+            });
+            if (awaitingTesting.length > 0) {
+                queue.push({
+                    type: 'urgent',
+                    icon: '🧫',
+                    count: awaitingTesting.length,
+                    label: 'Samples Awaiting Pathogen Testing',
+                    action: 'Click to view and start testing'
+                });
+            }
+
+            // 2. Positive samples needing isolate generation
+            var needIsolates = foodSamples.filter(function(s) {
+                return (s.ecoliResult === 'Positive' || s.campyloResult === 'Positive' ||
+                        s.salmonellaResult === 'Positive' || s.enterococcusResult === 'Positive' ||
+                        s.aeromonasResult === 'Positive' || s.vibrioResult === 'Positive') &&
+                       !s.isolatesGenerated;
+            });
+            if (needIsolates.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '🧬',
+                    count: needIsolates.length,
+                    label: 'Positive Samples Need Isolates',
+                    action: 'Click to generate isolates'
+                });
+            }
+
+            // 3. E. coli tests in progress
+            var ecoliInProgress = foodSamples.filter(function(s) {
+                return s.ecoliTested && !s.ecoliResult;
+            });
+            if (ecoliInProgress.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '🧫',
+                    count: ecoliInProgress.length,
+                    label: 'E. coli Tests In Progress',
+                    action: 'Click to view'
+                });
+            }
+
+            // 4. Campylobacter tests in progress
+            var campyloInProgress = foodSamples.filter(function(s) {
+                return s.campyloTested && !s.campyloResult;
+            });
+            if (campyloInProgress.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '🦠',
+                    count: campyloInProgress.length,
+                    label: 'Campylobacter Tests In Progress',
+                    action: 'Click to view'
+                });
+            }
+
+            // 5. Salmonella tests in progress
+            var salmonellaInProgress = foodSamples.filter(function(s) {
+                return s.salmonellaTested && !s.salmonellaResult;
+            });
+            if (salmonellaInProgress.length > 0) {
+                queue.push({
+                    type: 'waiting',
+                    icon: '🔴',
+                    count: salmonellaInProgress.length,
+                    label: 'Salmonella Tests In Progress',
+                    action: 'Click to view'
+                });
+            }
+
+            // 6. Recently received (last 7 days, not tested)
+            var recentUntested = foodSamples.filter(function(s) {
+                if (!s.dateReceived) return false;
+                var receivedDate = new Date(s.dateReceived);
+                var today = new Date();
+                var daysDiff = Math.floor((today - receivedDate) / (1000 * 60 * 60 * 24));
+                return daysDiff <= 7 && s.status === 'Active' && (!s.ecoliTested && !s.campyloTested && !s.salmonellaTested);
+            });
+            if (recentUntested.length > 0) {
+                queue.push({
+                    type: 'ready',
+                    icon: '📥',
+                    count: recentUntested.length,
+                    label: 'Recently Received (Untested)',
+                    action: 'Click to start testing'
+                });
+            }
+
+            // 7. All positive samples (summary)
+            var allPositive = foodSamples.filter(function(s) {
+                return s.ecoliResult === 'Positive' || s.campyloResult === 'Positive' ||
+                       s.salmonellaResult === 'Positive' || s.enterococcusResult === 'Positive' ||
+                       s.aeromonasResult === 'Positive' || s.vibrioResult === 'Positive';
+            });
+            if (allPositive.length > 0) {
+                queue.push({
+                    type: 'urgent',
+                    icon: '⚠️',
+                    count: allPositive.length,
+                    label: 'Total Positive Detections',
+                    action: 'Click to view all positives'
+                });
+            }
+
+            // Render the work queue
+            var container = document.getElementById('foodWorkQueue');
+            var noWorkMsg = document.getElementById('foodNoWorkMessage');
+
+            if (!container) return; // Safety check
+
+            if (queue.length === 0) {
+                container.style.display = 'none';
+                if (noWorkMsg) noWorkMsg.style.display = 'block';
+            } else {
+                container.style.display = 'grid';
+                if (noWorkMsg) noWorkMsg.style.display = 'none';
+
+                var html = '';
+                queue.forEach(function(item) {
+                    html += '<div class="work-queue-card ' + item.type + '" style="cursor: default;">';
+                    html += '<div class="work-queue-number">' + item.icon + ' ' + item.count + '</div>';
+                    html += '<div class="work-queue-label">' + item.label + '</div>';
+                    html += '<div class="work-queue-action">' + item.action + '</div>';
+                    html += '</div>';
+                });
+
+                container.innerHTML = html;
+            }
         }
 
         // Update form fields based on sample type
