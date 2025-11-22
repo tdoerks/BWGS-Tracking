@@ -9405,6 +9405,34 @@ html += '</div>';
                 html += '</div>';
 
                 html += '<div class="form-group">';
+                html += '<label>Sample Weight (g):</label>';
+                html += '<input type="number" id="bulk_sampleWeight" value="50" step="0.1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>BPW Volume (ml):</label>';
+                html += '<input type="number" id="bulk_bpwVolume" value="250" step="1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Stomach Time (minutes):</label>';
+                html += '<input type="number" id="bulk_stomachTime" value="2" step="0.5" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Volume Pulled for EC (ml):</label>';
+                html += '<input type="number" id="bulk_volumePulled" value="50" step="1" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Remaining BPW to Incubator?:</label>';
+                html += '<select id="bulk_bpwToIncubator">';
+                html += '<option value="Yes">Yes (for Salmonella)</option>';
+                html += '<option value="No">No</option>';
+                html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
                 html += '<label>Technician Initials:</label>';
                 html += '<input type="text" id="bulk_techInitials" maxlength="3" />';
                 html += '</div>';
@@ -9435,6 +9463,16 @@ html += '</div>';
                 html += '<option value="INC-2">Incubator 2</option>';
                 html += '<option value="INC-3">Incubator 3</option>';
                 html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="bulk_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="bulk_timeOut" />';
                 html += '</div>';
 
                 html += '<div class="form-group">';
@@ -9471,6 +9509,16 @@ html += '</div>';
                 html += '</div>';
 
                 html += '<div class="form-group">';
+                html += '<label>Time In:</label>';
+                html += '<input type="time" id="bulk_timeIn" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Time Out:</label>';
+                html += '<input type="time" id="bulk_timeOut" />';
+                html += '</div>';
+
+                html += '<div class="form-group">';
                 html += '<label>Technician Initials:</label>';
                 html += '<input type="text" id="bulk_techInitials" maxlength="3" />';
                 html += '</div>';
@@ -9486,6 +9534,11 @@ html += '</div>';
                 html += '<option value="Yes">Yes - Pink colonies present</option>';
                 html += '<option value="No">No - No pink colonies</option>';
                 html += '</select>';
+                html += '</div>';
+
+                html += '<div class="form-group">';
+                html += '<label>Colony Count (approx):</label>';
+                html += '<input type="number" id="bulk_colonyCount" placeholder="e.g., 20" />';
                 html += '</div>';
 
                 html += '<div class="form-group">';
@@ -9567,18 +9620,28 @@ html += '</div>';
             if (stageKey === 'day1A_BPWPrep') {
                 stageData.bpwLot = document.getElementById('bulk_bpwLot').value;
                 addReagentLotToHistory('bpwLot', stageData.bpwLot);
+                stageData.sampleWeight = document.getElementById('bulk_sampleWeight').value;
+                stageData.bpwVolume = document.getElementById('bulk_bpwVolume').value;
+                stageData.stomachTime = document.getElementById('bulk_stomachTime').value;
+                stageData.volumePulled = document.getElementById('bulk_volumePulled').value;
+                stageData.bpwToIncubator = document.getElementById('bulk_bpwToIncubator').value;
             } else if (stageKey === 'day1B_MacBroth') {
                 stageData.macBrothLot = document.getElementById('bulk_macBrothLot').value;
                 addReagentLotToHistory('macBrothLot', stageData.macBrothLot);
                 stageData.temperature = document.getElementById('bulk_temperature').value;
                 stageData.incubator = document.getElementById('bulk_incubator').value;
+                stageData.timeIn = document.getElementById('bulk_timeIn').value;
+                stageData.timeOut = document.getElementById('bulk_timeOut').value;
             } else if (stageKey === 'day2_MacAgar') {
                 stageData.macAgarLot = document.getElementById('bulk_macAgarLot').value;
                 addReagentLotToHistory('macAgarLot', stageData.macAgarLot);
                 stageData.temperature = document.getElementById('bulk_temperature').value;
                 stageData.incubator = document.getElementById('bulk_incubator').value;
+                stageData.timeIn = document.getElementById('bulk_timeIn').value;
+                stageData.timeOut = document.getElementById('bulk_timeOut').value;
             } else if (stageKey === 'day3_PinkColonies') {
                 stageData.pinkColonies = document.getElementById('bulk_pinkColonies').value;
+                stageData.colonyCount = document.getElementById('bulk_colonyCount').value;
             } else if (stageKey === 'day4_BAP') {
                 stageData.bapLot = document.getElementById('bulk_bapLot').value;
                 addReagentLotToHistory('bapLot', stageData.bapLot);
