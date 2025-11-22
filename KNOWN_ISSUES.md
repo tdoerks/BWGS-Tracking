@@ -1,26 +1,30 @@
 # Known Issues - BWGS Tracker
 
-## 🐛 Minor Bugs (Non-Critical)
+## ✅ Fixed Issues
 
 ### Food Testing Module
 
 #### Delete Success Message Shows Wrong Count
-**Status:** Found, not fixed yet
+**Status:** ✅ FIXED (2025-11-22)
 **Priority:** Low
 **Impact:** Cosmetic only - deletion works correctly
 
 **Issue:**
 When deleting multiple food samples using "Delete Selected" button:
 - Samples are deleted correctly ✅
-- Success message shows "0 sample deleted successfully" instead of actual count ❌
+- Success message was showing "0 sample deleted successfully" instead of actual count ❌
 
-**Expected:** "3 samples deleted successfully"
-**Actual:** "0 sample deleted successfully"
+**Fix:** Changed alert to use original `count` variable (from `selectedSamplesForDelete.length`) instead of the `deletedCount` tracking variable. This ensures the message always shows the correct number.
 
-**Location:** `bulkDeleteSamples()` function, line ~15869
-**Root Cause:** `deletedCount` variable not being set correctly in the alert message context
+**Files Modified:**
+- `index.html` - line ~16773
+- `playground.html` - line ~16765
 
-**Workaround:** None needed - deletion works fine, just ignore the wrong number
+---
+
+## 🐛 Current Known Issues
+
+No known bugs at this time! 🎉
 
 ---
 

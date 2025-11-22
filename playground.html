@@ -16761,9 +16761,8 @@ html += '</div>';
                         // Then re-render
                         renderFoodSamplesTab();
 
-                        // Use the deletedCount we tracked, or fall back to the original count
-                        var finalCount = deletedCount > 0 ? deletedCount : count;
-                        alert(finalCount + ' sample' + (finalCount > 1 ? 's' : '') + ' deleted successfully.\nReason: ' + reason);
+                        // Use the count from the original selection (always accurate)
+                        alert(count + ' sample' + (count > 1 ? 's' : '') + ' deleted successfully.\nReason: ' + reason);
                     } catch (error) {
                         console.error('Error deleting samples:', error);
                         alert('Error deleting samples: ' + error.message);
